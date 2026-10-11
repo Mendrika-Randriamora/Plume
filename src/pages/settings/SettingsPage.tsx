@@ -79,10 +79,10 @@ export function SettingsPage() {
 
       <Card title="Politique de confidentialité">
         <p className="small">
-          Plume fonctionne entièrement sur votre ordinateur. Aucune donnée n'est collectée ni envoyée.
+          Plume fonctionne entièrement sur votre ordinateur. Aucune donnée n{`'`}est collectée ni envoyée.
           Elle lit uniquement votre dossier personnel (en ignorant les dossiers de dépendances comme node_modules
           ou vendor) et ne supprime jamais définitivement un de vos fichiers : ils vont à la corbeille.
-          Les modifications du système passent par la fenêtre d'autorisation de votre distribution.
+          Les modifications du système passent par la fenêtre d{`'`}autorisation de votre distribution.
           Vos réglages sont conservés localement.
         </p>
       </Card>
