@@ -33,7 +33,11 @@ export function CleanPage() {
   const toggle = (p: string) =>
     setPicked((s) => {
       const n = new Set(s);
-      n.has(p) ? n.delete(p) : n.add(p);
+      if (n.has(p)) {
+        n.delete(p);
+      } else {
+        n.add(p);
+      }
       return n;
     });
 
