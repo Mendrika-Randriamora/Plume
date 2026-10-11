@@ -20,7 +20,7 @@ export function AppList({ applications, onUninstall, onDetails, isUninstalling }
               <span className="ellipsis">{app.name}</span>
               <span className="muted small ellipsis">{app.source}</span>
             </span>
-            <span className="nowrap">{app.size !== null ? bytes(app.size) : "-"}</span>
+            <span className="nowrap">{bytes(app.size)}</span>
             <div className="row gap">
               <ConfirmButton
                 label="Désinstaller"

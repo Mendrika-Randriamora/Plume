@@ -9,14 +9,16 @@ import type { Application, ApplicationDetails } from "./types";
 export function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isUninstalling, setIsUninstalling] = useState<string | null>(null);
+  const [isUninstalling, setIsUninstalling] = useState<string | undefined>(undefined);
   const [selectedApp, setSelectedApp] = useState<{ packageName: string; source: string } | null>(null);
+  const [details, setDetails] = useState<ApplicationDetails | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   const loadApplications = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setError(undefined);
     try {
       const apps = await listApplications();
       setApplications(apps);
@@ -51,7 +53,7 @@ export function ApplicationsPage() {
   const handleUninstall = useCallback(async (packageName: string, source: string) => {
     const key = `${source}-${packageName}`;
     setIsUninstalling(key);
-    setError(null);
+    setError(undefined);
     try {
       const success = await uninstallApplication(packageName, source);
       if (success) {
@@ -62,7 +64,7 @@ export function ApplicationsPage() {
     } catch (e: any) {
       setError(e.message || "Erreur lors de la désinstallation");
     } finally {
-      setIsUninstalling(null);
+      setIsUninstalling(undefined);
     }
   }, [loadApplications]);
 
@@ -72,17 +74,28 @@ export function ApplicationsPage() {
 
   const closeDetails = useCallback(() => {
     setSelectedApp(null);
+    setDetails(null);
   }, []);
 
-  const fetchDetails = useCallback(async (): Promise<ApplicationDetails | null> => {
-    if (!selectedApp) return null;
+  const loadDetails = useCallback(async () => {
+    if (!selectedApp) return;
+    setDetailsLoading(true);
+    setDetails(null);
     try {
-      return await getApplicationDetails(selectedApp.packageName, selectedApp.source);
+      const d = await getApplicationDetails(selectedApp.packageName, selectedApp.source);
+      setDetails(d);
     } catch (e: any) {
       setError(e.message || "Erreur lors du chargement des détails");
-      return null;
+    } finally {
+      setDetailsLoading(false);
     }
   }, [selectedApp]);
+
+  useEffect(() => {
+    if (selectedApp) {
+      loadDetails();
+    }
+  }, [selectedApp, loadDetails]);
 
   return (
     <>
@@ -127,7 +140,8 @@ export function ApplicationsPage() {
       <AppDetailsModal
         isOpen={selectedApp !== null}
         onClose={closeDetails}
-        fetchDetails={fetchDetails}
+        details={details}
+        loading={detailsLoading}
       />
     </>
   );

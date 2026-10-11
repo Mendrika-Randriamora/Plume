@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Button, Loading } from "@/core/ui";
 import { bytes } from "@/core/format";
@@ -7,25 +6,11 @@ import type { ApplicationDetails } from "../types";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  fetchDetails: () => Promise<ApplicationDetails | null>;
+  details: ApplicationDetails | null;
+  loading: boolean;
 }
 
-export function AppDetailsModal({ isOpen, onClose, fetchDetails }: Props) {
-  const [details, setDetails] = useState<ApplicationDetails | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      setLoading(true);
-      fetchDetails().then((d) => {
-        setDetails(d);
-        setLoading(false);
-      }).catch(() => {
-        setLoading(false);
-      });
-    }
-  }, [isOpen, fetchDetails]);
-
+export function AppDetailsModal({ isOpen, onClose, details, loading }: Props) {
   if (!isOpen) return null;
 
   return (
@@ -36,7 +21,7 @@ export function AppDetailsModal({ isOpen, onClose, fetchDetails }: Props) {
           <Button variant="ghost" icon={X} onClick={onClose} aria-label="Fermer" />
         </header>
         
-        {loading ? (
+        {loading && !details ? (
           <Loading text="Chargement des détails..." />
         ) : details ? (
           <div className="modal-content">
@@ -59,7 +44,7 @@ export function AppDetailsModal({ isOpen, onClose, fetchDetails }: Props) {
                   <span className="detail-value">{details.version}</span>
                 </div>
               )}
-              {details.size !== null && (
+              {details.size !== undefined && (
                 <div className="detail-item">
                   <span className="detail-label">Taille</span>
                   <span className="detail-value">{bytes(details.size)}</span>

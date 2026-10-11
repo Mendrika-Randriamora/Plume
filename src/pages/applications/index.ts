@@ -1,4 +1,4 @@
-import { Apps } from "lucide-react";
+import { Grid3X3 } from "lucide-react";
 import { ApplicationsPage } from "./ApplicationsPage";
 
-export const page = { id: "applications", label: "Applications", icon: Apps, component: ApplicationsPage };
+export const page = { id: "applications", label: "Applications", icon: Grid3X3, component: ApplicationsPage };
