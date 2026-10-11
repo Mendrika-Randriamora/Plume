@@ -130,7 +130,7 @@ async fn get_apt_details(package_name: &str) -> Result<ApplicationDetails, Strin
     let size = lines.get(1).and_then(|s| s.trim().parse::<u64>().ok());
     let name = get_apt_display_name(package_name);
     
-    let (desktop_file, desktop_content, description, icon, categories, exec) = find_desktop_info(package_name, "apt");
+    let (desktop_file, desktop_content, description, categories, exec) = find_desktop_info(package_name);
     
     Ok(ApplicationDetails {
         name,
@@ -209,7 +209,7 @@ async fn get_snap_details(package_name: &str) -> Result<ApplicationDetails, Stri
         }
     }
     
-    let (desktop_file, desktop_content, icon, categories, exec) = find_desktop_info(package_name, "snap");
+    let (desktop_file, desktop_content, description, categories, exec) = find_desktop_info(package_name);
     
     Ok(ApplicationDetails {
         name: package_name.to_string(),
@@ -285,7 +285,7 @@ async fn get_flatpak_details(package_name: &str) -> Result<ApplicationDetails, S
         }
     }
     
-    let (desktop_file, desktop_content, icon, categories, exec) = find_desktop_info(package_name, "flatpak");
+    let (desktop_file, desktop_content, description, categories, exec) = find_desktop_info(package_name);
     
     Ok(ApplicationDetails {
         name: package_name.to_string(),
@@ -311,7 +311,7 @@ async fn uninstall_flatpak(package_name: &str) -> Result<bool, String> {
     Ok(status.success())
 }
 
-fn find_desktop_info(package_name: &str, source: &str) -> (Option<String>, Option<String>, Option<String>, Option<Vec<String>>, Option<String>) {
+fn find_desktop_info(package_name: &str) -> (Option<String>, Option<String>, Option<String>, Option<Vec<String>>, Option<String>) {
     let desktop_dirs = [
         "/usr/share/applications",
         "/usr/local/share/applications",
@@ -355,7 +355,7 @@ fn find_desktop_info(package_name: &str, source: &str) -> (Option<String>, Optio
                             }
                             
                             if has_match || path_str.contains(package_name) {
-                                return (Some(path_str.to_string()), Some(content), description.or(icon), categories, exec);
+                                return (Some(path_str.to_string()), Some(content), description, categories, exec);
                             }
                         }
                     }
