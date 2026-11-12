@@ -17,6 +17,10 @@ fn main() {
             modules::clean::delete_to_trash,
             modules::clean::scan_temp,
             modules::clean::clear_temp,
+            modules::applications::list_applications,
+            modules::applications::search_applications,
+            modules::applications::get_application_details,
+            modules::applications::uninstall_application,
         ])
         .run(tauri::generate_context!())
         .expect("erreur au lancement de Plume");
