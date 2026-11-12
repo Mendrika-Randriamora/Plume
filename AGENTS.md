@@ -11,7 +11,14 @@ UI copy, Rust error messages, and comments are French; keep new user-facing stri
 - Frontend check/build: `npm run build` = `tsc --noEmit && vite build`. `strict` and `noUnusedLocals` are enabled, so unused imports/variables fail the build.
 - Rust check: `cargo check --manifest-path src-tauri/Cargo.toml` (or `cd src-tauri && cargo check`).
 - Bundle: `npm run tauri build`; outputs under `src-tauri/target/release/bundle/`.
-- No test suite, lint/format scripts, or CI workflow exists. The two checks above are the verification path.
+- No test suite or local lint/format scripts are configured. For quick local verification, use `npm run build` + `cargo check`; CI also runs the checks below.
+
+## CI and release
+
+- `.github/workflows/ci.yml` runs on push and pull requests to `dev`: ESLint (`npm run lint`), `tsc --noEmit`, `npm run tauri build`, `cargo check`, `cargo fmt -- --check`, and `cargo clippy -- -D warnings`.
+- `package.json` currently has no `lint` script, so the CI lint job will fail until one is added.
+- `.github/workflows/release.yml` runs on every push to `main` and via `workflow_dispatch`. It builds Ubuntu 22.04 (`.deb`/`.rpm`/`.AppImage`), Windows (`.msi`/`.exe`), and macOS Apple Silicon + Intel (`.dmg`), then publishes a GitHub release with `tauri-apps/tauri-action`.
+- The release tag/name use `__VERSION__`, replaced with the version in `src-tauri/tauri.conf.json`; bump that version to create a new release tag. The workflow needs `contents: write` and uses `GITHUB_TOKEN`; Tauri update-signing secrets are optional and currently commented out.
 
 ## Architecture and page wiring
 
