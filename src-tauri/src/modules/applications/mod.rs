@@ -130,7 +130,7 @@ async fn get_apt_details(package_name: &str) -> Result<ApplicationDetails, Strin
     let size = lines.get(1).and_then(|s| s.trim().parse::<u64>().ok());
     let name = get_apt_display_name(package_name);
     
-    let (desktop_file, desktop_content, description, categories, exec) = find_desktop_info(package_name);
+    let (desktop_file, desktop_content, description, icon, categories, exec) = find_desktop_info(package_name);
     
     Ok(ApplicationDetails {
         name,
@@ -197,19 +197,20 @@ async fn get_snap_details(package_name: &str) -> Result<ApplicationDetails, Stri
         .map_err(|e| format!("Failed to get snap details: {}", e))?;
     
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut description: Option<String> = None;
+    let mut snap_description: Option<String> = None;
     let mut version: Option<String> = None;
     
     for line in stdout.lines() {
         let line = line.trim();
         if line.starts_with("description:") {
-            description = Some(line.trim_start_matches("description:").trim().to_string());
+            snap_description = Some(line.trim_start_matches("description:").trim().to_string());
         } else if line.starts_with("version:") {
             version = Some(line.trim_start_matches("version:").trim().to_string());
         }
     }
     
-    let (desktop_file, desktop_content, description, categories, exec) = find_desktop_info(package_name);
+    let (desktop_file, desktop_content, desktop_description, icon, categories, exec) = find_desktop_info(package_name);
+    let description = snap_description.or(desktop_description);
     
     Ok(ApplicationDetails {
         name: package_name.to_string(),
@@ -276,16 +277,17 @@ async fn get_flatpak_details(package_name: &str) -> Result<ApplicationDetails, S
         .map_err(|e| format!("Failed to get flatpak details: {}", e))?;
     
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut description: Option<String> = None;
+    let mut flatpak_description: Option<String> = None;
     
     for line in stdout.lines() {
         let line = line.trim();
         if line.starts_with("Description:") {
-            description = Some(line.trim_start_matches("Description:").trim().to_string());
+            flatpak_description = Some(line.trim_start_matches("Description:").trim().to_string());
         }
     }
     
-    let (desktop_file, desktop_content, description, categories, exec) = find_desktop_info(package_name);
+    let (desktop_file, desktop_content, desktop_description, icon, categories, exec) = find_desktop_info(package_name);
+    let description = flatpak_description.or(desktop_description);
     
     Ok(ApplicationDetails {
         name: package_name.to_string(),
@@ -311,7 +313,7 @@ async fn uninstall_flatpak(package_name: &str) -> Result<bool, String> {
     Ok(status.success())
 }
 
-fn find_desktop_info(package_name: &str) -> (Option<String>, Option<String>, Option<String>, Option<Vec<String>>, Option<String>) {
+fn find_desktop_info(package_name: &str) -> (Option<String>, Option<String>, Option<String>, Option<String>, Option<Vec<String>>, Option<String>) {
     let desktop_dirs = [
         "/usr/share/applications",
         "/usr/local/share/applications",
@@ -355,7 +357,7 @@ fn find_desktop_info(package_name: &str) -> (Option<String>, Option<String>, Opt
                             }
                             
                             if has_match || path_str.contains(package_name) {
-                                return (Some(path_str.to_string()), Some(content), description, categories, exec);
+                                return (Some(path_str.to_string()), Some(content), description, icon, categories, exec);
                             }
                         }
                     }
@@ -363,7 +365,7 @@ fn find_desktop_info(package_name: &str) -> (Option<String>, Option<String>, Opt
             }
         }
     }
-    (None, None, None, None, None)
+    (None, None, None, None, None, None)
 }
 
 fn parse_human_size(size_str: &str) -> Option<u64> {
