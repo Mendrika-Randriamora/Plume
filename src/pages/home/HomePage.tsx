@@ -103,7 +103,7 @@ export function HomePage() {
           </Card>
         </div>
       ) : (
-        <Notice>L'analyse de votre dossier personnel est désactivée dans les Réglages.</Notice>
+        <Notice>L{`'`}analyse de votre dossier personnel est désactivée dans les Réglages.</Notice>
       )}
 
       <ObsoleteCard />
