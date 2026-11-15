@@ -16,18 +16,27 @@ concurrency:
 
 jobs:
   release:
+    name: Release (${{ matrix.platform }}${{ matrix.target && format(' / {0}', matrix.target) || '' }})
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: ubuntu-22.04   # .deb, .rpm, .AppImage
-            args: ""
-          - platform: windows-latest # .msi, .exe
-            args: ""
-          - platform: macos-latest   # .dmg (Apple Silicon)
-            args: "--target aarch64-apple-darwin"
-          - platform: macos-13       # .dmg (Intel)
-            args: "--target x86_64-apple-darwin"
+          # .deb, .rpm, .AppImage
+          - platform: ubuntu-22.04
+            target: ""
+            bundles: deb,rpm,appimage
+          # .msi + .exe (installeur NSIS)
+          - platform: windows-latest
+            target: ""
+            bundles: nsis,msi
+          # .dmg Apple Silicon
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+            bundles: dmg
+          # .dmg Intel (compilation croisée depuis un runner arm64)
+          - platform: macos-latest
+            target: x86_64-apple-darwin
+            bundles: dmg
 
     runs-on: ${{ matrix.platform }}
 
@@ -50,17 +59,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: npm   # change en pnpm / yarn selon ton projet
+          cache: npm
 
       - name: Rust stable
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || matrix.platform == 'macos-13' && 'x86_64-apple-darwin' || '' }}
+
+      - name: Ajouter la cible Rust (macOS)
+        if: matrix.target != ''
+        run: rustup target add ${{ matrix.target }}
 
       - name: Cache Rust
         uses: swatinem/rust-cache@v2
         with:
           workspaces: "./src-tauri -> target"
+          key: ${{ matrix.target }}
 
       - name: Installer les dépendances frontend
         run: npm ci
@@ -76,7 +88,8 @@ jobs:
           # __VERSION__ est remplacé automatiquement par la version de tauri.conf.json
           tagName: v__VERSION__
           releaseName: "Release v__VERSION__"
-          releaseBody: "Voir les assets ci-dessous pour télécharger l'installeur de ta plateforme."
+          releaseBody: "Voir les assets ci-dessous pour télécharger l'installeur de ta plateforme (.deb/.rpm/.AppImage sur Linux, .msi/.exe sur Windows, .dmg sur macOS)."
           releaseDraft: false
           prerelease: false
-          args: ${{ matrix.args }}
+          # --bundles force les formats attendus par plateforme (le .exe = NSIS, le .dmg = macOS)
+          args: ${{ matrix.target != '' && format('--target {0} --bundles {1}', matrix.target, matrix.bundles) || format('--bundles {0}', matrix.bundles) }}
