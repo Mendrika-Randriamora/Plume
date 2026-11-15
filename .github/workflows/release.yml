@@ -88,7 +88,7 @@ jobs:
           # __VERSION__ est remplacé automatiquement par la version de tauri.conf.json
           tagName: v__VERSION__
           releaseName: "Release v__VERSION__"
-          releaseBody: "Voir les assets ci-dessous pour télécharger l'installeur de ta plateforme (.deb/.rpm/.AppImage sur Linux, .msi/.exe sur Windows, .dmg sur macOS)."
+          releaseBody: "See the assets below to download the installer for your platform (.deb/.rpm/.AppImage on Linux, .msi/.exe on Windows, .dmg on macOS)."
           releaseDraft: false
           prerelease: false
           # --bundles force les formats attendus par plateforme (le .exe = NSIS, le .dmg = macOS)
