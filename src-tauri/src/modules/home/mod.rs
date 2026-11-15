@@ -12,7 +12,7 @@ pub struct Temps {
     ram: Option<f32>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct App {
     name: String,
     memory: u64,
@@ -53,6 +53,24 @@ fn bytes_to_go(bytes: u64) -> f64 {
     (bytes as f64) / (go_converter as f64)
 }
 
+#[cfg(target_os = "linux")]
+fn pss_bytes(pid: u32) -> Option<u64> {
+    let s = std::fs::read_to_string(format!("/proc/{pid}/smaps_rollup")).ok()?;
+    let kb: u64 = s
+        .lines()
+        .find(|l| l.starts_with("Pss:"))?
+        .split_whitespace()
+        .nth(1)?
+        .parse()
+        .ok()?;
+    Some(kb * 1024)
+}
+
+#[cfg(not(target_os = "linux"))]
+fn pss_bytes(_pid: u32) -> Option<u64> {
+    None
+}
+
 #[tauri::command]
 pub async fn system_stats() -> Result<SystemStats, String> {
     blocking(|| {
@@ -63,12 +81,24 @@ pub async fn system_stats() -> Result<SystemStats, String> {
         // Mémoire par application (les processus du même nom sont regroupés)
         let mut by_name: HashMap<String, u64> = HashMap::new();
         for p in sys.processes().values() {
-            *by_name.entry(p.name().to_string_lossy().into_owned()).or_insert(0) += p.memory();
+            if p.thread_kind().is_some() {
+                continue; // ignorer les threads
+            }
+            // PSS si disponible, sinon RSS en secours
+            let mem = pss_bytes(p.pid().as_u32()).unwrap_or_else(|| p.memory());
+            *by_name
+                .entry(p.name().to_string_lossy().into_owned())
+                .or_insert(0) += mem;
         }
+
         let mut top_apps: Vec<App> =
-            by_name.into_iter().map(|(name, memory)| App { name, memory }).collect();
+            by_name.into_iter().map(
+                |(name, memory)| App { name, memory }
+            ).collect();
+
         top_apps.sort_by(|a, b| b.memory.cmp(&a.memory));
         top_apps.truncate(5);
+        println!("{:#?}", top_apps);
 
         // Températures
         let comps = Components::new_with_refreshed_list();
