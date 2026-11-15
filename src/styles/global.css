@@ -95,6 +95,12 @@ select { background: var(--bg); border: 1px solid var(--line); border-radius: 8p
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Mise à jour de l'application */
+.update-banner { border: 0; width: 100%; text-align: left; }
+.update-banner:hover { background: var(--line); }
+.update-notes { white-space: pre-wrap; background: var(--bg); border-radius: 8px; padding: 10px 12px; max-height: 220px; overflow-y: auto; }
+.update-action { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+
 /* Recherche */
 .search-container { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--hover); border-radius: 10px; }
 .search-icon { color: var(--muted); flex-shrink: 0; }

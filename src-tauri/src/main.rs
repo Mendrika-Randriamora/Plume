@@ -4,7 +4,15 @@ mod modules;
 mod shared;
 
 fn main() {
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default().plugin(tauri_plugin_process::init());
+
+    // Les mises à jour automatiques ne concernent que les bureaux (Linux, Windows, macOS).
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+    }
+
+    builder
         .invoke_handler(tauri::generate_handler![
             modules::home::system_stats,
             modules::home::home_highlights,
