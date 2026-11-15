@@ -64,7 +64,9 @@ jobs:
         run: npm ci
 
       - name: Build application
-        run: npm run tauri build
+        # La signature des mises à jour (createUpdaterArtifacts) exige une clé privée
+        # que la CI ne possède pas : --no-sign ignore cette étape, la compilation reste vérifiée.
+        run: npm run tauri build -- --no-sign
 
   rust-check:
     name: Rust Check

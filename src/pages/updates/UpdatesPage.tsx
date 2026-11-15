@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CheckCircle2, Download, Search } from "lucide-react";
 import { Button, Card, ConfirmButton, Empty, Notice, PageHeader } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
+import { AppUpdateCard } from "./components/AppUpdateCard";
 import { applyUpdates, checkUpdates } from "./api";
 import type { UpdateInfo } from "./types";
 
@@ -54,7 +55,9 @@ export function UpdatesPage() {
       {!allowed && <Notice>Les modifications du système sont désactivées dans les Réglages.</Notice>}
       {error && <Notice>{error}</Notice>}
 
-      <Card>
+      <AppUpdateCard />
+
+      <Card title="Mises à jour du système" hint="Paquets installés par votre distribution.">
         {phase === "idle" && <Empty icon={Download} text="Cliquez sur « Rechercher ». Votre mot de passe sera demandé une seule fois." />}
         {phase === "checking" && <Empty icon={Search} text="Recherche en cours…" />}
         {phase === "updating" && <Empty icon={Download} text="Mise à jour en cours, ne fermez pas Plume…" />}

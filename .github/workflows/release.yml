@@ -81,9 +81,9 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Décommente si tu signes tes mises à jour :
-          # TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          # TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # Signature des mises à jour : génère les .sig et le latest.json de la release.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           # __VERSION__ est remplacé automatiquement par la version de tauri.conf.json
           tagName: v__VERSION__
@@ -91,5 +91,8 @@ jobs:
           releaseBody: "See the assets below to download the installer for your platform (.deb/.rpm/.AppImage on Linux, .msi/.exe on Windows, .dmg on macOS)."
           releaseDraft: false
           prerelease: false
+          # Publie latest.json (le fichier lu par le plugin updater) dans la release.
+          # Nécessite les .sig, donc TAURI_SIGNING_PRIVATE_KEY(_PASSWORD).
+          includeUpdaterJson: true
           # --bundles force les formats attendus par plateforme (le .exe = NSIS, le .dmg = macOS)
           args: ${{ matrix.target != '' && format('--target {0} --bundles {1}', matrix.target, matrix.bundles) || format('--bundles {0}', matrix.bundles) }}

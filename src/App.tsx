@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { pages } from "@/pages/registry";
 import { Sidebar } from "@/core/layout/Sidebar";
 import { NavContext } from "@/core/layout/nav";
+import { UpdateBanner } from "@/core/updater/UpdateBanner";
 
 export default function App() {
   const [current, setCurrent] = useState(pages[0].id);
@@ -13,6 +14,7 @@ export default function App() {
       <div className="shell">
         <Sidebar current={current} onSelect={setCurrent} />
         <main className="content">
+          <UpdateBanner />
           <Page />
         </main>
       </div>
