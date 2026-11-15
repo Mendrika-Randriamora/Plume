@@ -49,8 +49,8 @@ export function HomePage() {
         <Stat
           icon={MemoryStick}
           label="Mémoire"
-          value={stats ? bytes(stats.ramUsed) : "…"}
-          detail={stats ? `utilisée sur ${bytes(stats.ramTotal)}` : undefined}
+          value={stats ? `${stats.ramUsed.toFixed(2)} Go` : "…"}
+          detail={stats ? `utilisée sur ${stats.ramTotal.toFixed(2)} Go` : undefined}
           meter={stats ? pct(stats.ramUsed, stats.ramTotal) : 0}
         />
         <Stat

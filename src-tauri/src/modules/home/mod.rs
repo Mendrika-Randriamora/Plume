@@ -21,8 +21,8 @@ pub struct App {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SystemStats {
-    ram_total: u64,
-    ram_used: u64,
+    ram_total: f64,
+    ram_used: f64,
     disk_total: u64,
     disk_free: u64,
     temps: Temps,
@@ -46,6 +46,11 @@ fn gpu_from_nvidia_smi() -> Option<f32> {
     let txt = String::from_utf8_lossy(&out.stdout);
     let vals: Vec<f32> = txt.lines().filter_map(|l| l.trim().parse().ok()).collect();
     avg(vals)
+}
+
+fn bytes_to_go(bytes: u64) -> f64 {
+    let go_converter = 1024_i32.pow(3);
+    (bytes as f64) / (go_converter as f64)
 }
 
 #[tauri::command]
@@ -95,8 +100,8 @@ pub async fn system_stats() -> Result<SystemStats, String> {
             disk.map(|d| (d.total_space(), d.available_space())).unwrap_or((0, 0));
 
         Ok(SystemStats {
-            ram_total: sys.total_memory(),
-            ram_used: sys.used_memory(),
+            ram_total: bytes_to_go(sys.total_memory()),
+            ram_used: bytes_to_go(sys.used_memory()),
             disk_total,
             disk_free,
             temps: Temps { cpu: avg(cpu), gpu, ram: avg(ram) },
