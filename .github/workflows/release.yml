@@ -91,5 +91,8 @@ jobs:
           releaseBody: "See the assets below to download the installer for your platform (.deb/.rpm/.AppImage on Linux, .msi/.exe on Windows, .dmg on macOS)."
           releaseDraft: false
           prerelease: false
+          # Publie latest.json (le fichier lu par le plugin updater) dans la release.
+          # Nécessite les .sig, donc TAURI_SIGNING_PRIVATE_KEY(_PASSWORD).
+          includeUpdaterJson: true
           # --bundles force les formats attendus par plateforme (le .exe = NSIS, le .dmg = macOS)
           args: ${{ matrix.target != '' && format('--target {0} --bundles {1}', matrix.target, matrix.bundles) || format('--bundles {0}', matrix.bundles) }}
