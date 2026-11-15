@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { Button, Card, PageHeader } from "@/core/ui";
+import { getCurrentVersion } from "@/core/updater";
 import { useSettings } from "@/core/settings/SettingsProvider";
 import { resolveDark, FONTS } from "@/core/settings/theme";
 import type { FontKey, Permissions, Rgb, ThemeMode } from "@/core/settings/store";
@@ -13,8 +15,14 @@ const PERMS: [keyof Permissions, string, string][] = [
 
 export function SettingsPage() {
   const { settings: s, update, reset } = useSettings();
+  const [version, setVersion] = useState("…");
   const dark = resolveDark(s);
   const rgb = dark ? s.baseDark : s.baseLight;
+
+  useEffect(() => {
+    void getCurrentVersion().then((v) => setVersion(v ?? "—"));
+  }, []);
+
   const setRgb = (i: number, v: number) => {
     const next = [...rgb] as Rgb;
     next[i] = v;
@@ -28,6 +36,16 @@ export function SettingsPage() {
         subtitle="Adaptez Plume à vos goûts."
         action={<Button variant="ghost" icon={RotateCcw} onClick={reset}>Réinitialiser</Button>}
       />
+
+      <Card title="Application" hint="Informations sur votre installation de Plume.">
+        <div className="field">
+          <span>Version de Plume</span>
+          <span className="muted">{version}</span>
+        </div>
+        <p className="small muted">
+          Les mises à jour de Plume s{`'`}installent depuis la page « Mises à jour ».
+        </p>
+      </Card>
 
       <Card title="Apparence">
         <div className="field">
