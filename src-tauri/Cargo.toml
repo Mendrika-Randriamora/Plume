@@ -19,3 +19,6 @@ trash = "5"
 opt-level = "s"
 lto = true
 strip = true
+
+[target."cfg(windows)".dependencies]
+windows = { version = "0.62.2", features = ["Win32_Foundation", "Win32_System_ProcessStatus", "Win32_System_Threading"] }
