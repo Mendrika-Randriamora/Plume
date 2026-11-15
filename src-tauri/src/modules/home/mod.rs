@@ -12,7 +12,7 @@ pub struct Temps {
     ram: Option<f32>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct App {
     name: String,
     memory: u64,
@@ -39,10 +39,17 @@ fn avg(v: Vec<f32>) -> Option<f32> {
 }
 
 fn gpu_from_nvidia_smi() -> Option<f32> {
-    let out = Command::new("nvidia-smi")
-        .args(["--query-gpu=temperature.gpu", "--format=csv,noheader"])
-        .output()
-        .ok()?;
+    let mut cmd = Command::new("nvidia-smi");
+    cmd.args(["--query-gpu=temperature.gpu", "--format=csv,noheader"]);
+
+    // Windows : évite qu'une fenêtre de console ne clignote à chaque appel
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
+    }
+
+    let out = cmd.output().ok()?;
     let txt = String::from_utf8_lossy(&out.stdout);
     let vals: Vec<f32> = txt.lines().filter_map(|l| l.trim().parse().ok()).collect();
     avg(vals)
@@ -51,6 +58,96 @@ fn gpu_from_nvidia_smi() -> Option<f32> {
 fn bytes_to_go(bytes: u64) -> f64 {
     let go_converter = 1024_i32.pow(3);
     (bytes as f64) / (go_converter as f64)
+}
+
+// ---------------------------------------------------------------------------
+// Mémoire "réelle" d'un processus, sans compter plusieurs fois les pages
+// partagées. Renvoie None si la mesure est impossible (processus protégé,
+// appartenant à un autre utilisateur...) : l'appelant retombe alors sur la RSS.
+// ---------------------------------------------------------------------------
+
+/// Linux : PSS (Proportional Set Size), lue dans /proc/<pid>/smaps_rollup.
+#[cfg(target_os = "linux")]
+fn real_memory(pid: u32) -> Option<u64> {
+    let s = std::fs::read_to_string(format!("/proc/{pid}/smaps_rollup")).ok()?;
+    let kb: u64 = s
+        .lines()
+        .find(|l| l.starts_with("Pss:"))?
+        .split_whitespace()
+        .nth(1)?
+        .parse()
+        .ok()?;
+    Some(kb * 1024)
+}
+
+/// Windows : private working set (la colonne « Mémoire » du Gestionnaire des tâches).
+#[cfg(target_os = "windows")]
+fn real_memory(pid: u32) -> Option<u64> {
+    use windows::Win32::Foundation::CloseHandle;
+    use windows::Win32::System::ProcessStatus::{
+        GetProcessMemoryInfo, PROCESS_MEMORY_COUNTERS, PROCESS_MEMORY_COUNTERS_EX2,
+    };
+    use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION};
+
+    unsafe {
+        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
+        let mut counters = PROCESS_MEMORY_COUNTERS_EX2::default();
+        let size = std::mem::size_of::<PROCESS_MEMORY_COUNTERS_EX2>() as u32;
+        counters.cb = size;
+        let ok = GetProcessMemoryInfo(
+            handle,
+            &mut counters as *mut _ as *mut PROCESS_MEMORY_COUNTERS,
+            size,
+        )
+        .is_ok();
+        let _ = CloseHandle(handle);
+        ok.then_some(counters.PrivateWorkingSetSize as u64)
+    }
+}
+
+/// macOS : physical footprint (la colonne « Mémoire » du Moniteur d'activité).
+#[cfg(target_os = "macos")]
+#[repr(C)]
+#[derive(Default)]
+struct RusageInfoV2 {
+    ri_uuid: [u8; 16],
+    ri_user_time: u64,
+    ri_system_time: u64,
+    ri_pkg_idle_wkups: u64,
+    ri_interrupt_wkups: u64,
+    ri_pageins: u64,
+    ri_wired_size: u64,
+    ri_resident_size: u64,
+    ri_phys_footprint: u64,
+    ri_proc_start_abstime: u64,
+    ri_proc_exit_abstime: u64,
+    ri_child_user_time: u64,
+    ri_child_system_time: u64,
+    ri_child_pkg_idle_wkups: u64,
+    ri_child_interrupt_wkups: u64,
+    ri_child_pageins: u64,
+    ri_child_elapsed_abstime: u64,
+    ri_diskio_bytesread: u64,
+    ri_diskio_byteswritten: u64,
+}
+
+#[cfg(target_os = "macos")]
+unsafe extern "C" {
+    fn proc_pid_rusage(pid: i32, flavor: i32, buffer: *mut std::ffi::c_void) -> i32;
+}
+
+#[cfg(target_os = "macos")]
+fn real_memory(pid: u32) -> Option<u64> {
+    const RUSAGE_INFO_V2: i32 = 2;
+    let mut info = RusageInfoV2::default();
+    let r = unsafe { proc_pid_rusage(pid as i32, RUSAGE_INFO_V2, &mut info as *mut _ as *mut _) };
+    (r == 0).then_some(info.ri_phys_footprint)
+}
+
+/// Autres systèmes : pas de mesure spécifique.
+#[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
+fn real_memory(_pid: u32) -> Option<u64> {
+    None
 }
 
 #[tauri::command]
@@ -63,10 +160,21 @@ pub async fn system_stats() -> Result<SystemStats, String> {
         // Mémoire par application (les processus du même nom sont regroupés)
         let mut by_name: HashMap<String, u64> = HashMap::new();
         for p in sys.processes().values() {
-            *by_name.entry(p.name().to_string_lossy().into_owned()).or_insert(0) += p.memory();
+            if p.thread_kind().is_some() {
+                continue; // ignorer les threads (Linux)
+            }
+            // Mesure réelle si disponible, sinon RSS / working set en secours
+            let mem = real_memory(p.pid().as_u32()).unwrap_or_else(|| p.memory());
+            *by_name
+                .entry(p.name().to_string_lossy().into_owned())
+                .or_insert(0) += mem;
         }
-        let mut top_apps: Vec<App> =
-            by_name.into_iter().map(|(name, memory)| App { name, memory }).collect();
+
+        let mut top_apps: Vec<App> = by_name
+            .into_iter()
+            .map(|(name, memory)| App { name, memory })
+            .collect();
+
         top_apps.sort_by(|a, b| b.memory.cmp(&a.memory));
         top_apps.truncate(5);
 
@@ -89,7 +197,7 @@ pub async fn system_stats() -> Result<SystemStats, String> {
         }
         let gpu = avg(gpu).or_else(gpu_from_nvidia_smi);
 
-        // Disque qui contient /home
+        // Disque qui contient le dossier personnel
         let home = fsutil::home();
         let disks = Disks::new_with_refreshed_list();
         let disk = disks
@@ -136,6 +244,18 @@ pub async fn home_highlights() -> Result<Highlights, String> {
     .await
 }
 
+/// Ouvre un dossier dans le gestionnaire de fichiers du système.
+fn open_in_file_manager(target: &std::path::Path) -> std::io::Result<()> {
+    #[cfg(target_os = "windows")]
+    let mut cmd = Command::new("explorer");
+    #[cfg(target_os = "macos")]
+    let mut cmd = Command::new("open");
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+    let mut cmd = Command::new("xdg-open");
+
+    cmd.arg(target).spawn().map(|_| ())
+}
+
 /// Ouvre le dossier concerné dans le gestionnaire de fichiers.
 #[tauri::command]
 pub fn reveal(path: String) -> Result<(), String> {
@@ -144,6 +264,5 @@ pub fn reveal(path: String) -> Result<(), String> {
         return Err("Chemin en dehors de votre dossier personnel".into());
     }
     let target = if p.is_dir() { p } else { p.parent().map(|x| x.to_path_buf()).unwrap_or(p) };
-    Command::new("xdg-open").arg(target).spawn().map_err(|e| e.to_string())?;
-    Ok(())
+    open_in_file_manager(&target).map_err(|e| e.to_string())
 }
