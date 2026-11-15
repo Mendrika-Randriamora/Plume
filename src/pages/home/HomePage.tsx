@@ -11,6 +11,10 @@ import type { FileEntry, Highlights, SystemStats } from "./types";
 
 const deg = (t: number | null) => (t === null ? null : `${Math.round(t)} °C`);
 
+const bytes_to_go = (bytes: number, fixed: number) => {
+  return (bytes / Math.pow(1024, 3)).toFixed(fixed);
+}
+
 export function HomePage() {
   const canScan = usePermission("scanHome");
   const [stats, setStats] = useState<SystemStats | null>(null);
@@ -49,8 +53,8 @@ export function HomePage() {
         <Stat
           icon={MemoryStick}
           label="Mémoire"
-          value={stats ? bytes(stats.ramUsed) : "…"}
-          detail={stats ? `utilisée sur ${bytes(stats.ramTotal)}` : undefined}
+          value={stats ? bytes_to_go(stats.ramUsed, 2) : "…"}
+          detail={stats ? `utilisée sur ${bytes_to_go(stats.ramTotal, 1)}` : undefined}
           meter={stats ? pct(stats.ramUsed, stats.ramTotal) : 0}
         />
         <Stat
