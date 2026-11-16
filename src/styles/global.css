@@ -59,6 +59,15 @@ button { cursor: pointer; }
 .meter { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
 .meter > div { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s; }
 
+/* Graphiques (page Ressources) */
+.section-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 0; border: 0; background: none; text-align: left; }
+.section-head svg { flex: none; }
+.section-body { margin-top: 12px; }
+.chart { width: 100%; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 10px 32px; margin-top: 12px; }
+.chart-legend-item { display: flex; gap: 8px; align-items: flex-start; }
+.chart-swatch { width: 12px; height: 12px; border-radius: 3px; margin-top: 4px; flex: none; }
+
 /* Listes */
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .list-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 8px; border: 0; background: none; border-radius: 8px; text-align: left; }
