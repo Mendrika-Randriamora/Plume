@@ -23,6 +23,8 @@ pub struct App {
 pub struct SystemStats {
     ram_total: f64,
     ram_used: f64,
+    swap_total: f64,
+    swap_used: f64,
     disk_total: u64,
     disk_free: u64,
     temps: Temps,
@@ -219,6 +221,8 @@ pub async fn system_stats() -> Result<SystemStats, String> {
         Ok(SystemStats {
             ram_total: bytes_to_go(sys.total_memory()),
             ram_used: bytes_to_go(sys.used_memory()),
+            swap_total: bytes_to_go(sys.total_swap()),
+            swap_used: bytes_to_go(sys.used_swap()),
             disk_total,
             disk_free,
             temps: Temps {
