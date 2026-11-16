@@ -1,0 +1,333 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "loading": "Loading…",
+    "search": "Search",
+    "refresh": "Refresh",
+    "error": "Error",
+    "unknown": "Unknown",
+    "none": "None",
+    "unsupportedSystem": "Your system isn't supported yet.",
+    "systemChangesDisabled": "System changes are disabled in Settings.",
+    "deleteDisabled": "Deletion is disabled in Settings.",
+    "authorizationDisabled": "Permission disabled in Settings.",
+    "openFolder": "Open folder",
+    "celsius": "{{value}} °C",
+    "perSecond": "{{value}}/s",
+    "cpu": "CPU",
+    "gpu": "Graphics card",
+    "memory": "Memory",
+    "swap": "Swap",
+    "network": "Network",
+    "disk": "Disk",
+    "received": "Download",
+    "sent": "Upload",
+    "read": "Read",
+    "write": "Write",
+    "unknownDate": "unknown date"
+  },
+  "units": {
+    "byte": "B",
+    "kb": "KB",
+    "mb": "MB",
+    "gb": "GB",
+    "tb": "TB"
+  },
+  "errors": {
+    "unknown": "Something went wrong.",
+    "internal_error": "Something went wrong inside Plume.",
+    "path_outside_home": "This path is outside your home folder.",
+    "open_failed": "Couldn't open the folder.",
+    "command_failed": "The system command failed.",
+    "pkexec_missing": "pkexec is missing. Install the polkit package.",
+    "permission_denied": "Permission denied or cancelled.",
+    "unsupported_package_manager": "This package manager isn't supported.",
+    "delete_failed": "Couldn't move the files to the trash.",
+    "application_not_found": "Application not found.",
+    "manual_application": "This application was installed manually. Plume never deletes files you added yourself.",
+    "unsupported_platform": "This feature is only available on Linux.",
+    "inventory_unavailable": "Couldn't read the application list.",
+    "missing_package_id": "No package identifier was found for this application.",
+    "unknown_source": "Unknown application source.",
+    "resources_unavailable": "Couldn't read system resources.",
+    "processes_unavailable": "Couldn't read the process list."
+  },
+  "updater": {
+    "banner": {
+      "available": "Plume {{version}} is available. Install it whenever you like.",
+      "view": "View update →"
+    },
+    "errors": {
+      "alreadyUpToDate": "Plume is already up to date — nothing to install.",
+      "appOnly": "Automatic updates are only available in the Plume app.",
+      "signature": "The update couldn't be verified because its signature is invalid. Installation was cancelled for safety.",
+      "unsupported": "Automatic updates are only available for the AppImage version of Plume.",
+      "endpoint": "No update endpoint is configured. Contact the person who develops Plume.",
+      "notFound": "The update server couldn't find a new version. Try again later.",
+      "timeout": "The update server is taking too long to respond. Check your connection and try again.",
+      "network": "Couldn't reach the update server. Check your internet connection and try again.",
+      "generic": "Couldn't update Plume right now. Try again later."
+    }
+  },
+  "home": {
+    "title": "Home",
+    "subtitle": "Your computer at a glance.",
+    "temps": {
+      "none": "No temperature sensor detected"
+    },
+    "memory": {
+      "detail": "used of {{total}}"
+    },
+    "swap": {
+      "detail": "used of {{total}}",
+      "none": "No swap configured"
+    },
+    "disk": {
+      "free": "Free space",
+      "detail": "of {{total}}"
+    },
+    "apps": {
+      "title": "What's using memory",
+      "hint": "The 5 most demanding programs right now."
+    },
+    "heavy": {
+      "title": "Largest files",
+      "hint": "Click to open the folder.",
+      "loading": "Scanning your home folder…"
+    },
+    "unused": {
+      "title": "Large and forgotten",
+      "hint": "Big files you no longer open.",
+      "refresh": "Rescan",
+      "loading": "Scanning…"
+    },
+    "scanDisabled": "Scanning your home folder is disabled in Settings.",
+    "obsolete": {
+      "title": "Programs no longer needed",
+      "hint": "Installed for other programs that have since disappeared. Removing them frees space without breaking anything.",
+      "remove": "Remove ({{count}})",
+      "empty": "All clean, nothing to remove.",
+      "more_one": "+ {{count}} more",
+      "more_other": "+ {{count}} more"
+    }
+  },
+  "resources": {
+    "title": "Resources",
+    "subtitle": "Your computer's activity in real time over the last minute.",
+    "cpu": {
+      "hint_one": "{{percent}} total · {{count}} core",
+      "hint_other": "{{percent}} total · {{count}} cores"
+    },
+    "memorySwap": {
+      "title": "Memory and swap"
+    },
+    "on": "of {{total}}",
+    "network": {
+      "totalReceived": "Total received {{total}}",
+      "totalSent": "Total sent {{total}}"
+    },
+    "disk": {
+      "totalRead": "Total read {{total}}",
+      "totalWritten": "Total written {{total}}"
+    }
+  },
+  "processes": {
+    "title": "Processes",
+    "subtitle": "Running programs, refreshed every 2 seconds.",
+    "columns": {
+      "name": "Name",
+      "cpu": "CPU",
+      "pid": "ID",
+      "memory": "Memory",
+      "read": "Disk read",
+      "write": "Disk write"
+    },
+    "sortColumns": {
+      "name": "name",
+      "cpu": "cpu",
+      "pid": "id",
+      "memory": "memory",
+      "read": "disk read",
+      "write": "disk write"
+    },
+    "summary_one": "{{count}} process · sorted by {{column}} {{direction}}",
+    "summary_other": "{{count}} processes · sorted by {{column}} {{direction}}",
+    "loading": "Reading…",
+    "loadingTable": "Reading processes…",
+    "show": "Show",
+    "all": "All",
+    "limit_one": "{{count}} process",
+    "limit_other": "{{count}} processes",
+    "ascending": "ascending",
+    "descending": "descending",
+    "sortBy": "Sort by {{column}}"
+  },
+  "updates": {
+    "title": "Updates",
+    "subtitle": "Keep your system up to date and secure.",
+    "system": {
+      "title": "System updates",
+      "hint": "Packages installed by your distribution.",
+      "idle": "Click “Search”. You'll be asked for your password only once.",
+      "checking": "Searching…",
+      "updating": "Updating, don't close Plume…",
+      "done": "Everything is up to date. A restart may help.",
+      "latest": "Everything is up to date."
+    },
+    "available_one": "{{count}} update available",
+    "available_other": "{{count}} updates available",
+    "updateAll": "Update all",
+    "updateAllConfirm": "Yes, update",
+    "app": {
+      "title": "Application update",
+      "hint": "Plume updates itself without reinstalling. You choose when.",
+      "installed": "Installed version",
+      "idle": "Click “Search” to check for a newer version.",
+      "latest": "Plume is up to date.",
+      "newVersion": "New version",
+      "published": "Published on",
+      "notes": "Release notes",
+      "notesSoon": "Release notes will be available soon.",
+      "restart": "Plume will restart to finish installing.",
+      "install": "Install and restart",
+      "installing": "Installing…",
+      "downloading": "Downloading… {{progress}}%",
+      "keepOpen": "Don't close Plume during the update."
+    }
+  },
+  "clean": {
+    "title": "Cleanup",
+    "subtitle": "Free up space in your home folder. Nothing is permanently deleted.",
+    "filters": {
+      "unused": "Least used",
+      "largest": "Largest"
+    },
+    "files": {
+      "title": "Your files",
+      "onlyFiles": "Files only"
+    },
+    "scanDisabled": "Scanning is disabled in Settings.",
+    "loading": "Scanning…",
+    "empty": "Nothing to report.",
+    "select": "Select {{name}}",
+    "selected_one": "{{count}} file selected · {{size}}",
+    "selected_other": "{{count}} files selected · {{size}}",
+    "trash": "Move to trash",
+    "trashConfirm": "Yes, move to trash",
+    "temp": {
+      "title": "Temporary files",
+      "hint": "Program caches and trash. They're recreated automatically when needed.",
+      "clear": "Empty ({{size}})",
+      "clearConfirm": "Yes, empty",
+      "empty": "No large temporary files.",
+      "cache": "{{name}} cache",
+      "trash": "Trash"
+    }
+  },
+  "applications": {
+    "title": "Applications",
+    "subtitle": "Manage the applications shown in your desktop menu.",
+    "errors": {
+      "load": "Couldn't load applications",
+      "search": "Search failed",
+      "uninstall": "Uninstall failed. Check that you have administrator rights.",
+      "uninstallGeneric": "Uninstall failed",
+      "details": "Couldn't load details"
+    },
+    "search": {
+      "title": "Search applications",
+      "hint": "Search the applications in your menu",
+      "placeholder": "Search for an application..."
+    },
+    "installed": {
+      "title": "Installed applications"
+    },
+    "found_one": "Found: {{count}} application",
+    "found_other": "Found: {{count}} applications",
+    "loading": "Loading applications...",
+    "empty": "No applications found.",
+    "emptyHint": "Try another search.",
+    "showMore": "Show more ({{count}})",
+    "source": {
+      "manual": "installed manually"
+    },
+    "uninstall": "Uninstall",
+    "details": "View details",
+    "modal": {
+      "title": "Application details",
+      "loading": "Loading details...",
+      "name": "Name",
+      "package": "Package / identifier",
+      "source": "Source",
+      "version": "Version",
+      "size": "Size",
+      "description": "Description",
+      "exec": "Run command",
+      "icon": "Icon",
+      "categories": "Categories",
+      "desktopFile": ".desktop file",
+      "manualNote": "This application was installed by hand. Plume won't delete its .desktop file automatically.",
+      "desktopContent": ".desktop file contents",
+      "error": "Couldn't load application details."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Make Plume your own.",
+    "reset": "Reset",
+    "app": {
+      "title": "Application",
+      "hint": "Information about your Plume installation.",
+      "version": "Plume version",
+      "updatesNote": "Plume updates are installed from the “Updates” page."
+    },
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "themes": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+      },
+      "font": "Font",
+      "fonts": {
+        "system": "System",
+        "rounded": "Rounded",
+        "serif": "Serif",
+        "mono": "Monospace"
+      },
+      "fontSize": "Text size · {{size}}px",
+      "background": "Background color ({{theme}})",
+      "lightTheme": "light theme",
+      "darkTheme": "dark theme",
+      "colors": {
+        "red": "Red",
+        "green": "Green",
+        "blue": "Blue"
+      },
+      "language": "Language"
+    },
+    "permissions": {
+      "title": "Permissions",
+      "hint": "You stay in control: every action can be disabled.",
+      "scanHome": {
+        "title": "Read my home folder",
+        "description": "Needed to find large files. Nothing is sent over the internet."
+      },
+      "deleteFiles": {
+        "title": "Move files to the trash",
+        "description": "Always after your confirmation. Recoverable from the trash."
+      },
+      "systemChanges": {
+        "title": "Change the system",
+        "description": "Updates and program removal. Your password is requested by the system."
+      }
+    },
+    "privacy": {
+      "title": "Privacy policy",
+      "text": "Plume runs entirely on your computer. No data is collected or sent. It only reads your home folder (ignoring dependency folders such as node_modules or vendor) and never permanently deletes your files: they go to the trash. System changes go through your distribution's permission prompt. Your settings are stored locally."
+    }
+  }
+}
