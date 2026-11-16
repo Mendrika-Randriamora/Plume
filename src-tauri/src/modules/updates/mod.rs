@@ -38,7 +38,10 @@ fn run(cmd: &str, args: &[&str]) -> Result<(String, i32), String> {
         .args(args)
         .env("LC_ALL", "C")
         .output()
-        .map_err(|e| format!("Impossible de lancer {cmd} : {e}"))?;
+        .map_err(|e| {
+            eprintln!("Impossible de lancer {cmd} : {e}");
+            "command_failed".to_string()
+        })?;
     Ok((
         String::from_utf8_lossy(&out.stdout).into_owned(),
         out.status.code().unwrap_or(-1),
@@ -48,7 +51,7 @@ fn run(cmd: &str, args: &[&str]) -> Result<(String, i32), String> {
 /// Lance une commande administrateur via pkexec (fenêtre de mot de passe du système).
 pub(crate) fn run_root(args: &[&str]) -> Result<String, String> {
     if !has("pkexec") {
-        return Err("pkexec est introuvable : installez le paquet « polkit ».".into());
+        return Err("pkexec_missing".into());
     }
     let out = Command::new("pkexec")
         .arg("env")
@@ -56,17 +59,23 @@ pub(crate) fn run_root(args: &[&str]) -> Result<String, String> {
         .arg("LC_ALL=C")
         .args(args)
         .output()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            eprintln!("Impossible de lancer pkexec : {e}");
+            "command_failed".to_string()
+        })?;
     match out.status.code() {
         Some(0) => Ok(String::from_utf8_lossy(&out.stdout).into_owned()),
-        Some(126) | Some(127) => Err("Autorisation refusée ou annulée.".into()),
-        _ => Err(format!(
-            "La commande a échoué : {}",
-            String::from_utf8_lossy(&out.stderr)
-                .lines()
-                .last()
-                .unwrap_or("erreur inconnue")
-        )),
+        Some(126) | Some(127) => Err("permission_denied".into()),
+        _ => {
+            eprintln!(
+                "Commande administrateur échouée : {}",
+                String::from_utf8_lossy(&out.stderr)
+                    .lines()
+                    .last()
+                    .unwrap_or("erreur inconnue")
+            );
+            Err("command_failed".into())
+        }
     }
 }
 
@@ -153,7 +162,7 @@ pub async fn apply_updates() -> Result<(), String> {
             Manager::Apt => run_root(&["apt-get", "-y", "upgrade"])?,
             Manager::Pacman => run_root(&["pacman", "-Syu", "--noconfirm"])?,
             Manager::Dnf => run_root(&["dnf", "-y", "upgrade"])?,
-            Manager::None => return Err("Gestionnaire de paquets non reconnu.".into()),
+            Manager::None => return Err("unsupported_package_manager".into()),
         };
         Ok(())
     })
@@ -219,7 +228,7 @@ pub async fn remove_obsolete() -> Result<(), String> {
                 args.extend(names.iter().map(|s| s.as_str()));
                 run_root(&args)?
             }
-            Manager::None => return Err("Gestionnaire de paquets non reconnu.".into()),
+            Manager::None => return Err("unsupported_package_manager".into()),
         };
         Ok(())
     })

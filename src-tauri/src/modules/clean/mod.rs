@@ -34,7 +34,10 @@ pub async fn delete_to_trash(paths: Vec<String>) -> Result<(), String> {
                 ok.push(pb);
             }
         }
-        trash::delete_all(ok).map_err(|e| e.to_string())
+        trash::delete_all(ok).map_err(|e| {
+            eprintln!("Impossible de déplacer les fichiers vers la corbeille : {e}");
+            "delete_failed".to_string()
+        })
     })
     .await
 }

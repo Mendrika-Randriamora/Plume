@@ -55,7 +55,7 @@ pub async fn list_processes(
     blocking(move || {
         let mut i = inner
             .lock()
-            .map_err(|_| "Impossible de lire la liste des processus".to_string())?;
+            .map_err(|_| "processes_unavailable".to_string())?;
 
         i.sys.refresh_processes_specifics(
             ProcessesToUpdate::All,
