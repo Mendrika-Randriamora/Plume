@@ -1,17 +1,35 @@
-use serde::{Serialize, Deserialize};
-use std::process::Command;
-use std::fs;
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+use std::sync::RwLock;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[cfg(target_os = "linux")]
+use crate::modules::updates::{detect, run_root, Manager};
+#[cfg(target_os = "linux")]
+use crate::shared::blocking;
+#[cfg(target_os = "linux")]
+use std::collections::{HashMap, HashSet};
+#[cfg(target_os = "linux")]
+use std::env;
+#[cfg(target_os = "linux")]
+use std::fs;
+#[cfg(target_os = "linux")]
+use std::path::Path;
+#[cfg(target_os = "linux")]
+use std::process::Command;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Application {
+    /// Identifiant du fichier `.desktop` : sert de clé stable entre l'interface et Rust.
+    pub id: String,
     pub name: String,
+    /// Paquet apt/dnf/pacman, identifiant Flatpak ou nom du snap.
     pub package_name: String,
     pub version: Option<String>,
     pub size: Option<u64>,
     pub source: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApplicationDetails {
     pub name: String,
     pub package_name: String,
@@ -26,359 +44,1301 @@ pub struct ApplicationDetails {
     pub exec: Option<String>,
 }
 
-#[tauri::command]
-pub async fn list_applications() -> Result<Vec<Application>, String> {
-    let mut applications = Vec::new();
-    applications.extend(get_apt_applications().await?);
-    applications.extend(get_snap_applications().await?);
-    applications.extend(get_flatpak_applications().await?);
-    Ok(applications)
+#[derive(Debug, Clone)]
+struct CachedApplication {
+    app: Application,
+    path: PathBuf,
+    categories: Vec<String>,
+}
+
+/// Inventaire conservé en mémoire : il n'est régénéré que sur demande explicite.
+#[derive(Default)]
+pub struct ApplicationsState {
+    entries: RwLock<Option<Vec<CachedApplication>>>,
 }
 
 #[tauri::command]
-pub async fn search_applications(query: String) -> Result<Vec<Application>, String> {
-    let all_apps = list_applications().await?;
-    let query_lower = query.to_lowercase();
-    Ok(all_apps.into_iter()
-        .filter(|app| app.name.to_lowercase().contains(&query_lower) || app.package_name.to_lowercase().contains(&query_lower))
-        .collect())
-}
-
-#[tauri::command]
-pub async fn get_application_details(package_name: String, source: String) -> Result<ApplicationDetails, String> {
-    match source.as_str() {
-        "apt" => get_apt_details(&package_name).await,
-        "snap" => get_snap_details(&package_name).await,
-        "flatpak" => get_flatpak_details(&package_name).await,
-        _ => Err(format!("Unknown source: {}", source)),
-    }
-}
-
-#[tauri::command]
-pub async fn uninstall_application(package_name: String, source: String) -> Result<bool, String> {
-    match source.as_str() {
-        "apt" => uninstall_apt(&package_name).await,
-        "snap" => uninstall_snap(&package_name).await,
-        "flatpak" => uninstall_flatpak(&package_name).await,
-        _ => Err(format!("Unknown source: {}", source)),
-    }
-}
-
-async fn get_apt_applications() -> Result<Vec<Application>, String> {
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg("dpkg-query -W -f='${Package}\t${Version}\t${Installed-Size}\n' 2>/dev/null | grep -v deinstall | head -200")
-        .output()
-        .map_err(|e| format!("Failed to run dpkg-query: {}", e))?;
-    
-    if !output.status.success() {
-        return Ok(Vec::new());
-    }
-    
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut applications = Vec::new();
-    
-    for line in stdout.lines() {
-        let parts: Vec<&str> = line.split('\t').collect();
-        if parts.len() >= 3 {
-            let package_name = parts[0].to_string();
-            let version = Some(parts[1].to_string());
-            let size = parts[2].trim().parse::<u64>().ok();
-            let name = get_apt_display_name(&package_name);
-            
-            applications.push(Application {
-                name,
-                package_name,
-                version,
-                size,
-                source: "apt".to_string(),
-            });
+pub async fn list_applications(
+    state: tauri::State<'_, ApplicationsState>,
+) -> Result<Vec<Application>, String> {
+    #[cfg(target_os = "linux")]
+    {
+        if let Some(entries) = cached_entries(&state)? {
+            return Ok(entries.into_iter().map(|entry| entry.app).collect());
         }
+        scan_and_store(&state).await
     }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = state;
+        Ok(Vec::new())
+    }
+}
+
+#[tauri::command]
+pub async fn refresh_applications(
+    state: tauri::State<'_, ApplicationsState>,
+) -> Result<Vec<Application>, String> {
+    #[cfg(target_os = "linux")]
+    {
+        scan_and_store(&state).await
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = state;
+        Ok(Vec::new())
+    }
+}
+
+#[tauri::command]
+pub async fn search_applications(
+    query: String,
+    state: tauri::State<'_, ApplicationsState>,
+) -> Result<Vec<Application>, String> {
+    #[cfg(target_os = "linux")]
+    {
+        // Aucun sous-processus ici : on filtre uniquement le cache mémoire.
+        let entries = cached_entries(&state)?.unwrap_or_default();
+        let query = normalize_search(&query);
+        let terms: Vec<&str> = query.split_whitespace().collect();
+
+        Ok(entries
+            .into_iter()
+            .filter(|entry| {
+                if terms.is_empty() {
+                    return true;
+                }
+                let haystack = normalize_search(&format!(
+                    "{} {} {} {}",
+                    entry.app.name,
+                    entry.app.id,
+                    entry.app.package_name,
+                    entry.categories.join(" ")
+                ));
+                terms.iter().all(|term| haystack.contains(*term))
+            })
+            .map(|entry| entry.app)
+            .collect())
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = (query, state);
+        Ok(Vec::new())
+    }
+}
+
+#[tauri::command]
+pub async fn get_application_details(
+    desktop_id: String,
+    state: tauri::State<'_, ApplicationsState>,
+) -> Result<ApplicationDetails, String> {
+    #[cfg(target_os = "linux")]
+    {
+        let entry = find_cached(&state, &desktop_id)?
+            .ok_or_else(|| format!("Application introuvable : {desktop_id}"))?;
+
+        blocking(move || details_for_entry(&entry)).await
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = (desktop_id, state);
+        Err("La gestion des applications n'est disponible que sous Linux.".into())
+    }
+}
+
+#[tauri::command]
+pub async fn uninstall_application(
+    desktop_id: String,
+    state: tauri::State<'_, ApplicationsState>,
+) -> Result<bool, String> {
+    #[cfg(target_os = "linux")]
+    {
+        // L'identifiant vient du front : on le valide dans l'inventaire en mémoire.
+        let entry = find_cached(&state, &desktop_id)?
+            .ok_or_else(|| format!("Application introuvable : {desktop_id}"))?;
+
+        if entry.app.source == "manuel" {
+            return Err(format!(
+                "« {} » a été installée manuellement ({}). Plume ne supprime jamais un fichier déposé à la main : retirez ce fichier .desktop vous-même si vous le souhaitez.",
+                entry.app.name,
+                entry.path.display()
+            ));
+        }
+
+        blocking(move || uninstall_entry(&entry)).await?;
+        Ok(true)
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = (desktop_id, state);
+        Err("La désinstallation n'est disponible que sous Linux.".into())
+    }
+}
+
+fn cached_entries(state: &ApplicationsState) -> Result<Option<Vec<CachedApplication>>, String> {
+    let guard = state
+        .entries
+        .read()
+        .map_err(|_| "Impossible de lire l'inventaire des applications.".to_string())?;
+    Ok(guard.clone())
+}
+
+fn find_cached(
+    state: &ApplicationsState,
+    desktop_id: &str,
+) -> Result<Option<CachedApplication>, String> {
+    Ok(cached_entries(state)?
+        .unwrap_or_default()
+        .into_iter()
+        .find(|entry| entry.app.id == desktop_id))
+}
+
+/// Scanne l'inventaire puis remplace le cache mémoire.
+#[cfg(target_os = "linux")]
+async fn scan_and_store(state: &ApplicationsState) -> Result<Vec<Application>, String> {
+    let entries = blocking(scan_inventory).await?;
+    let applications: Vec<Application> = entries.iter().map(|entry| entry.app.clone()).collect();
+
+    {
+        let mut guard = state.entries.write().map_err(|_| {
+            "Impossible de mettre à jour l'inventaire des applications.".to_string()
+        })?;
+        *guard = Some(entries);
+    }
+
     Ok(applications)
 }
 
-fn get_apt_display_name(package_name: &str) -> String {
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg(format!("apt-cache show {} 2>/dev/null | grep '^Description:' | head -1 | sed 's/^Description: //'", package_name))
-        .output()
-        .ok();
-    
-    if let Some(output) = output {
-        if output.status.success() {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            let desc = stdout.trim();
-            if !desc.is_empty() {
-                return desc.split('\n').next().unwrap_or(package_name).to_string();
+#[cfg(target_os = "linux")]
+fn scan_inventory() -> Result<Vec<CachedApplication>, String> {
+    let dirs = application_dirs();
+    let desktops = current_desktops();
+    let parsed = load_visible_entries(&dirs, &desktops);
+    let manager = detect();
+    let source = manager_source(manager);
+
+    let owner_paths: Vec<PathBuf> = parsed
+        .iter()
+        .filter(|entry| origin_from_path(&entry.path).is_none())
+        .map(|entry| entry.path.clone())
+        .collect();
+    let owners = find_owners(&owner_paths, manager);
+
+    let mut entries: Vec<CachedApplication> = parsed
+        .into_iter()
+        .map(|parsed| {
+            if let Some((origin, package_name)) = origin_from_path(&parsed.path) {
+                build_cached(parsed, origin, package_name)
+            } else if let Some(package_name) = owners.get(&parsed.path) {
+                build_cached(parsed, source.to_string(), package_name.clone())
+            } else {
+                build_cached(parsed, "manuel".to_string(), String::new())
             }
-        }
-    }
-    package_name.to_string()
+        })
+        .collect();
+
+    enrich_entries(&mut entries);
+    entries.sort_by(|a, b| {
+        a.app
+            .name
+            .to_lowercase()
+            .cmp(&b.app.name.to_lowercase())
+            .then_with(|| a.app.id.cmp(&b.app.id))
+    });
+
+    Ok(entries)
 }
 
-async fn get_apt_details(package_name: &str) -> Result<ApplicationDetails, String> {
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg(format!("dpkg-query -W -f='${{Version}}\n${{Installed-Size}}\n' {} 2>/dev/null", package_name))
-        .output()
-        .map_err(|e| format!("Failed to get apt details: {}", e))?;
-    
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let lines: Vec<&str> = stdout.lines().collect();
-    let version = lines.get(0).map(|s| s.to_string());
-    let size = lines.get(1).and_then(|s| s.trim().parse::<u64>().ok());
-    let name = get_apt_display_name(package_name);
-    
-    let (desktop_file, desktop_content, description, icon, categories, exec) = find_desktop_info(package_name);
-    
+#[cfg(target_os = "linux")]
+fn build_cached(parsed: ParsedDesktop, source: String, package_name: String) -> CachedApplication {
+    let name = parsed
+        .entry
+        .localized("Name")
+        .filter(|name| !name.is_empty())
+        .unwrap_or_else(|| parsed.id.trim_end_matches(".desktop").to_string());
+    let categories = parsed
+        .entry
+        .get("Categories")
+        .map(split_list)
+        .unwrap_or_default();
+
+    CachedApplication {
+        app: Application {
+            id: parsed.id,
+            name,
+            package_name,
+            version: None,
+            size: None,
+            source,
+        },
+        path: parsed.path,
+        categories,
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn details_for_entry(entry: &CachedApplication) -> Result<ApplicationDetails, String> {
+    let content = fs::read_to_string(&entry.path).ok();
+    let parsed = content
+        .as_deref()
+        .map(parse_desktop_entry)
+        .unwrap_or_default();
+
+    let name = parsed
+        .localized("Name")
+        .filter(|name| !name.is_empty())
+        .unwrap_or_else(|| entry.app.name.clone());
+    let categories: Vec<String> = parsed.get("Categories").map(split_list).unwrap_or_default();
+
     Ok(ApplicationDetails {
         name,
-        package_name: package_name.to_string(),
-        version,
-        size,
-        source: "apt".to_string(),
-        desktop_file,
-        desktop_content,
-        description,
-        icon,
-        categories,
-        exec,
+        package_name: entry.app.package_name.clone(),
+        version: entry.app.version.clone(),
+        size: entry.app.size,
+        source: entry.app.source.clone(),
+        desktop_file: Some(entry.path.display().to_string()),
+        desktop_content: content,
+        description: parsed.localized("Comment").filter(|text| !text.is_empty()),
+        icon: parsed
+            .get("Icon")
+            .map(str::to_string)
+            .filter(|icon| !icon.is_empty()),
+        categories: if categories.is_empty() {
+            None
+        } else {
+            Some(categories)
+        },
+        exec: parsed
+            .get("Exec")
+            .map(clean_exec)
+            .filter(|exec| !exec.is_empty()),
     })
 }
 
-async fn uninstall_apt(package_name: &str) -> Result<bool, String> {
-    let status = Command::new("sh")
-        .arg("-c")
-        .arg(format!("sudo apt-get remove -y {} 2>&1", package_name))
-        .status()
-        .map_err(|e| format!("Failed to uninstall: {}", e))?;
-    Ok(status.success())
-}
-
-async fn get_snap_applications() -> Result<Vec<Application>, String> {
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg("snap list 2>/dev/null | tail -n +2 | awk '{print $1\"\\t\"$2\"\\t\"$4}'")
-        .output()
-        .map_err(|e| format!("Failed to run snap list: {}", e))?;
-    
-    if !output.status.success() {
-        return Ok(Vec::new());
+/// L'identifiant a déjà été validé dans le cache ; la commande ne reçoit que des arguments sûrs.
+#[cfg(target_os = "linux")]
+fn uninstall_entry(entry: &CachedApplication) -> Result<(), String> {
+    let package = entry.app.package_name.as_str();
+    if package.is_empty() {
+        return Err("Identifiant de paquet introuvable pour cette application.".into());
     }
-    
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut applications = Vec::new();
-    
-    for line in stdout.lines() {
-        let parts: Vec<&str> = line.split('\t').collect();
-        if parts.len() >= 3 {
-            let name = parts[0].to_string();
-            let version = Some(parts[1].to_string());
-            let size = parse_human_size(parts[2].trim());
-            
-            applications.push(Application {
-                name: name.clone(),
-                package_name: name,
-                version,
-                size,
-                source: "snap".to_string(),
-            });
-        }
+
+    match entry.app.source.as_str() {
+        "apt" => run_root(&["apt-get", "remove", "-y", package])?,
+        "dnf" => run_root(&["dnf", "remove", "-y", package])?,
+        "pacman" => run_root(&["pacman", "-Rs", "--noconfirm", package])?,
+        "flatpak" => run_root(&["flatpak", "uninstall", "-y", package])?,
+        "snap" => run_root(&["snap", "remove", package])?,
+        other => return Err(format!("Source inconnue : {other}")),
+    };
+    Ok(())
+}
+
+// ---------- Découverte des fichiers .desktop ----------
+
+#[cfg(target_os = "linux")]
+#[derive(Debug, Clone, Default)]
+struct DesktopEntry {
+    values: HashMap<String, String>,
+}
+
+#[cfg(target_os = "linux")]
+impl DesktopEntry {
+    fn get(&self, key: &str) -> Option<&str> {
+        self.values.get(key).map(String::as_str)
     }
-    Ok(applications)
-}
 
-async fn get_snap_details(package_name: &str) -> Result<ApplicationDetails, String> {
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg(format!("snap info {} 2>/dev/null", package_name))
-        .output()
-        .map_err(|e| format!("Failed to get snap details: {}", e))?;
-    
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut snap_description: Option<String> = None;
-    let mut version: Option<String> = None;
-    
-    for line in stdout.lines() {
-        let line = line.trim();
-        if line.starts_with("description:") {
-            snap_description = Some(line.trim_start_matches("description:").trim().to_string());
-        } else if line.starts_with("version:") {
-            version = Some(line.trim_start_matches("version:").trim().to_string());
-        }
-    }
-    
-    let (desktop_file, desktop_content, desktop_description, icon, categories, exec) = find_desktop_info(package_name);
-    let description = snap_description.or(desktop_description);
-    
-    Ok(ApplicationDetails {
-        name: package_name.to_string(),
-        package_name: package_name.to_string(),
-        version,
-        size: None,
-        source: "snap".to_string(),
-        desktop_file,
-        desktop_content,
-        description,
-        icon,
-        categories,
-        exec,
-    })
-}
-
-async fn uninstall_snap(package_name: &str) -> Result<bool, String> {
-    let status = Command::new("sh")
-        .arg("-c")
-        .arg(format!("sudo snap remove {} 2>&1", package_name))
-        .status()
-        .map_err(|e| format!("Failed to uninstall snap: {}", e))?;
-    Ok(status.success())
-}
-
-async fn get_flatpak_applications() -> Result<Vec<Application>, String> {
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg("flatpak list --app 2>/dev/null | tail -n +2 | awk '{print $1\"\\t\"$2\"\\t\"$4}'")
-        .output()
-        .map_err(|e| format!("Failed to run flatpak list: {}", e))?;
-    
-    if !output.status.success() {
-        return Ok(Vec::new());
-    }
-    
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut applications = Vec::new();
-    
-    for line in stdout.lines() {
-        let parts: Vec<&str> = line.split('\t').collect();
-        if parts.len() >= 3 {
-            let name = parts[0].to_string();
-            let version = Some(parts[1].to_string());
-            let size = parse_human_size(parts[2].trim());
-            
-            applications.push(Application {
-                name: name.clone(),
-                package_name: name,
-                version,
-                size,
-                source: "flatpak".to_string(),
-            });
-        }
-    }
-    Ok(applications)
-}
-
-async fn get_flatpak_details(package_name: &str) -> Result<ApplicationDetails, String> {
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg(format!("flatpak info {} 2>/dev/null", package_name))
-        .output()
-        .map_err(|e| format!("Failed to get flatpak details: {}", e))?;
-    
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut flatpak_description: Option<String> = None;
-    
-    for line in stdout.lines() {
-        let line = line.trim();
-        if line.starts_with("Description:") {
-            flatpak_description = Some(line.trim_start_matches("Description:").trim().to_string());
-        }
-    }
-    
-    let (desktop_file, desktop_content, desktop_description, icon, categories, exec) = find_desktop_info(package_name);
-    let description = flatpak_description.or(desktop_description);
-    
-    Ok(ApplicationDetails {
-        name: package_name.to_string(),
-        package_name: package_name.to_string(),
-        version: None,
-        size: None,
-        source: "flatpak".to_string(),
-        desktop_file,
-        desktop_content,
-        description,
-        icon,
-        categories,
-        exec,
-    })
-}
-
-async fn uninstall_flatpak(package_name: &str) -> Result<bool, String> {
-    let status = Command::new("sh")
-        .arg("-c")
-        .arg(format!("sudo flatpak uninstall -y {} 2>&1", package_name))
-        .status()
-        .map_err(|e| format!("Failed to uninstall flatpak: {}", e))?;
-    Ok(status.success())
-}
-
-fn find_desktop_info(package_name: &str) -> (Option<String>, Option<String>, Option<String>, Option<String>, Option<Vec<String>>, Option<String>) {
-    let desktop_dirs = [
-        "/usr/share/applications",
-        "/usr/local/share/applications",
-        "/var/lib/snapd/desktop/applications",
-        "/var/lib/flatpak/exports/share/applications",
-    ];
-    
-    for dir in desktop_dirs.iter() {
-        if let Ok(entries) = fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                if let Some(path_str) = entry.path().to_str() {
-                    if path_str.ends_with(".desktop") {
-                        if let Ok(content) = fs::read_to_string(path_str) {
-                            let mut has_match = false;
-                            let mut icon: Option<String> = None;
-                            let mut categories: Option<Vec<String>> = None;
-                            let mut exec: Option<String> = None;
-                            let mut description: Option<String> = None;
-                            
-                            for line in content.lines() {
-                                let line = line.trim();
-                                if line.starts_with("Exec=") {
-                                    let exec_line = line.trim_start_matches("Exec=");
-                                    if exec_line.contains(package_name) {
-                                        has_match = true;
-                                        exec = Some(exec_line.to_string());
-                                    }
-                                }
-                                if line.starts_with("Icon=") {
-                                    icon = Some(line.trim_start_matches("Icon=").to_string());
-                                }
-                                if line.starts_with("Categories=") {
-                                    categories = Some(line.trim_start_matches("Categories=").split(';').map(|s| s.to_string()).collect());
-                                }
-                                if line.starts_with("Name=") && description.is_none() {
-                                    description = Some(line.trim_start_matches("Name=").to_string());
-                                }
-                                if line.starts_with("Comment=") && description.is_none() {
-                                    description = Some(line.trim_start_matches("Comment=").to_string());
-                                }
-                            }
-                            
-                            if has_match || path_str.contains(package_name) {
-                                return (Some(path_str.to_string()), Some(content), description, icon, categories, exec);
-                            }
-                        }
-                    }
+    fn localized(&self, key: &str) -> Option<String> {
+        for locale in locale_candidates() {
+            if let Some(value) = self.values.get(&format!("{key}[{locale}]")) {
+                let value = value.trim();
+                if !value.is_empty() {
+                    return Some(value.to_string());
                 }
             }
         }
+        self.get(key)
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map(str::to_string)
     }
-    (None, None, None, None, None, None)
+
+    fn boolean(&self, key: &str) -> bool {
+        self.get(key)
+            .map(|value| value.trim().eq_ignore_ascii_case("true"))
+            .unwrap_or(false)
+    }
 }
 
-fn parse_human_size(size_str: &str) -> Option<u64> {
-    let size_str = size_str.trim().to_uppercase();
-    if size_str.ends_with("KB") {
-        size_str.trim_end_matches("KB").parse::<f64>().ok().map(|s| (s * 1024.0) as u64)
-    } else if size_str.ends_with("MB") {
-        size_str.trim_end_matches("MB").parse::<f64>().ok().map(|s| (s * 1024.0 * 1024.0) as u64)
-    } else if size_str.ends_with("GB") {
-        size_str.trim_end_matches("GB").parse::<f64>().ok().map(|s| (s * 1024.0 * 1024.0 * 1024.0) as u64)
-    } else if size_str.ends_with("TB") {
-        size_str.trim_end_matches("TB").parse::<f64>().ok().map(|s| (s * 1024.0 * 1024.0 * 1024.0 * 1024.0) as u64)
+#[cfg(target_os = "linux")]
+#[derive(Debug)]
+struct ParsedDesktop {
+    id: String,
+    path: PathBuf,
+    entry: DesktopEntry,
+}
+
+#[cfg(target_os = "linux")]
+fn application_dirs() -> Vec<PathBuf> {
+    let mut dirs = Vec::new();
+    let home = dirs::home_dir();
+
+    let data_home = env::var_os("XDG_DATA_HOME")
+        .filter(|value| !value.is_empty())
+        .map(PathBuf::from)
+        .or_else(|| home.as_ref().map(|home| home.join(".local/share")));
+    if let Some(data_home) = data_home {
+        dirs.push(data_home.join("applications"));
+    }
+
+    match env::var_os("XDG_DATA_DIRS").filter(|value| !value.is_empty()) {
+        Some(value) => {
+            for dir in env::split_paths(&value) {
+                dirs.push(dir.join("applications"));
+            }
+        }
+        None => {
+            dirs.push(PathBuf::from("/usr/share/applications"));
+            dirs.push(PathBuf::from("/usr/local/share/applications"));
+            dirs.push(PathBuf::from("/var/lib/flatpak/exports/share/applications"));
+            if let Some(home) = &home {
+                dirs.push(home.join(".local/share/flatpak/exports/share/applications"));
+            }
+            dirs.push(PathBuf::from("/var/lib/snapd/desktop/applications"));
+        }
+    }
+
+    let mut seen = HashSet::new();
+    dirs.retain(|dir| seen.insert(dir.clone()));
+    dirs
+}
+
+#[cfg(target_os = "linux")]
+fn current_desktops() -> Vec<String> {
+    env::var("XDG_CURRENT_DESKTOP")
+        .unwrap_or_default()
+        .split(':')
+        .map(str::trim)
+        .filter(|desktop| !desktop.is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
+/// Charge les entrées visibles de chaque dossier, en respectant la priorité utilisateur > système.
+#[cfg(target_os = "linux")]
+fn load_visible_entries(dirs: &[PathBuf], desktops: &[String]) -> Vec<ParsedDesktop> {
+    let mut seen = HashSet::new();
+    let mut entries = Vec::new();
+
+    for dir in dirs {
+        let mut files = Vec::new();
+        collect_desktop_files(dir, &mut files);
+        files.sort();
+
+        for path in files {
+            let id = desktop_id(dir, &path);
+            // Un fichier utilisateur masque toujours l'entrée système de même ID.
+            if !seen.insert(id.clone()) {
+                continue;
+            }
+
+            let Some(entry) = read_desktop_entry(&path) else {
+                continue;
+            };
+            if is_visible(&entry, desktops) {
+                entries.push(ParsedDesktop { id, path, entry });
+            }
+        }
+    }
+
+    entries
+}
+
+#[cfg(target_os = "linux")]
+fn collect_desktop_files(dir: &Path, files: &mut Vec<PathBuf>) {
+    let Ok(read_dir) = fs::read_dir(dir) else {
+        return;
+    };
+
+    for item in read_dir.flatten() {
+        let name = item.file_name();
+        if name.to_string_lossy().starts_with('.') {
+            continue;
+        }
+
+        let path = item.path();
+        if item.file_type().map(|kind| kind.is_dir()).unwrap_or(false) {
+            collect_desktop_files(&path, files);
+        } else if path.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some("desktop")
+        {
+            files.push(path);
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn desktop_id(dir: &Path, path: &Path) -> String {
+    path.strip_prefix(dir)
+        .unwrap_or(path)
+        .components()
+        .map(|part| part.as_os_str().to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("-")
+}
+
+#[cfg(target_os = "linux")]
+fn read_desktop_entry(path: &Path) -> Option<DesktopEntry> {
+    fs::read_to_string(path)
+        .ok()
+        .map(|content| parse_desktop_entry(&content))
+}
+
+#[cfg(target_os = "linux")]
+fn parse_desktop_entry(content: &str) -> DesktopEntry {
+    let mut entry = DesktopEntry::default();
+    let mut in_main_group = false;
+
+    for raw_line in content.lines() {
+        let line = raw_line.trim_start_matches('\u{feff}').trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+
+        if line.starts_with('[') && line.ends_with(']') {
+            in_main_group = &line[1..line.len() - 1] == "Desktop Entry";
+            continue;
+        }
+
+        if !in_main_group {
+            continue;
+        }
+
+        if let Some((key, value)) = line.split_once('=') {
+            entry
+                .values
+                .insert(key.trim().to_string(), value.trim().to_string());
+        }
+    }
+
+    entry
+}
+
+#[cfg(target_os = "linux")]
+fn is_visible(entry: &DesktopEntry, desktops: &[String]) -> bool {
+    if !entry
+        .get("Type")
+        .map(|kind| kind.eq_ignore_ascii_case("Application"))
+        .unwrap_or(false)
+    {
+        return false;
+    }
+
+    if entry.boolean("NoDisplay") || entry.boolean("Hidden") {
+        return false;
+    }
+
+    let only_show_in = entry.get("OnlyShowIn").map(split_list).unwrap_or_default();
+    if !only_show_in.is_empty()
+        && !only_show_in.iter().any(|wanted| {
+            desktops
+                .iter()
+                .any(|current| current.eq_ignore_ascii_case(wanted))
+        })
+    {
+        return false;
+    }
+
+    let not_show_in = entry.get("NotShowIn").map(split_list).unwrap_or_default();
+    if not_show_in.iter().any(|blocked| {
+        desktops
+            .iter()
+            .any(|current| current.eq_ignore_ascii_case(blocked))
+    }) {
+        return false;
+    }
+
+    if let Some(try_exec) = entry.get("TryExec") {
+        if !try_exec_exists(try_exec) {
+            return false;
+        }
+    }
+
+    true
+}
+
+#[cfg(target_os = "linux")]
+fn split_list(value: &str) -> Vec<String> {
+    value
+        .split(';')
+        .map(str::trim)
+        .filter(|item| !item.is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
+#[cfg(target_os = "linux")]
+fn try_exec_exists(value: &str) -> bool {
+    let command = value.split_whitespace().next().unwrap_or_default();
+    if command.is_empty() {
+        return false;
+    }
+
+    let path = Path::new(command);
+    if path.is_absolute() || command.contains('/') {
+        return path.is_file();
+    }
+
+    env::var_os("PATH")
+        .map(|paths| env::split_paths(&paths).any(|dir| dir.join(command).is_file()))
+        .unwrap_or(false)
+}
+
+#[cfg(target_os = "linux")]
+fn locale_candidates() -> Vec<String> {
+    let mut candidates = Vec::new();
+    for language in gio::glib::language_names() {
+        let language = language.as_str();
+        if language == "C" || language == "POSIX" {
+            continue;
+        }
+
+        let without_encoding = language.split('.').next().unwrap_or(language);
+        let without_modifier = without_encoding
+            .split('@')
+            .next()
+            .unwrap_or(without_encoding);
+        let short = without_modifier
+            .split('_')
+            .next()
+            .unwrap_or(without_modifier);
+
+        for candidate in [language, without_encoding, without_modifier, short] {
+            if !candidate.is_empty()
+                && !candidates
+                    .iter()
+                    .any(|existing: &String| existing == candidate)
+            {
+                candidates.push(candidate.to_string());
+            }
+        }
+    }
+    candidates
+}
+
+/// Retire les codes de champ XDG (`%U`, `%f`, `%i`, etc.) du champ Exec.
+#[cfg(target_os = "linux")]
+fn clean_exec(exec: &str) -> String {
+    const FIELD_CODES: &[char] = &[
+        'f', 'F', 'u', 'U', 'i', 'c', 'k', 'd', 'D', 'n', 'N', 'v', 'm',
+    ];
+
+    let mut cleaned = String::new();
+    let mut chars = exec.chars().peekable();
+    while let Some(ch) = chars.next() {
+        if ch != '%' {
+            cleaned.push(ch);
+            continue;
+        }
+
+        match chars.peek().copied() {
+            Some('%') => {
+                chars.next();
+                cleaned.push('%');
+            }
+            Some(code) if FIELD_CODES.contains(&code) => {
+                chars.next();
+            }
+            Some(_) => cleaned.push('%'),
+            None => cleaned.push('%'),
+        }
+    }
+
+    cleaned.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+// ---------- Origine et propriétaire des paquets ----------
+
+#[cfg(target_os = "linux")]
+fn origin_from_path(path: &Path) -> Option<(String, String)> {
+    let path_text = path.to_string_lossy();
+
+    if path_text.contains("/flatpak/exports/") {
+        let app_id = path.file_stem()?.to_string_lossy().to_string();
+        return Some(("flatpak".to_string(), app_id));
+    }
+
+    if path_text.starts_with("/var/lib/snapd/desktop/") {
+        let file_stem = path.file_stem()?.to_string_lossy();
+        let snap_name = file_stem.split('_').next().unwrap_or(&file_stem);
+        return Some(("snap".to_string(), snap_name.to_string()));
+    }
+
+    None
+}
+
+#[cfg(target_os = "linux")]
+fn manager_source(manager: Manager) -> &'static str {
+    match manager {
+        Manager::Apt => "apt",
+        Manager::Dnf => "dnf",
+        Manager::Pacman => "pacman",
+        Manager::None => "manuel",
+    }
+}
+
+/// Une seule commande groupée par gestionnaire pour retrouver les paquets propriétaires.
+#[cfg(target_os = "linux")]
+fn find_owners(paths: &[PathBuf], manager: Manager) -> HashMap<PathBuf, String> {
+    if paths.is_empty() {
+        return HashMap::new();
+    }
+
+    match manager {
+        Manager::Apt => dpkg_owners(paths),
+        Manager::Pacman => pacman_owners(paths),
+        Manager::Dnf => rpm_owners(paths),
+        Manager::None => HashMap::new(),
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn dpkg_owners(paths: &[PathBuf]) -> HashMap<PathBuf, String> {
+    let wanted: HashSet<PathBuf> = paths.iter().cloned().collect();
+    let mut owners = HashMap::new();
+
+    let Ok(entries) = fs::read_dir("/var/lib/dpkg/info") else {
+        return owners;
+    };
+
+    for item in entries.flatten() {
+        let list_path = item.path();
+        if list_path.extension().and_then(|ext| ext.to_str()) != Some("list") {
+            continue;
+        }
+
+        let Some(file_stem) = list_path.file_stem().and_then(|stem| stem.to_str()) else {
+            continue;
+        };
+        // Les fichiers .list peuvent être nommés « paquet:architecture.list ».
+        let package = file_stem.split(':').next().unwrap_or(file_stem).to_string();
+
+        let Ok(content) = fs::read_to_string(&list_path) else {
+            continue;
+        };
+        for line in content.lines() {
+            let candidate = PathBuf::from(line.trim());
+            if wanted.contains(&candidate) {
+                owners.entry(candidate).or_insert_with(|| package.clone());
+            }
+        }
+
+        if owners.len() == wanted.len() {
+            break;
+        }
+    }
+
+    owners
+}
+
+#[cfg(target_os = "linux")]
+fn pacman_owners(paths: &[PathBuf]) -> HashMap<PathBuf, String> {
+    let mut command = Command::new("pacman");
+    command.arg("-Qo");
+    for path in paths {
+        command.arg(path);
+    }
+
+    let Ok(output) = command.env("LC_ALL", "C").output() else {
+        return HashMap::new();
+    };
+
+    let mut owners = HashMap::new();
+    for line in String::from_utf8_lossy(&output.stdout).lines() {
+        let Some((file, rest)) = line.split_once(" is owned by ") else {
+            continue;
+        };
+        let Some(package) = rest.split_whitespace().next() else {
+            continue;
+        };
+        owners.insert(PathBuf::from(file.trim()), package.to_string());
+    }
+    owners
+}
+
+#[cfg(target_os = "linux")]
+fn rpm_owners(paths: &[PathBuf]) -> HashMap<PathBuf, String> {
+    let mut command = Command::new("rpm");
+    command.args(["-qf", "--qf", "%{NAME}\t%{VERSION}-%{RELEASE}\n"]);
+    for path in paths {
+        command.arg(path);
+    }
+
+    let Ok(output) = command.env("LC_ALL", "C").output() else {
+        return HashMap::new();
+    };
+
+    // rpm signale sur stderr les fichiers non possédés : on les retire de la liste,
+    // puis stdout reste aligné avec les chemins restants.
+    let mut rejected = HashSet::new();
+    for line in String::from_utf8_lossy(&output.stderr).lines() {
+        if let Some(path) = rpm_error_path(line) {
+            rejected.insert(path.to_string());
+        }
+    }
+
+    let remaining: Vec<&PathBuf> = paths
+        .iter()
+        .filter(|path| !rejected.contains(path.to_string_lossy().as_ref()))
+        .collect();
+
+    let mut owners = HashMap::new();
+    for (path, line) in remaining
+        .into_iter()
+        .zip(String::from_utf8_lossy(&output.stdout).lines())
+    {
+        let Some((package, _)) = line.split_once('\t') else {
+            continue;
+        };
+        let package = package.trim();
+        if !package.is_empty() {
+            owners.insert(path.clone(), package.to_string());
+        }
+    }
+    owners
+}
+
+#[cfg(target_os = "linux")]
+fn rpm_error_path(line: &str) -> Option<&str> {
+    let line = line.trim();
+    if let Some(rest) = line.strip_prefix("error: file ") {
+        return rest.split(':').next().map(str::trim);
+    }
+    if let Some(rest) = line.strip_prefix("file ") {
+        return rest
+            .strip_suffix(" is not owned by any package")
+            .map(str::trim);
+    }
+    None
+}
+
+// ---------- Enrichissement (version, taille) ----------
+
+#[cfg(target_os = "linux")]
+#[derive(Debug, Clone, Default)]
+struct PackageMeta {
+    version: Option<String>,
+    size: Option<u64>,
+}
+
+#[cfg(target_os = "linux")]
+fn enrich_entries(entries: &mut [CachedApplication]) {
+    let needs_apt = entries.iter().any(|entry| entry.app.source == "apt");
+    let needs_dnf = entries.iter().any(|entry| entry.app.source == "dnf");
+    let needs_pacman = entries.iter().any(|entry| entry.app.source == "pacman");
+    let needs_flatpak = entries.iter().any(|entry| entry.app.source == "flatpak");
+    let needs_snap = entries.iter().any(|entry| entry.app.source == "snap");
+
+    let apt = if needs_apt {
+        apt_metadata()
     } else {
-        size_str.parse::<u64>().ok()
+        HashMap::new()
+    };
+    let dnf = if needs_dnf {
+        rpm_metadata()
+    } else {
+        HashMap::new()
+    };
+    let pacman = if needs_pacman {
+        pacman_metadata()
+    } else {
+        HashMap::new()
+    };
+    let flatpak = if needs_flatpak {
+        flatpak_metadata()
+    } else {
+        HashMap::new()
+    };
+    let snap = if needs_snap {
+        snap_metadata()
+    } else {
+        HashMap::new()
+    };
+
+    for entry in entries {
+        let meta = match entry.app.source.as_str() {
+            "apt" => apt.get(&entry.app.package_name),
+            "dnf" => dnf.get(&entry.app.package_name),
+            "pacman" => pacman.get(&entry.app.package_name),
+            "flatpak" => flatpak.get(&entry.app.package_name),
+            "snap" => snap.get(&entry.app.package_name),
+            _ => None,
+        };
+
+        if let Some(meta) = meta {
+            entry.app.version = meta.version.clone();
+            entry.app.size = meta.size;
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn apt_metadata() -> HashMap<String, PackageMeta> {
+    let output = Command::new("dpkg-query")
+        .args(["-W", "-f=${Package}\t${Version}\t${Installed-Size}\n"])
+        .env("LC_ALL", "C")
+        .output();
+
+    let Ok(output) = output else {
+        return HashMap::new();
+    };
+
+    let mut metadata = HashMap::new();
+    for line in String::from_utf8_lossy(&output.stdout).lines() {
+        let mut fields = line.splitn(3, '\t');
+        let Some(package) = fields.next() else {
+            continue;
+        };
+        let version = fields.next().unwrap_or_default().trim();
+        let size = fields.next().unwrap_or_default();
+
+        metadata.insert(
+            package.trim().to_string(),
+            PackageMeta {
+                version: (!version.is_empty()).then(|| version.to_string()),
+                size: parse_installed_size(size),
+            },
+        );
+    }
+    metadata
+}
+
+#[cfg(target_os = "linux")]
+fn rpm_metadata() -> HashMap<String, PackageMeta> {
+    let output = Command::new("rpm")
+        .args(["-qa", "--qf", "%{NAME}\t%{VERSION}-%{RELEASE}\t%{SIZE}\n"])
+        .env("LC_ALL", "C")
+        .output();
+
+    let Ok(output) = output else {
+        return HashMap::new();
+    };
+
+    let mut metadata = HashMap::new();
+    for line in String::from_utf8_lossy(&output.stdout).lines() {
+        let mut fields = line.splitn(3, '\t');
+        let Some(package) = fields.next() else {
+            continue;
+        };
+        let version = fields.next().unwrap_or_default().trim();
+        let size = fields.next().unwrap_or_default().trim();
+
+        metadata.insert(
+            package.trim().to_string(),
+            PackageMeta {
+                version: (!version.is_empty()).then(|| version.to_string()),
+                size: size.parse::<u64>().ok(),
+            },
+        );
+    }
+    metadata
+}
+
+#[cfg(target_os = "linux")]
+fn pacman_metadata() -> HashMap<String, PackageMeta> {
+    let output = Command::new("pacman")
+        .arg("-Qi")
+        .env("LC_ALL", "C")
+        .output();
+
+    let Ok(output) = output else {
+        return HashMap::new();
+    };
+
+    let mut metadata = HashMap::new();
+    let mut name: Option<String> = None;
+    let mut version: Option<String> = None;
+    let mut size: Option<u64> = None;
+
+    for line in String::from_utf8_lossy(&output.stdout).lines() {
+        if line.trim().is_empty() {
+            if let Some(package) = name.take() {
+                metadata.insert(
+                    package,
+                    PackageMeta {
+                        version: version.take(),
+                        size: size.take(),
+                    },
+                );
+            }
+            continue;
+        }
+
+        let Some((key, value)) = line.split_once(':') else {
+            continue;
+        };
+        let value = value.trim();
+        match key.trim() {
+            "Name" => name = Some(value.to_string()),
+            "Version" => version = (!value.is_empty()).then(|| value.to_string()),
+            "Installed Size" => size = parse_human_size(value),
+            _ => {}
+        }
+    }
+
+    if let Some(package) = name {
+        metadata.insert(package, PackageMeta { version, size });
+    }
+    metadata
+}
+
+#[cfg(target_os = "linux")]
+fn flatpak_metadata() -> HashMap<String, PackageMeta> {
+    let output = Command::new("flatpak")
+        .args(["list", "--app", "--columns=application,name,version,size"])
+        .env("LC_ALL", "C")
+        .output();
+
+    let Ok(output) = output else {
+        return HashMap::new();
+    };
+
+    let mut metadata = HashMap::new();
+    for line in String::from_utf8_lossy(&output.stdout).lines() {
+        let fields: Vec<&str> = line.split('\t').collect();
+        if fields.len() < 3 {
+            continue;
+        }
+
+        let app_id = fields[0].trim();
+        if app_id.is_empty() {
+            continue;
+        }
+        let version = fields[2].trim();
+
+        metadata.insert(
+            app_id.to_string(),
+            PackageMeta {
+                version: (!version.is_empty()).then(|| version.to_string()),
+                size: fields.get(3).and_then(|size| parse_human_size(size)),
+            },
+        );
+    }
+    metadata
+}
+
+#[cfg(target_os = "linux")]
+fn snap_metadata() -> HashMap<String, PackageMeta> {
+    let output = Command::new("snap").arg("list").env("LC_ALL", "C").output();
+
+    let Ok(output) = output else {
+        return HashMap::new();
+    };
+
+    let mut metadata = HashMap::new();
+    for (index, line) in String::from_utf8_lossy(&output.stdout).lines().enumerate() {
+        if index == 0 {
+            continue;
+        }
+
+        let mut fields = line.split_whitespace();
+        let Some(name) = fields.next() else {
+            continue;
+        };
+        let version = fields.next().unwrap_or_default();
+
+        metadata.insert(
+            name.to_string(),
+            PackageMeta {
+                version: (!version.is_empty() && version != "—" && version != "-")
+                    .then(|| version.to_string()),
+                size: None,
+            },
+        );
+    }
+    metadata
+}
+
+/// `Installed-Size` de dpkg est exprimé en Kio.
+#[cfg(target_os = "linux")]
+fn parse_installed_size(raw: &str) -> Option<u64> {
+    let raw = raw.trim();
+    if raw.is_empty() {
+        return None;
+    }
+    raw.parse::<u64>().ok().map(|kib| kib.saturating_mul(1024))
+}
+
+#[cfg(target_os = "linux")]
+fn parse_human_size(raw: &str) -> Option<u64> {
+    let value = raw.trim().replace(',', ".");
+    if value.is_empty() {
+        return None;
+    }
+
+    let split_at = value
+        .find(|ch: char| !(ch.is_ascii_digit() || ch == '.'))
+        .unwrap_or(value.len());
+    let number = value[..split_at].parse::<f64>().ok()?;
+    if !number.is_finite() || number < 0.0 {
+        return None;
+    }
+
+    let unit = value[split_at..].trim().to_ascii_uppercase();
+    let multiplier = match unit.as_str() {
+        "" | "B" | "BYTE" | "BYTES" | "O" => 1.0,
+        "K" | "KB" | "KO" => 1000.0,
+        "KIB" | "KIO" => 1024.0,
+        "M" | "MB" | "MO" => 1000.0 * 1000.0,
+        "MIB" | "MIO" => 1024.0 * 1024.0,
+        "G" | "GB" | "GO" => 1000.0 * 1000.0 * 1000.0,
+        "GIB" | "GIO" => 1024.0 * 1024.0 * 1024.0,
+        "T" | "TB" | "TO" => 1000.0 * 1000.0 * 1000.0 * 1000.0,
+        "TIB" | "TIO" => 1024.0 * 1024.0 * 1024.0 * 1024.0,
+        _ => return None,
+    };
+
+    Some((number * multiplier).round() as u64)
+}
+
+// ---------- Recherche insensible à la casse et aux accents ----------
+
+#[cfg(target_os = "linux")]
+fn normalize_search(value: &str) -> String {
+    let mut normalized = String::with_capacity(value.len());
+    for ch in value.to_lowercase().chars() {
+        match ch {
+            'à' | 'á' | 'â' | 'ã' | 'ä' | 'å' | 'ā' | 'ă' | 'ą' => normalized.push('a'),
+            'ç' | 'ć' | 'č' => normalized.push('c'),
+            'ď' | 'đ' => normalized.push('d'),
+            'è' | 'é' | 'ê' | 'ë' | 'ē' | 'ė' | 'ę' | 'ě' => normalized.push('e'),
+            'ğ' | 'ĝ' | 'ģ' => normalized.push('g'),
+            'ì' | 'í' | 'î' | 'ï' | 'ī' | 'į' => normalized.push('i'),
+            'ł' | 'ľ' | 'ĺ' => normalized.push('l'),
+            'ñ' | 'ń' | 'ň' => normalized.push('n'),
+            'ò' | 'ó' | 'ô' | 'õ' | 'ö' | 'ø' | 'ō' | 'ő' => normalized.push('o'),
+            'ŕ' | 'ř' => normalized.push('r'),
+            'ś' | 'š' | 'ş' => normalized.push('s'),
+            'ť' | 'ţ' => normalized.push('t'),
+            'ù' | 'ú' | 'û' | 'ü' | 'ū' | 'ů' | 'ű' | 'ų' => normalized.push('u'),
+            'ý' | 'ÿ' => normalized.push('y'),
+            'ź' | 'ż' | 'ž' => normalized.push('z'),
+            'œ' => normalized.push_str("oe"),
+            'æ' => normalized.push_str("ae"),
+            'ß' => normalized.push_str("ss"),
+            _ => normalized.push(ch),
+        }
+    }
+    normalized
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+    use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    struct TempDir(PathBuf);
+
+    impl TempDir {
+        fn new() -> Self {
+            let unique = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map(|duration| duration.as_nanos())
+                .unwrap_or_default();
+            let path = env::temp_dir().join(format!(
+                "plume-applications-{}-{unique}",
+                std::process::id()
+            ));
+            fs::create_dir_all(&path).expect("création du dossier temporaire");
+            Self(path)
+        }
+
+        fn path(&self) -> &Path {
+            &self.0
+        }
+    }
+
+    impl Drop for TempDir {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn write_desktop(dir: &Path, name: &str, content: &str) {
+        fs::write(dir.join(name), content).expect("écriture du fichier .desktop");
+    }
+
+    #[test]
+    fn filtre_les_entrees_non_visibles() {
+        let tmp = TempDir::new();
+
+        write_desktop(
+            tmp.path(),
+            "visible.desktop",
+            "[Desktop Entry]\nType=Application\nName=Visible\nExec=visible %U\n",
+        );
+        write_desktop(
+            tmp.path(),
+            "nodisplay.desktop",
+            "[Desktop Entry]\nType=Application\nName=Cachée\nNoDisplay=true\nExec=hidden\n",
+        );
+        write_desktop(
+            tmp.path(),
+            "hidden.desktop",
+            "[Desktop Entry]\nType=Application\nName=Masquée\nHidden=true\nExec=hidden\n",
+        );
+        write_desktop(
+            tmp.path(),
+            "library.desktop",
+            "[Desktop Entry]\nType=Library\nName=Bibliothèque\nExec=lib\n",
+        );
+        write_desktop(
+            tmp.path(),
+            "kde.desktop",
+            "[Desktop Entry]\nType=Application\nName=KDE\nOnlyShowIn=KDE;\nExec=kde\n",
+        );
+        write_desktop(
+            tmp.path(),
+            "gnome.desktop",
+            "[Desktop Entry]\nType=Application\nName=GNOME\nOnlyShowIn=GNOME;\nExec=gnome\n",
+        );
+        write_desktop(
+            tmp.path(),
+            "pasgnome.desktop",
+            "[Desktop Entry]\nType=Application\nName=Pas GNOME\nNotShowIn=GNOME;\nExec=autre\n",
+        );
+        write_desktop(
+            tmp.path(),
+            "tryexec-absent.desktop",
+            "[Desktop Entry]\nType=Application\nName=Absent\nTryExec=/chemin/qui/n-existe-pas\nExec=absent\n",
+        );
+        write_desktop(
+            tmp.path(),
+            "tryexec-present.desktop",
+            "[Desktop Entry]\nType=Application\nName=Présent\nTryExec=/bin/sh\nExec=present\n",
+        );
+
+        let entries = load_visible_entries(&[tmp.path().to_path_buf()], &["GNOME".to_string()]);
+        let ids: Vec<&str> = entries.iter().map(|entry| entry.id.as_str()).collect();
+
+        assert!(ids.contains(&"visible.desktop"));
+        assert!(ids.contains(&"gnome.desktop"));
+        assert!(ids.contains(&"tryexec-present.desktop"));
+        assert!(!ids.contains(&"nodisplay.desktop"));
+        assert!(!ids.contains(&"hidden.desktop"));
+        assert!(!ids.contains(&"library.desktop"));
+        assert!(!ids.contains(&"kde.desktop"));
+        assert!(!ids.contains(&"pasgnome.desktop"));
+        assert!(!ids.contains(&"tryexec-absent.desktop"));
+    }
+
+    #[test]
+    fn la_source_utilisateur_gagne_sur_le_systeme() {
+        let user = TempDir::new();
+        let system = TempDir::new();
+
+        write_desktop(
+            user.path(),
+            "partage.desktop",
+            "[Desktop Entry]\nType=Application\nName=Utilisateur\nExec=user\n",
+        );
+        write_desktop(
+            system.path(),
+            "partage.desktop",
+            "[Desktop Entry]\nType=Application\nName=Système\nExec=system\n",
+        );
+
+        let entries = load_visible_entries(
+            &[user.path().to_path_buf(), system.path().to_path_buf()],
+            &[],
+        );
+
+        assert_eq!(entries.len(), 1);
+        assert_eq!(
+            entries[0].entry.localized("Name").as_deref(),
+            Some("Utilisateur")
+        );
+    }
+
+    #[test]
+    fn une_entree_utilisateur_masquee_cache_celle_du_systeme() {
+        let user = TempDir::new();
+        let system = TempDir::new();
+
+        write_desktop(
+            user.path(),
+            "partage.desktop",
+            "[Desktop Entry]\nType=Application\nName=Masquée\nHidden=true\nExec=user\n",
+        );
+        write_desktop(
+            system.path(),
+            "partage.desktop",
+            "[Desktop Entry]\nType=Application\nName=Système\nExec=system\n",
+        );
+
+        let entries = load_visible_entries(
+            &[user.path().to_path_buf(), system.path().to_path_buf()],
+            &[],
+        );
+
+        assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn nettoie_les_codes_de_champ_exec() {
+        assert_eq!(clean_exec("firefox %U"), "firefox");
+        assert_eq!(
+            clean_exec("/usr/bin/app --file=%f %i %c %k %F %u"),
+            "/usr/bin/app --file="
+        );
+        assert_eq!(clean_exec("app %%{foo} %U"), "app %{foo}");
+        assert_eq!(clean_exec("   "), "");
+    }
+
+    #[test]
+    fn detecte_lorigine_par_chemin() {
+        assert_eq!(
+            origin_from_path(Path::new(
+                "/var/lib/flatpak/exports/share/applications/org.gimp.GIMP.desktop"
+            )),
+            Some(("flatpak".to_string(), "org.gimp.GIMP".to_string()))
+        );
+        assert_eq!(
+            origin_from_path(Path::new(
+                "/home/alice/.local/share/flatpak/exports/share/applications/org.mozilla.firefox.desktop"
+            )),
+            Some(("flatpak".to_string(), "org.mozilla.firefox".to_string()))
+        );
+        assert_eq!(
+            origin_from_path(Path::new(
+                "/var/lib/snapd/desktop/applications/firefox_firefox.desktop"
+            )),
+            Some(("snap".to_string(), "firefox".to_string()))
+        );
+        assert_eq!(
+            origin_from_path(Path::new("/usr/share/applications/gedit.desktop")),
+            None
+        );
+    }
+
+    #[test]
+    fn parse_installed_size_en_kio() {
+        assert_eq!(parse_installed_size("1234"), Some(1234 * 1024));
+        assert_eq!(parse_installed_size(" 42 \n"), Some(42 * 1024));
+        assert_eq!(parse_installed_size(""), None);
+        assert_eq!(parse_installed_size("inconnue"), None);
+    }
+
+    #[test]
+    fn parse_les_tailles_humaines_de_flatpak() {
+        assert_eq!(parse_human_size("593,5 Mo"), Some(593_500_000));
+        assert_eq!(parse_human_size("1.2 GB"), Some(1_200_000_000));
+        assert_eq!(parse_human_size("512 Kio"), Some(512 * 1024));
+        assert_eq!(parse_human_size(""), None);
+        assert_eq!(parse_human_size("inconnue"), None);
     }
 }

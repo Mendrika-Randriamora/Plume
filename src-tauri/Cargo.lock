@@ -2444,6 +2444,7 @@ name = "plume"
 version = "0.2.4"
 dependencies = [
  "dirs 5.0.1",
+ "gio",
  "serde",
  "serde_json",
  "sysinfo",

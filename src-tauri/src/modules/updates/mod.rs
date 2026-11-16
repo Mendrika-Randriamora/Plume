@@ -21,7 +21,7 @@ fn has(cmd: &str) -> bool {
         .unwrap_or(false)
 }
 
-fn detect() -> Manager {
+pub(crate) fn detect() -> Manager {
     if has("apt-get") {
         Manager::Apt
     } else if has("pacman") {
@@ -39,11 +39,14 @@ fn run(cmd: &str, args: &[&str]) -> Result<(String, i32), String> {
         .env("LC_ALL", "C")
         .output()
         .map_err(|e| format!("Impossible de lancer {cmd} : {e}"))?;
-    Ok((String::from_utf8_lossy(&out.stdout).into_owned(), out.status.code().unwrap_or(-1)))
+    Ok((
+        String::from_utf8_lossy(&out.stdout).into_owned(),
+        out.status.code().unwrap_or(-1),
+    ))
 }
 
 /// Lance une commande administrateur via pkexec (fenêtre de mot de passe du système).
-fn run_root(args: &[&str]) -> Result<String, String> {
+pub(crate) fn run_root(args: &[&str]) -> Result<String, String> {
     if !has("pkexec") {
         return Err("pkexec est introuvable : installez le paquet « polkit ».".into());
     }
@@ -59,7 +62,10 @@ fn run_root(args: &[&str]) -> Result<String, String> {
         Some(126) | Some(127) => Err("Autorisation refusée ou annulée.".into()),
         _ => Err(format!(
             "La commande a échoué : {}",
-            String::from_utf8_lossy(&out.stderr).lines().last().unwrap_or("erreur inconnue")
+            String::from_utf8_lossy(&out.stderr)
+                .lines()
+                .last()
+                .unwrap_or("erreur inconnue")
         )),
     }
 }
@@ -93,16 +99,27 @@ pub async fn check_updates(refresh: bool) -> Result<UpdateInfo, String> {
                 for l in out.lines().filter(|l| l.contains("upgradable from")) {
                     let name = l.split('/').next().unwrap_or("").to_string();
                     let to = l.split_whitespace().nth(1).map(String::from);
-                    let from = l.split("upgradable from: ").nth(1).map(|s| s.trim_end_matches(']').to_string());
+                    let from = l
+                        .split("upgradable from: ")
+                        .nth(1)
+                        .map(|s| s.trim_end_matches(']').to_string());
                     items.push(Pkg { name, from, to });
                 }
             }
             Manager::Pacman => {
-                let (out, _) = if has("checkupdates") { run("checkupdates", &[])? } else { run("pacman", &["-Qu"])? };
+                let (out, _) = if has("checkupdates") {
+                    run("checkupdates", &[])?
+                } else {
+                    run("pacman", &["-Qu"])?
+                };
                 for l in out.lines() {
                     let p: Vec<&str> = l.split_whitespace().collect();
                     if p.len() >= 4 {
-                        items.push(Pkg { name: p[0].into(), from: Some(p[1].into()), to: Some(p[3].into()) });
+                        items.push(Pkg {
+                            name: p[0].into(),
+                            from: Some(p[1].into()),
+                            to: Some(p[3].into()),
+                        });
                     }
                 }
             }
@@ -114,7 +131,11 @@ pub async fn check_updates(refresh: bool) -> Result<UpdateInfo, String> {
                     }
                     let p: Vec<&str> = l.split_whitespace().collect();
                     if p.len() == 3 {
-                        items.push(Pkg { name: p[0].into(), from: None, to: Some(p[1].into()) });
+                        items.push(Pkg {
+                            name: p[0].into(),
+                            from: None,
+                            to: Some(p[1].into()),
+                        });
                     }
                 }
             }
@@ -155,7 +176,11 @@ fn obsolete_names(m: Manager) -> Result<Vec<String>, String> {
             .filter(|l| l.starts_with("Remv "))
             .filter_map(|l| l.split_whitespace().nth(1).map(String::from))
             .collect(),
-        Manager::Pacman => run("pacman", &["-Qdtq"])?.0.lines().map(String::from).collect(),
+        Manager::Pacman => run("pacman", &["-Qdtq"])?
+            .0
+            .lines()
+            .map(String::from)
+            .collect(),
         Manager::Dnf => run("dnf", &["-q", "repoquery", "--unneeded"])?
             .0
             .lines()
@@ -170,7 +195,10 @@ fn obsolete_names(m: Manager) -> Result<Vec<String>, String> {
 pub async fn list_obsolete() -> Result<ObsoleteInfo, String> {
     blocking(|| {
         let manager = detect();
-        Ok(ObsoleteInfo { manager, items: obsolete_names(manager)? })
+        Ok(ObsoleteInfo {
+            manager,
+            items: obsolete_names(manager)?,
+        })
     })
     .await
 }

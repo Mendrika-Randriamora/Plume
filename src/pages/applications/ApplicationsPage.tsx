@@ -1,18 +1,29 @@
 import { useCallback, useEffect, useState } from "react";
-import { Search } from "lucide-react";
-import { Card, Loading, Notice, PageHeader } from "@/core/ui";
-import { listApplications, searchApplications, uninstallApplication, getApplicationDetails } from "./api";
+import { RefreshCw, Search } from "lucide-react";
+import { Button, Card, Loading, Notice, PageHeader } from "@/core/ui";
+import { usePermission } from "@/core/settings/SettingsProvider";
+import { refreshApplications, searchApplications, uninstallApplication, getApplicationDetails } from "./api";
 import { AppList } from "./components/AppList";
 import { AppDetailsModal } from "./components/AppDetailsModal";
 import type { Application, ApplicationDetails } from "./types";
 
+const PAGE_SIZE = 100;
+const SEARCH_DEBOUNCE_MS = 150;
+
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export function ApplicationsPage() {
+  const allowed = usePermission("systemChanges");
   const [applications, setApplications] = useState<Application[]>([]);
+  const [results, setResults] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [isUninstalling, setIsUninstalling] = useState<string | undefined>(undefined);
-  const [selectedApp, setSelectedApp] = useState<{ packageName: string; source: string } | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [details, setDetails] = useState<ApplicationDetails | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
@@ -20,10 +31,12 @@ export function ApplicationsPage() {
     setLoading(true);
     setError(undefined);
     try {
-      const apps = await listApplications();
+      const apps = await refreshApplications();
       setApplications(apps);
-    } catch (e: any) {
-      setError(e.message || "Erreur lors du chargement des applications");
+      setResults(apps);
+      setVisibleCount(PAGE_SIZE);
+    } catch (e: unknown) {
+      setError(errorMessage(e, "Erreur lors du chargement des applications"));
     } finally {
       setLoading(false);
     }
@@ -33,80 +46,106 @@ export function ApplicationsPage() {
     loadApplications();
   }, [loadApplications]);
 
-  const handleSearch = useCallback(async (query: string) => {
-    setSearchQuery(query);
-    if (query.trim() === "") {
-      loadApplications();
+  // La recherche est débouncée et ne filtre que le cache mémoire côté Rust.
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (query === "") {
+      setResults(applications);
+      setVisibleCount(PAGE_SIZE);
       return;
     }
-    setLoading(true);
-    try {
-      const apps = await searchApplications(query);
-      setApplications(apps);
-    } catch (e: any) {
-      setError(e.message || "Erreur lors de la recherche");
-    } finally {
-      setLoading(false);
-    }
-  }, [loadApplications]);
 
-  const handleUninstall = useCallback(async (packageName: string, source: string) => {
-    const key = `${source}-${packageName}`;
-    setIsUninstalling(key);
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        const apps = await searchApplications(query);
+        if (!cancelled) {
+          setResults(apps);
+          setVisibleCount(PAGE_SIZE);
+        }
+      } catch (e: unknown) {
+        if (!cancelled) {
+          setError(errorMessage(e, "Erreur lors de la recherche"));
+        }
+      }
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [searchQuery, applications]);
+
+  const handleUninstall = useCallback(async (desktopId: string) => {
+    if (!allowed) {
+      setError("Les modifications du système sont désactivées dans les Réglages.");
+      return;
+    }
+
+    setIsUninstalling(desktopId);
     setError(undefined);
     try {
-      const success = await uninstallApplication(packageName, source);
+      const success = await uninstallApplication(desktopId);
       if (success) {
-        loadApplications();
+        await loadApplications();
       } else {
         setError("La désinstallation a échoué. Vérifiez que vous avez les droits d'administration.");
       }
-    } catch (e: any) {
-      setError(e.message || "Erreur lors de la désinstallation");
+    } catch (e: unknown) {
+      setError(errorMessage(e, "Erreur lors de la désinstallation"));
     } finally {
       setIsUninstalling(undefined);
     }
-  }, [loadApplications]);
+  }, [allowed, loadApplications]);
 
-  const handleDetails = useCallback((packageName: string, source: string) => {
-    setSelectedApp({ packageName, source });
+  const handleDetails = useCallback((desktopId: string) => {
+    setSelectedId(desktopId);
   }, []);
 
   const closeDetails = useCallback(() => {
-    setSelectedApp(null);
+    setSelectedId(null);
     setDetails(null);
   }, []);
 
   const loadDetails = useCallback(async () => {
-    if (!selectedApp) return;
+    if (!selectedId) return;
     setDetailsLoading(true);
     setDetails(null);
     try {
-      const d = await getApplicationDetails(selectedApp.packageName, selectedApp.source);
+      const d = await getApplicationDetails(selectedId);
       setDetails(d);
-    } catch (e: any) {
-      setError(e.message || "Erreur lors du chargement des détails");
+    } catch (e: unknown) {
+      setError(errorMessage(e, "Erreur lors du chargement des détails"));
     } finally {
       setDetailsLoading(false);
     }
-  }, [selectedApp]);
+  }, [selectedId]);
 
   useEffect(() => {
-    if (selectedApp) {
+    if (selectedId) {
       loadDetails();
     }
-  }, [selectedApp, loadDetails]);
+  }, [selectedId, loadDetails]);
+
+  const visibleApplications = results.slice(0, visibleCount);
+  const remaining = results.length - visibleApplications.length;
 
   return (
     <>
       <PageHeader
         title="Applications"
-        subtitle="Gérez toutes les applications installées sur votre système."
+        subtitle="Gérez les applications visibles dans le menu de votre bureau."
+        action={
+          <Button icon={RefreshCw} busy={loading} onClick={loadApplications}>
+            Rafraîchir
+          </Button>
+        }
       />
-      
+
+      {!allowed && <Notice>Les modifications du système sont désactivées dans les Réglages.</Notice>}
       {error && <Notice>{error}</Notice>}
 
-      <Card title="Rechercher une application" hint="Recherchez parmi les applications apt, snap et flatpak">
+      <Card title="Rechercher une application" hint="Recherchez parmi les applications du menu">
         <div className="search-container">
           <Search size={18} className="search-icon" />
           <input
@@ -114,31 +153,47 @@ export function ApplicationsPage() {
             className="search-input"
             placeholder="Rechercher une application..."
             value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </Card>
 
-      <Card title="Applications installées" hint={`Trouvées : ${applications.length} applications`}>
+      <Card
+        title="Applications installées"
+        hint={`Trouvées : ${results.length} application${results.length > 1 ? "s" : ""}`}
+      >
         {loading ? (
           <Loading text="Chargement des applications..." />
-        ) : applications.length === 0 ? (
+        ) : results.length === 0 ? (
           <div className="empty">
             <p>Aucune application trouvée.</p>
             {searchQuery && <p className="muted small">Essayez une autre recherche.</p>}
           </div>
         ) : (
-          <AppList
-            applications={applications}
-            onUninstall={handleUninstall}
-            onDetails={handleDetails}
-            isUninstalling={isUninstalling}
-          />
+          <>
+            <AppList
+              applications={visibleApplications}
+              onUninstall={handleUninstall}
+              onDetails={handleDetails}
+              isUninstalling={isUninstalling}
+              allowed={allowed}
+            />
+            {remaining > 0 && (
+              <div className="row gap" style={{ justifyContent: "center", marginTop: "0.75rem" }}>
+                <Button
+                  variant="ghost"
+                  onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+                >
+                  Afficher plus ({remaining})
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </Card>
 
       <AppDetailsModal
-        isOpen={selectedApp !== null}
+        isOpen={selectedId !== null}
         onClose={closeDetails}
         details={details}
         loading={detailsLoading}

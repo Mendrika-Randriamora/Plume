@@ -6,8 +6,16 @@ use super::fsutil::home;
 
 /// Dossiers de dépendances / build ignorés (les dossiers cachés le sont aussi).
 const SKIP: &[&str] = &[
-    "node_modules", "vendor", "venv", "env", "__pycache__", "target", "dist", "build",
-    "site-packages", "snap",
+    "node_modules",
+    "vendor",
+    "venv",
+    "env",
+    "__pycache__",
+    "target",
+    "dist",
+    "build",
+    "site-packages",
+    "snap",
 ];
 
 #[derive(Serialize, Clone)]
@@ -32,8 +40,14 @@ fn secs(t: std::io::Result<SystemTime>) -> u64 {
 fn entry(path: &std::path::Path, is_dir: bool, size: u64, last_used: u64) -> Entry {
     Entry {
         path: path.to_string_lossy().into_owned(),
-        name: path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(),
-        parent: path.parent().map(|p| p.to_string_lossy().into_owned()).unwrap_or_default(),
+        name: path
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default(),
+        parent: path
+            .parent()
+            .map(|p| p.to_string_lossy().into_owned())
+            .unwrap_or_default(),
         is_dir,
         size,
         last_used,
@@ -47,16 +61,19 @@ pub fn scan(include_dirs: bool) -> Vec<Entry> {
     let mut out = Vec::new();
     let mut dirs: HashMap<PathBuf, (u64, u64)> = HashMap::new();
 
-    let walker = WalkDir::new(&root).follow_links(false).into_iter().filter_entry(|e| {
-        if e.depth() == 0 {
-            return true;
-        }
-        let name = e.file_name().to_string_lossy();
-        if name.starts_with('.') {
-            return false;
-        }
-        !(e.file_type().is_dir() && SKIP.contains(&&*name))
-    });
+    let walker = WalkDir::new(&root)
+        .follow_links(false)
+        .into_iter()
+        .filter_entry(|e| {
+            if e.depth() == 0 {
+                return true;
+            }
+            let name = e.file_name().to_string_lossy();
+            if name.starts_with('.') {
+                return false;
+            }
+            !(e.file_type().is_dir() && SKIP.contains(&&*name))
+        });
 
     for e in walker.flatten() {
         if !e.file_type().is_file() {
