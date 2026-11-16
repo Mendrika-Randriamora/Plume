@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { pages } from "@/pages/registry";
 import { Sidebar } from "@/core/layout/Sidebar";
 import { NavContext } from "@/core/layout/nav";
 import { UpdateBanner } from "@/core/updater/UpdateBanner";
 import { useSettings } from "@/core/settings/SettingsProvider";
+import { Loading } from "@/core/ui";
 import { usePolling } from "@/core/live";
 import { sampleHomeStats, loadHighlights, loadObsolete } from "@/pages/home/live";
 import { sampleResources } from "@/pages/resources/live";
@@ -37,7 +38,9 @@ export default function App() {
         <Sidebar current={current} onSelect={setCurrent} />
         <main className="content">
           <UpdateBanner />
-          <Page />
+          <Suspense fallback={<Loading />}>
+            <Page />
+          </Suspense>
         </main>
       </div>
     </NavContext.Provider>

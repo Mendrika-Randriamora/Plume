@@ -1,6 +1,11 @@
 import { call } from "@/core/ipc";
 import type { Application, ApplicationDetails } from "./types";
 
+/** Inventaire gardé en mémoire par Rust : rescanne seulement s'il est encore vide. */
+export async function listApplications(): Promise<Application[]> {
+  return await call<Application[]>("list_applications");
+}
+
 /** Rescanne les fichiers .desktop et remplace l'inventaire gardé en mémoire par Rust. */
 export async function refreshApplications(): Promise<Application[]> {
   return await call<Application[]>("refresh_applications");

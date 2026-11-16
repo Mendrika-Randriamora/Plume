@@ -1,4 +1,6 @@
+import { lazy } from "react";
 import { RefreshCw } from "lucide-react";
-import { UpdatesPage } from "./UpdatesPage";
+
+const UpdatesPage = lazy(() => import("./UpdatesPage").then((m) => ({ default: m.UpdatesPage })));
 
 export const page = { id: "updates", label: "updates.title", icon: RefreshCw, component: UpdatesPage } as const;
