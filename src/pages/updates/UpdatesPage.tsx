@@ -46,18 +46,21 @@ export function UpdatesPage() {
       <PageHeader
         title="Mises à jour"
         subtitle="Gardez votre système à jour et sécurisé."
-        action={
-          <Button icon={Search} busy={phase === "checking"} disabled={!allowed || phase === "updating"} onClick={search}>
-            Rechercher
-          </Button>
-        }
       />
       {!allowed && <Notice>Les modifications du système sont désactivées dans les Réglages.</Notice>}
       {error && <Notice>{error}</Notice>}
 
       <AppUpdateCard />
 
-      <Card title="Mises à jour du système" hint="Paquets installés par votre distribution.">
+      <Card
+        title="Mises à jour du système"
+        hint="Paquets installés par votre distribution."
+        action={
+          <Button icon={Search} busy={phase === "checking"} disabled={!allowed || phase === "updating"} onClick={search}>
+            Rechercher
+          </Button>
+        }
+      >
         {phase === "idle" && <Empty icon={Download} text="Cliquez sur « Rechercher ». Votre mot de passe sera demandé une seule fois." />}
         {phase === "checking" && <Empty icon={Search} text="Recherche en cours…" />}
         {phase === "updating" && <Empty icon={Download} text="Mise à jour en cours, ne fermez pas Plume…" />}

@@ -30,7 +30,10 @@ pub struct SystemStats {
 }
 
 fn avg(v: Vec<f32>) -> Option<f32> {
-    let v: Vec<f32> = v.into_iter().filter(|t| t.is_finite() && *t > 0.0 && *t < 125.0).collect();
+    let v: Vec<f32> = v
+        .into_iter()
+        .filter(|t| t.is_finite() && *t > 0.0 && *t < 125.0)
+        .collect();
     if v.is_empty() {
         None
     } else {
@@ -175,7 +178,7 @@ pub async fn system_stats() -> Result<SystemStats, String> {
             .map(|(name, memory)| App { name, memory })
             .collect();
 
-        top_apps.sort_by(|a, b| b.memory.cmp(&a.memory));
+        top_apps.sort_by_key(|a| std::cmp::Reverse(a.memory));
         top_apps.truncate(5);
 
         // Températures
@@ -184,13 +187,18 @@ pub async fn system_stats() -> Result<SystemStats, String> {
         for c in comps.iter() {
             let l = c.label().to_lowercase();
             let t = c.temperature();
-            if ["amdgpu", "nouveau", "nvidia", "gpu"].iter().any(|k| l.contains(k)) {
+            if ["amdgpu", "nouveau", "nvidia", "gpu"]
+                .iter()
+                .any(|k| l.contains(k))
+            {
                 gpu.push(t);
             } else if ["spd", "jc42", "dimm", "ram"].iter().any(|k| l.contains(k)) {
                 ram.push(t);
-            } else if ["cpu", "core", "package", "tctl", "tdie", "k10temp", "coretemp"]
-                .iter()
-                .any(|k| l.contains(k))
+            } else if [
+                "cpu", "core", "package", "tctl", "tdie", "k10temp", "coretemp",
+            ]
+            .iter()
+            .any(|k| l.contains(k))
             {
                 cpu.push(t);
             }
@@ -204,15 +212,20 @@ pub async fn system_stats() -> Result<SystemStats, String> {
             .iter()
             .filter(|d| home.starts_with(d.mount_point()))
             .max_by_key(|d| d.mount_point().as_os_str().len());
-        let (disk_total, disk_free) =
-            disk.map(|d| (d.total_space(), d.available_space())).unwrap_or((0, 0));
+        let (disk_total, disk_free) = disk
+            .map(|d| (d.total_space(), d.available_space()))
+            .unwrap_or((0, 0));
 
         Ok(SystemStats {
             ram_total: bytes_to_go(sys.total_memory()),
             ram_used: bytes_to_go(sys.used_memory()),
             disk_total,
             disk_free,
-            temps: Temps { cpu: avg(cpu), gpu, ram: avg(ram) },
+            temps: Temps {
+                cpu: avg(cpu),
+                gpu,
+                ram: avg(ram),
+            },
             top_apps,
         })
     })
@@ -232,7 +245,7 @@ pub async fn home_highlights() -> Result<Highlights, String> {
         let all = scanner::scan(false);
 
         let mut heavy = all.clone();
-        heavy.sort_by(|a, b| b.size.cmp(&a.size));
+        heavy.sort_by_key(|a| std::cmp::Reverse(a.size));
         heavy.truncate(5);
 
         let mut unused: Vec<Entry> = all.into_iter().filter(|e| e.size >= 5_000_000).collect();
@@ -263,6 +276,10 @@ pub fn reveal(path: String) -> Result<(), String> {
     if !fsutil::is_inside(&fsutil::home(), &p) {
         return Err("Chemin en dehors de votre dossier personnel".into());
     }
-    let target = if p.is_dir() { p } else { p.parent().map(|x| x.to_path_buf()).unwrap_or(p) };
+    let target = if p.is_dir() {
+        p
+    } else {
+        p.parent().map(|x| x.to_path_buf()).unwrap_or(p)
+    };
     open_in_file_manager(&target).map_err(|e| e.to_string())
 }

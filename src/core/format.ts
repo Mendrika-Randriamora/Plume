@@ -1,5 +1,5 @@
-export function bytes(n: number | undefined): string {
-  if (n === undefined) return "-";
+export function bytes(n: number | null | undefined): string {
+  if (n === undefined || n === null) return "-";
   if (n < 1000) return `${n} o`;
   const u = ["Ko", "Mo", "Go", "To"];
   let v = n / 1000;

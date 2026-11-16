@@ -10,6 +10,10 @@ interface Props {
   loading: boolean;
 }
 
+function sourceLabel(source: ApplicationDetails["source"]): string {
+  return source === "manuel" ? "installée manuellement" : source;
+}
+
 export function AppDetailsModal({ isOpen, onClose, details, loading }: Props) {
   if (!isOpen) return null;
 
@@ -17,10 +21,10 @@ export function AppDetailsModal({ isOpen, onClose, details, loading }: Props) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <header className="modal-header">
-          <h2>Détails de l'application</h2>
+          <h2>Détails de l’application</h2>
           <Button variant="ghost" icon={X} onClick={onClose} aria-label="Fermer" />
         </header>
-        
+
         {loading && !details ? (
           <Loading text="Chargement des détails..." />
         ) : details ? (
@@ -30,13 +34,15 @@ export function AppDetailsModal({ isOpen, onClose, details, loading }: Props) {
                 <span className="detail-label">Nom</span>
                 <span className="detail-value">{details.name}</span>
               </div>
-              <div className="detail-item">
-                <span className="detail-label">Nom du paquet</span>
-                <span className="detail-value muted">{details.package_name}</span>
-              </div>
+              {details.package_name && (
+                <div className="detail-item">
+                  <span className="detail-label">Paquet / identifiant</span>
+                  <span className="detail-value muted">{details.package_name}</span>
+                </div>
+              )}
               <div className="detail-item">
                 <span className="detail-label">Source</span>
-                <span className="detail-value">{details.source}</span>
+                <span className="detail-value">{sourceLabel(details.source)}</span>
               </div>
               {details.version && (
                 <div className="detail-item">
@@ -44,12 +50,12 @@ export function AppDetailsModal({ isOpen, onClose, details, loading }: Props) {
                   <span className="detail-value">{details.version}</span>
                 </div>
               )}
-              {details.size !== undefined && (
-                <div className="detail-item">
-                  <span className="detail-label">Taille</span>
-                  <span className="detail-value">{bytes(details.size)}</span>
-                </div>
-              )}
+              <div className="detail-item">
+                <span className="detail-label">Taille</span>
+                <span className="detail-value">
+                  {details.size === null ? "inconnue" : bytes(details.size)}
+                </span>
+              </div>
               {details.description && (
                 <div className="detail-item full-width">
                   <span className="detail-label">Description</span>
@@ -58,7 +64,7 @@ export function AppDetailsModal({ isOpen, onClose, details, loading }: Props) {
               )}
               {details.exec && (
                 <div className="detail-item full-width">
-                  <span className="detail-label">Commande d'exécution</span>
+                  <span className="detail-label">Commande d’exécution</span>
                   <span className="detail-value muted">{details.exec}</span>
                 </div>
               )}
@@ -88,7 +94,14 @@ export function AppDetailsModal({ isOpen, onClose, details, loading }: Props) {
                 </div>
               )}
             </div>
-            
+
+            {details.source === "manuel" && (
+              <p className="muted small">
+                Cette application a été installée à la main. Plume ne supprime pas son fichier
+                .desktop automatiquement.
+              </p>
+            )}
+
             {details.desktop_content && (
               <div className="desktop-content">
                 <h3>Contenu du fichier .desktop</h3>
@@ -98,7 +111,7 @@ export function AppDetailsModal({ isOpen, onClose, details, loading }: Props) {
           </div>
         ) : (
           <div className="empty">
-            <p>Impossible de charger les détails de l'application.</p>
+            <p>Impossible de charger les détails de l’application.</p>
           </div>
         )}
       </div>

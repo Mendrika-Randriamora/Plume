@@ -5,34 +5,37 @@ import type { Application } from "../types";
 
 interface Props {
   applications: Application[];
-  onUninstall: (packageName: string, source: string) => void;
-  onDetails: (packageName: string, source: string) => void;
+  onUninstall: (desktopId: string) => void;
+  onDetails: (desktopId: string) => void;
   isUninstalling?: string;
+  allowed: boolean;
 }
 
-export function AppList({ applications, onUninstall, onDetails, isUninstalling }: Props) {
+export function AppList({ applications, onUninstall, onDetails, isUninstalling, allowed }: Props) {
   return (
     <ul className="list">
       {applications.map((app) => (
-        <li key={`${app.source}-${app.package_name}`}>
+        <li key={app.id}>
           <div className="list-row static">
             <span className="grow">
               <span className="ellipsis">{app.name}</span>
-              <span className="muted small ellipsis">{app.source}</span>
+              <span className="muted small ellipsis">
+                {app.source === "manuel" ? "installée manuellement" : app.source}
+              </span>
             </span>
-            <span className="nowrap">{bytes(app.size)}</span>
+            <span className="nowrap">{app.size === null ? "inconnue" : bytes(app.size)}</span>
             <div className="row gap">
               <ConfirmButton
                 label="Désinstaller"
                 confirmLabel="Confirmer"
-                onConfirm={() => onUninstall(app.package_name, app.source)}
-                disabled={isUninstalling === `${app.source}-${app.package_name}`}
+                onConfirm={() => onUninstall(app.id)}
+                disabled={!allowed || isUninstalling === app.id}
                 icon={Trash2}
               />
               <Button
                 variant="ghost"
                 icon={Info}
-                onClick={() => onDetails(app.package_name, app.source)}
+                onClick={() => onDetails(app.id)}
                 aria-label="Voir les détails"
               />
             </div>

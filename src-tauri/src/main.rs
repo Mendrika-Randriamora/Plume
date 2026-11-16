@@ -4,7 +4,9 @@ mod modules;
 mod shared;
 
 fn main() {
-    let mut builder = tauri::Builder::default().plugin(tauri_plugin_process::init());
+    let mut builder = tauri::Builder::default()
+        .manage(modules::applications::ApplicationsState::default())
+        .plugin(tauri_plugin_process::init());
 
     // Les mises à jour automatiques ne concernent que les bureaux (Linux, Windows, macOS).
     #[cfg(desktop)]
@@ -26,6 +28,7 @@ fn main() {
             modules::clean::scan_temp,
             modules::clean::clear_temp,
             modules::applications::list_applications,
+            modules::applications::refresh_applications,
             modules::applications::search_applications,
             modules::applications::get_application_details,
             modules::applications::uninstall_application,

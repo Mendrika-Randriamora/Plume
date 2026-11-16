@@ -5,14 +5,18 @@ use crate::shared::{blocking, fsutil, scanner, scanner::Entry};
 
 /// filter: "unused" (moins utilisés récemment) ou "largest" (plus volumineux)
 #[tauri::command]
-pub async fn scan_clean(filter: String, only_files: bool, limit: usize) -> Result<Vec<Entry>, String> {
+pub async fn scan_clean(
+    filter: String,
+    only_files: bool,
+    limit: usize,
+) -> Result<Vec<Entry>, String> {
     blocking(move || {
         let mut v = scanner::scan(!only_files);
         if filter == "unused" {
             v.retain(|e| e.size >= 1_000_000);
             v.sort_by_key(|e| e.last_used);
         } else {
-            v.sort_by(|a, b| b.size.cmp(&a.size));
+            v.sort_by_key(|a| std::cmp::Reverse(a.size));
         }
         v.truncate(limit.min(500));
         Ok(v)
@@ -79,7 +83,7 @@ pub async fn scan_temp() -> Result<Vec<TempItem>, String> {
                 size,
             });
         }
-        items.sort_by(|a, b| b.size.cmp(&a.size));
+        items.sort_by_key(|a| std::cmp::Reverse(a.size));
         Ok(items)
     })
     .await
