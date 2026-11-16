@@ -1,3 +1,5 @@
+import { detectLang, isLang, type Lang } from "@/core/i18n";
+
 export type Rgb = [number, number, number];
 export type ThemeMode = "light" | "dark" | "system";
 export type FontKey = "system" | "serif" | "rounded" | "mono";
@@ -9,6 +11,7 @@ export interface Permissions {
 }
 
 export interface Settings {
+  lang: Lang;
   theme: ThemeMode;
   font: FontKey;
   fontSize: number;
@@ -18,6 +21,7 @@ export interface Settings {
 }
 
 export const DEFAULTS: Settings = {
+  lang: detectLang(),
   theme: "system",
   font: "system",
   fontSize: 15,
@@ -33,7 +37,12 @@ export function load(): Settings {
     const raw = localStorage.getItem(KEY);
     if (!raw) return DEFAULTS;
     const p = JSON.parse(raw) as Partial<Settings>;
-    return { ...DEFAULTS, ...p, permissions: { ...DEFAULTS.permissions, ...p.permissions } };
+    return {
+      ...DEFAULTS,
+      ...p,
+      lang: isLang(p.lang) ? p.lang : DEFAULTS.lang,
+      permissions: { ...DEFAULTS.permissions, ...p.permissions },
+    };
   } catch {
     return DEFAULTS;
   }
