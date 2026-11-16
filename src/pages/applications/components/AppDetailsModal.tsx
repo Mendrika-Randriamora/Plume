@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import { Button, Loading } from "@/core/ui";
 import { bytes } from "@/core/format";
@@ -10,73 +11,73 @@ interface Props {
   loading: boolean;
 }
 
-function sourceLabel(source: ApplicationDetails["source"]): string {
-  return source === "manuel" ? "installée manuellement" : source;
-}
-
 export function AppDetailsModal({ isOpen, onClose, details, loading }: Props) {
+  const { t } = useTranslation();
   if (!isOpen) return null;
+
+  const sourceLabel = (source: ApplicationDetails["source"]) =>
+    source === "manuel" ? t("applications.source.manual") : source;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <header className="modal-header">
-          <h2>Détails de l’application</h2>
-          <Button variant="ghost" icon={X} onClick={onClose} aria-label="Fermer" />
+          <h2>{t("applications.modal.title")}</h2>
+          <Button variant="ghost" icon={X} onClick={onClose} aria-label={t("common.close")} />
         </header>
 
         {loading && !details ? (
-          <Loading text="Chargement des détails..." />
+          <Loading text={t("applications.modal.loading")} />
         ) : details ? (
           <div className="modal-content">
             <div className="detail-grid">
               <div className="detail-item">
-                <span className="detail-label">Nom</span>
+                <span className="detail-label">{t("applications.modal.name")}</span>
                 <span className="detail-value">{details.name}</span>
               </div>
               {details.package_name && (
                 <div className="detail-item">
-                  <span className="detail-label">Paquet / identifiant</span>
+                  <span className="detail-label">{t("applications.modal.package")}</span>
                   <span className="detail-value muted">{details.package_name}</span>
                 </div>
               )}
               <div className="detail-item">
-                <span className="detail-label">Source</span>
+                <span className="detail-label">{t("applications.modal.source")}</span>
                 <span className="detail-value">{sourceLabel(details.source)}</span>
               </div>
               {details.version && (
                 <div className="detail-item">
-                  <span className="detail-label">Version</span>
+                  <span className="detail-label">{t("applications.modal.version")}</span>
                   <span className="detail-value">{details.version}</span>
                 </div>
               )}
               <div className="detail-item">
-                <span className="detail-label">Taille</span>
+                <span className="detail-label">{t("applications.modal.size")}</span>
                 <span className="detail-value">
-                  {details.size === null ? "inconnue" : bytes(details.size)}
+                  {details.size === null ? t("common.unknown") : bytes(details.size)}
                 </span>
               </div>
               {details.description && (
                 <div className="detail-item full-width">
-                  <span className="detail-label">Description</span>
+                  <span className="detail-label">{t("applications.modal.description")}</span>
                   <span className="detail-value">{details.description}</span>
                 </div>
               )}
               {details.exec && (
                 <div className="detail-item full-width">
-                  <span className="detail-label">Commande d’exécution</span>
+                  <span className="detail-label">{t("applications.modal.exec")}</span>
                   <span className="detail-value muted">{details.exec}</span>
                 </div>
               )}
               {details.icon && (
                 <div className="detail-item">
-                  <span className="detail-label">Icône</span>
+                  <span className="detail-label">{t("applications.modal.icon")}</span>
                   <span className="detail-value muted">{details.icon}</span>
                 </div>
               )}
               {details.categories && details.categories.length > 0 && (
                 <div className="detail-item full-width">
-                  <span className="detail-label">Catégories</span>
+                  <span className="detail-label">{t("applications.modal.categories")}</span>
                   <span className="detail-value">
                     {details.categories.map((c, i) => (
                       <span key={i}>
@@ -89,7 +90,7 @@ export function AppDetailsModal({ isOpen, onClose, details, loading }: Props) {
               )}
               {details.desktop_file && (
                 <div className="detail-item full-width">
-                  <span className="detail-label">Fichier .desktop</span>
+                  <span className="detail-label">{t("applications.modal.desktopFile")}</span>
                   <span className="detail-value muted">{details.desktop_file}</span>
                 </div>
               )}
@@ -97,21 +98,20 @@ export function AppDetailsModal({ isOpen, onClose, details, loading }: Props) {
 
             {details.source === "manuel" && (
               <p className="muted small">
-                Cette application a été installée à la main. Plume ne supprime pas son fichier
-                .desktop automatiquement.
+                {t("applications.modal.manualNote")}
               </p>
             )}
 
             {details.desktop_content && (
               <div className="desktop-content">
-                <h3>Contenu du fichier .desktop</h3>
+                <h3>{t("applications.modal.desktopContent")}</h3>
                 <pre className="desktop-pre">{details.desktop_content}</pre>
               </div>
             )}
           </div>
         ) : (
           <div className="empty">
-            <p>Impossible de charger les détails de l’application.</p>
+            <p>{t("applications.modal.error")}</p>
           </div>
         )}
       </div>

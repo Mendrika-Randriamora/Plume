@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { RefreshCw, Search } from "lucide-react";
 import { Button, Card, Loading, Notice, PageHeader } from "@/core/ui";
+import { translate } from "@/core/i18n";
 import { usePermission } from "@/core/settings/SettingsProvider";
 import { refreshApplications, searchApplications, uninstallApplication, getApplicationDetails } from "./api";
 import { AppList } from "./components/AppList";
@@ -15,6 +17,7 @@ function errorMessage(error: unknown, fallback: string): string {
 }
 
 export function ApplicationsPage() {
+  const { t } = useTranslation();
   const allowed = usePermission("systemChanges");
   const [applications, setApplications] = useState<Application[]>([]);
   const [results, setResults] = useState<Application[]>([]);
@@ -36,7 +39,7 @@ export function ApplicationsPage() {
       setResults(apps);
       setVisibleCount(PAGE_SIZE);
     } catch (e: unknown) {
-      setError(errorMessage(e, "Erreur lors du chargement des applications"));
+      setError(errorMessage(e, translate("applications.errors.load")));
     } finally {
       setLoading(false);
     }
@@ -65,7 +68,7 @@ export function ApplicationsPage() {
         }
       } catch (e: unknown) {
         if (!cancelled) {
-          setError(errorMessage(e, "Erreur lors de la recherche"));
+          setError(errorMessage(e, translate("applications.errors.search")));
         }
       }
     }, SEARCH_DEBOUNCE_MS);
@@ -78,7 +81,7 @@ export function ApplicationsPage() {
 
   const handleUninstall = useCallback(async (desktopId: string) => {
     if (!allowed) {
-      setError("Les modifications du système sont désactivées dans les Réglages.");
+      setError(translate("common.systemChangesDisabled"));
       return;
     }
 
@@ -89,10 +92,10 @@ export function ApplicationsPage() {
       if (success) {
         await loadApplications();
       } else {
-        setError("La désinstallation a échoué. Vérifiez que vous avez les droits d'administration.");
+        setError(translate("applications.errors.uninstall"));
       }
     } catch (e: unknown) {
-      setError(errorMessage(e, "Erreur lors de la désinstallation"));
+      setError(errorMessage(e, translate("applications.errors.uninstallGeneric")));
     } finally {
       setIsUninstalling(undefined);
     }
@@ -115,7 +118,7 @@ export function ApplicationsPage() {
       const d = await getApplicationDetails(selectedId);
       setDetails(d);
     } catch (e: unknown) {
-      setError(errorMessage(e, "Erreur lors du chargement des détails"));
+      setError(errorMessage(e, translate("applications.errors.details")));
     } finally {
       setDetailsLoading(false);
     }
@@ -133,25 +136,25 @@ export function ApplicationsPage() {
   return (
     <>
       <PageHeader
-        title="Applications"
-        subtitle="Gérez les applications visibles dans le menu de votre bureau."
+        title={t("applications.title")}
+        subtitle={t("applications.subtitle")}
         action={
           <Button icon={RefreshCw} busy={loading} onClick={loadApplications}>
-            Rafraîchir
+            {t("common.refresh")}
           </Button>
         }
       />
 
-      {!allowed && <Notice>Les modifications du système sont désactivées dans les Réglages.</Notice>}
+      {!allowed && <Notice>{t("common.systemChangesDisabled")}</Notice>}
       {error && <Notice>{error}</Notice>}
 
-      <Card title="Rechercher une application" hint="Recherchez parmi les applications du menu">
+      <Card title={t("applications.search.title")} hint={t("applications.search.hint")}>
         <div className="search-container">
           <Search size={18} className="search-icon" />
           <input
             type="text"
             className="search-input"
-            placeholder="Rechercher une application..."
+            placeholder={t("applications.search.placeholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -159,15 +162,15 @@ export function ApplicationsPage() {
       </Card>
 
       <Card
-        title="Applications installées"
-        hint={`Trouvées : ${results.length} application${results.length > 1 ? "s" : ""}`}
+        title={t("applications.installed.title")}
+        hint={t("applications.found", { count: results.length })}
       >
         {loading ? (
-          <Loading text="Chargement des applications..." />
+          <Loading text={t("applications.loading")} />
         ) : results.length === 0 ? (
           <div className="empty">
-            <p>Aucune application trouvée.</p>
-            {searchQuery && <p className="muted small">Essayez une autre recherche.</p>}
+            <p>{t("applications.empty")}</p>
+            {searchQuery && <p className="muted small">{t("applications.emptyHint")}</p>}
           </div>
         ) : (
           <>
@@ -184,7 +187,7 @@ export function ApplicationsPage() {
                   variant="ghost"
                   onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
                 >
-                  Afficher plus ({remaining})
+                  {t("applications.showMore", { count: remaining })}
                 </Button>
               </div>
             )}

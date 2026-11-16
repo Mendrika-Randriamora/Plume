@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Trash2, Info } from "lucide-react";
 import { bytes } from "@/core/format";
 import { ConfirmButton, Button } from "@/core/ui";
@@ -12,6 +13,8 @@ interface Props {
 }
 
 export function AppList({ applications, onUninstall, onDetails, isUninstalling, allowed }: Props) {
+  const { t } = useTranslation();
+
   return (
     <ul className="list">
       {applications.map((app) => (
@@ -20,14 +23,13 @@ export function AppList({ applications, onUninstall, onDetails, isUninstalling, 
             <span className="grow">
               <span className="ellipsis">{app.name}</span>
               <span className="muted small ellipsis">
-                {app.source === "manuel" ? "installée manuellement" : app.source}
+                {app.source === "manuel" ? t("applications.source.manual") : app.source}
               </span>
             </span>
-            <span className="nowrap">{app.size === null ? "inconnue" : bytes(app.size)}</span>
+            <span className="nowrap">{app.size === null ? t("common.unknown") : bytes(app.size)}</span>
             <div className="row gap">
               <ConfirmButton
-                label="Désinstaller"
-                confirmLabel="Confirmer"
+                label={t("applications.uninstall")}
                 onConfirm={() => onUninstall(app.id)}
                 disabled={!allowed || isUninstalling === app.id}
                 icon={Trash2}
@@ -36,7 +38,7 @@ export function AppList({ applications, onUninstall, onDetails, isUninstalling, 
                 variant="ghost"
                 icon={Info}
                 onClick={() => onDetails(app.id)}
-                aria-label="Voir les détails"
+                aria-label={t("applications.details")}
               />
             </div>
           </div>
