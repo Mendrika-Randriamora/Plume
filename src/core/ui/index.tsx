@@ -1,4 +1,5 @@
 import { useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Loader2, type LucideIcon } from "lucide-react";
 
 export function Card({ title, hint, action, children }: { title?: string; hint?: string; action?: ReactNode; children: ReactNode }) {
@@ -34,7 +35,7 @@ export function Button({ icon: Icon, busy, variant = "solid", children, ...rest 
 }
 
 /** Bouton en deux temps : évite les suppressions accidentelles sans fenêtre pop-up. */
-export function ConfirmButton({ label, confirmLabel = "Confirmer", onConfirm, busy, disabled, icon }: {
+export function ConfirmButton({ label, confirmLabel, onConfirm, busy, disabled, icon }: {
   label: string;
   confirmLabel?: string;
   onConfirm: () => void;
@@ -42,12 +43,13 @@ export function ConfirmButton({ label, confirmLabel = "Confirmer", onConfirm, bu
   disabled?: boolean;
   icon?: LucideIcon;
 }) {
+  const { t } = useTranslation();
   const [armed, setArmed] = useState(false);
   if (!armed) return <Button icon={icon} disabled={disabled} busy={busy} onClick={() => setArmed(true)}>{label}</Button>;
   return (
     <span className="row gap">
-      <Button onClick={() => { setArmed(false); onConfirm(); }}>{confirmLabel}</Button>
-      <Button variant="ghost" onClick={() => setArmed(false)}>Annuler</Button>
+      <Button onClick={() => { setArmed(false); onConfirm(); }}>{confirmLabel ?? t("common.confirm")}</Button>
+      <Button variant="ghost" onClick={() => setArmed(false)}>{t("common.cancel")}</Button>
     </span>
   );
 }
@@ -69,11 +71,12 @@ export function Empty({ icon: Icon, text }: { icon: LucideIcon; text: string }) 
   );
 }
 
-export function Loading({ text = "Chargement…" }: { text?: string }) {
+export function Loading({ text }: { text?: string }) {
+  const { t } = useTranslation();
   return (
     <div className="empty">
       <Loader2 size={20} className="spin" />
-      <p>{text}</p>
+      <p>{text ?? t("common.loading")}</p>
     </div>
   );
 }

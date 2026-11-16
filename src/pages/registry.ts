@@ -8,9 +8,19 @@ import { page as clean } from "./clean";
 import { page as settings } from "./settings";
 import { page as applications } from "./applications";
 
+/** Clés de titre utilisées à la fois par la barre latérale et les en-têtes de page. */
+export type PageTitleKey =
+  | "home.title"
+  | "resources.title"
+  | "processes.title"
+  | "updates.title"
+  | "clean.title"
+  | "applications.title"
+  | "settings.title";
+
 export interface PageDef {
   id: string;
-  label: string;
+  label: PageTitleKey;
   icon: LucideIcon;
   component: ComponentType;
   position?: "top" | "bottom";

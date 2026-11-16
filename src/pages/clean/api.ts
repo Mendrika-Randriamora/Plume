@@ -4,7 +4,8 @@ import type { FileEntry } from "@/pages/home/types";
 export type CleanFilter = "unused" | "largest";
 export interface TempItem {
   id: string;
-  label: string;
+  kind: "cache" | "trash";
+  name: string | null;
   path: string;
   size: number;
 }

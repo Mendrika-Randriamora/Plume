@@ -137,8 +137,8 @@ pub async fn get_application_details(
 ) -> Result<ApplicationDetails, String> {
     #[cfg(target_os = "linux")]
     {
-        let entry = find_cached(&state, &desktop_id)?
-            .ok_or_else(|| format!("Application introuvable : {desktop_id}"))?;
+        let entry =
+            find_cached(&state, &desktop_id)?.ok_or_else(|| "application_not_found".to_string())?;
 
         blocking(move || details_for_entry(&entry)).await
     }
@@ -146,7 +146,7 @@ pub async fn get_application_details(
     #[cfg(not(target_os = "linux"))]
     {
         let _ = (desktop_id, state);
-        Err("La gestion des applications n'est disponible que sous Linux.".into())
+        Err("unsupported_platform".into())
     }
 }
 
@@ -158,15 +158,11 @@ pub async fn uninstall_application(
     #[cfg(target_os = "linux")]
     {
         // L'identifiant vient du front : on le valide dans l'inventaire en mémoire.
-        let entry = find_cached(&state, &desktop_id)?
-            .ok_or_else(|| format!("Application introuvable : {desktop_id}"))?;
+        let entry =
+            find_cached(&state, &desktop_id)?.ok_or_else(|| "application_not_found".to_string())?;
 
         if entry.app.source == "manuel" {
-            return Err(format!(
-                "« {} » a été installée manuellement ({}). Plume ne supprime jamais un fichier déposé à la main : retirez ce fichier .desktop vous-même si vous le souhaitez.",
-                entry.app.name,
-                entry.path.display()
-            ));
+            return Err("manual_application".into());
         }
 
         blocking(move || uninstall_entry(&entry)).await?;
@@ -176,7 +172,7 @@ pub async fn uninstall_application(
     #[cfg(not(target_os = "linux"))]
     {
         let _ = (desktop_id, state);
-        Err("La désinstallation n'est disponible que sous Linux.".into())
+        Err("unsupported_platform".into())
     }
 }
 
@@ -184,7 +180,7 @@ fn cached_entries(state: &ApplicationsState) -> Result<Option<Vec<CachedApplicat
     let guard = state
         .entries
         .read()
-        .map_err(|_| "Impossible de lire l'inventaire des applications.".to_string())?;
+        .map_err(|_| "inventory_unavailable".to_string())?;
     Ok(guard.clone())
 }
 
@@ -205,9 +201,10 @@ async fn scan_and_store(state: &ApplicationsState) -> Result<Vec<Application>, S
     let applications: Vec<Application> = entries.iter().map(|entry| entry.app.clone()).collect();
 
     {
-        let mut guard = state.entries.write().map_err(|_| {
-            "Impossible de mettre à jour l'inventaire des applications.".to_string()
-        })?;
+        let mut guard = state
+            .entries
+            .write()
+            .map_err(|_| "inventory_unavailable".to_string())?;
         *guard = Some(entries);
     }
 
@@ -325,7 +322,7 @@ fn details_for_entry(entry: &CachedApplication) -> Result<ApplicationDetails, St
 fn uninstall_entry(entry: &CachedApplication) -> Result<(), String> {
     let package = entry.app.package_name.as_str();
     if package.is_empty() {
-        return Err("Identifiant de paquet introuvable pour cette application.".into());
+        return Err("missing_package_id".into());
     }
 
     match entry.app.source.as_str() {
@@ -334,7 +331,10 @@ fn uninstall_entry(entry: &CachedApplication) -> Result<(), String> {
         "pacman" => run_root(&["pacman", "-Rs", "--noconfirm", package])?,
         "flatpak" => run_root(&["flatpak", "uninstall", "-y", package])?,
         "snap" => run_root(&["snap", "remove", package])?,
-        other => return Err(format!("Source inconnue : {other}")),
+        other => {
+            eprintln!("Source d'application inconnue : {other}");
+            return Err("unknown_source".into());
+        }
     };
     Ok(())
 }

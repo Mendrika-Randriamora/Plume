@@ -1,5 +1,5 @@
 import type { EChartsCoreOption } from "echarts/core";
-import { bytes } from "@/core/format";
+import { bytes, percentValue } from "@/core/format";
 import type { ChartTheme } from "@/core/charts";
 
 export interface SeriesSpec {
@@ -17,7 +17,7 @@ export interface ChartSpec {
 
 /** Options communes aux courbes : même grille et mêmes couleurs que l'application. */
 export function lineOption({ labels, series, percent }: ChartSpec, theme: ChartTheme): EChartsCoreOption {
-  const format = percent ? (v: number) => `${Math.round(v)} %` : (v: number) => bytes(v);
+  const format = percent ? (v: number) => percentValue(v, 0) : (v: number) => bytes(v);
 
   return {
     animation: false,

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FileText, Folder, FolderOpen, Trash2 } from "lucide-react";
 import { ago, bytes } from "@/core/format";
 import { Button, Card, ConfirmButton, Empty, Loading, Notice, PageHeader } from "@/core/ui";
@@ -7,12 +8,13 @@ import type { FileEntry } from "@/pages/home/types";
 import { deleteToTrash, reveal, scanClean, type CleanFilter } from "./api";
 import { TempCard } from "./components/TempCard";
 
-const FILTERS: { id: CleanFilter; label: string }[] = [
-  { id: "unused", label: "Moins utilisés" },
-  { id: "largest", label: "Plus volumineux" },
-];
+const FILTERS = [
+  { id: "unused", labelKey: "clean.filters.unused" },
+  { id: "largest", labelKey: "clean.filters.largest" },
+] as const;
 
 export function CleanPage() {
+  const { t } = useTranslation();
   const canScan = usePermission("scanHome");
   const canDelete = usePermission("deleteFiles");
   const [filter, setFilter] = useState<CleanFilter>("unused");
@@ -61,34 +63,39 @@ export function CleanPage() {
 
   return (
     <>
-      <PageHeader title="Nettoyage" subtitle="Libérez de la place dans votre dossier personnel. Rien n'est supprimé définitivement." />
+      <PageHeader title={t("clean.title")} subtitle={t("clean.subtitle")} />
       {error && <Notice>{error}</Notice>}
 
       <TempCard />
 
-      <Card title="Vos fichiers">
+      <Card title={t("clean.files.title")}>
         <div className="toolbar">
           <div className="seg">
             {FILTERS.map((f) => (
               <button key={f.id} className={filter === f.id ? "on" : ""} onClick={() => setFilter(f.id)}>
-                {f.label}
+                {t(f.labelKey)}
               </button>
             ))}
           </div>
           <label className="check">
             <input type="checkbox" checked={onlyFiles} onChange={(e) => setOnlyFiles(e.target.checked)} />
-            Fichiers seulement
+            {t("clean.files.onlyFiles")}
           </label>
         </div>
 
-        {!canScan && <Empty icon={FolderOpen} text="L'analyse est désactivée dans les Réglages." />}
-        {canScan && !rows && <Loading text="Analyse en cours…" />}
-        {rows && rows.length === 0 && <Empty icon={FolderOpen} text="Rien à signaler." />}
+        {!canScan && <Empty icon={FolderOpen} text={t("clean.scanDisabled")} />}
+        {canScan && !rows && <Loading text={t("clean.loading")} />}
+        {rows && rows.length === 0 && <Empty icon={FolderOpen} text={t("clean.empty")} />}
         {rows && rows.length > 0 && (
           <ul className="list">
             {rows.map((r) => (
               <li key={r.path} className="list-row static">
-                <input type="checkbox" checked={picked.has(r.path)} onChange={() => toggle(r.path)} aria-label={`Sélectionner ${r.name}`} />
+                <input
+                  type="checkbox"
+                  checked={picked.has(r.path)}
+                  onChange={() => toggle(r.path)}
+                  aria-label={t("clean.select", { name: r.name })}
+                />
                 {r.isDir ? <Folder size={16} strokeWidth={1.75} /> : <FileText size={16} strokeWidth={1.75} />}
                 <span className="grow">
                   <span className="ellipsis">{r.name}</span>
@@ -96,7 +103,12 @@ export function CleanPage() {
                 </span>
                 <span className="muted small nowrap">{ago(r.lastUsed)}</span>
                 <span className="nowrap">{bytes(r.size)}</span>
-                <Button variant="ghost" icon={FolderOpen} aria-label="Ouvrir le dossier" onClick={() => reveal(r.path)} />
+                <Button
+                  variant="ghost"
+                  icon={FolderOpen}
+                  aria-label={t("common.openFolder")}
+                  onClick={() => reveal(r.path)}
+                />
               </li>
             ))}
           </ul>
@@ -104,11 +116,17 @@ export function CleanPage() {
 
         {picked.size > 0 && canDelete && (
           <div className="actionbar">
-            <span>{picked.size} sélectionné{picked.size > 1 ? "s" : ""} · {bytes(pickedSize)}</span>
-            <ConfirmButton icon={Trash2} label="Mettre à la corbeille" confirmLabel="Oui, mettre à la corbeille" onConfirm={remove} busy={busy} />
+            <span>{t("clean.selected", { count: picked.size, size: bytes(pickedSize) })}</span>
+            <ConfirmButton
+              icon={Trash2}
+              label={t("clean.trash")}
+              confirmLabel={t("clean.trashConfirm")}
+              onConfirm={remove}
+              busy={busy}
+            />
           </div>
         )}
-        {picked.size > 0 && !canDelete && <p className="muted small">La suppression est désactivée dans les Réglages.</p>}
+        {picked.size > 0 && !canDelete && <p className="muted small">{t("common.deleteDisabled")}</p>}
       </Card>
     </>
   );

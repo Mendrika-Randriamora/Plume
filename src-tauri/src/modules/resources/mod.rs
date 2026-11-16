@@ -96,7 +96,7 @@ pub async fn resource_snapshot(
     blocking(move || {
         let mut i = inner
             .lock()
-            .map_err(|_| "Impossible de lire l'état des ressources".to_string())?;
+            .map_err(|_| "resources_unavailable".to_string())?;
 
         i.sys.refresh_memory();
         i.sys.refresh_cpu_usage();

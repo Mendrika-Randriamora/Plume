@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import i18n, { systemLang } from "@/core/i18n";
 import { DEFAULTS, load, save, type Permissions, type Settings } from "./store";
 import { applyTheme } from "./theme";
 
@@ -16,6 +17,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     applyTheme(settings);
     save(settings);
+    if (i18n.language !== settings.lang) void i18n.changeLanguage(settings.lang);
     if (settings.theme !== "system") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const on = () => applyTheme(settings);
@@ -24,7 +26,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [settings]);
 
   const update = useCallback((patch: Partial<Settings>) => setSettings((s) => ({ ...s, ...patch })), []);
-  const reset = useCallback(() => setSettings(DEFAULTS), []);
+  const reset = useCallback(
+    () =>
+      setSettings({
+        ...DEFAULTS,
+        lang: systemLang(),
+        permissions: { ...DEFAULTS.permissions },
+      }),
+    [],
+  );
 
   return <SettingsContext.Provider value={{ settings, update, reset }}>{children}</SettingsContext.Provider>;
 }

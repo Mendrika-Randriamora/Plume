@@ -1,10 +1,10 @@
 import type { FontKey, Settings } from "./store";
 
-export const FONTS: Record<FontKey, { label: string; stack: string }> = {
-  system: { label: "Système", stack: 'system-ui, "Segoe UI", "Noto Sans", sans-serif' },
-  rounded: { label: "Arrondie", stack: 'ui-rounded, "Nunito", "Quicksand", system-ui, sans-serif' },
-  serif: { label: "Avec empattements", stack: 'Georgia, "Noto Serif", serif' },
-  mono: { label: "Monospace", stack: 'ui-monospace, "JetBrains Mono", "DejaVu Sans Mono", monospace' },
+export const FONTS: Record<FontKey, { stack: string }> = {
+  system: { stack: 'system-ui, "Segoe UI", "Noto Sans", sans-serif' },
+  rounded: { stack: 'ui-rounded, "Nunito", "Quicksand", system-ui, sans-serif' },
+  serif: { stack: 'Georgia, "Noto Serif", serif' },
+  mono: { stack: 'ui-monospace, "JetBrains Mono", "DejaVu Sans Mono", monospace' },
 };
 
 export function resolveDark(s: Settings): boolean {

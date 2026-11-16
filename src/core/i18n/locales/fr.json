@@ -1,0 +1,333 @@
+{
+  "common": {
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "loading": "Chargement…",
+    "search": "Rechercher",
+    "refresh": "Rafraîchir",
+    "error": "Erreur",
+    "unknown": "Inconnue",
+    "none": "Aucun",
+    "unsupportedSystem": "Votre système n'est pas encore pris en charge.",
+    "systemChangesDisabled": "Les modifications du système sont désactivées dans les Réglages.",
+    "deleteDisabled": "La suppression est désactivée dans les Réglages.",
+    "authorizationDisabled": "Autorisation désactivée dans les Réglages.",
+    "openFolder": "Ouvrir le dossier",
+    "celsius": "{{value}} °C",
+    "perSecond": "{{value}}/s",
+    "cpu": "Processeur",
+    "gpu": "Carte graphique",
+    "memory": "Mémoire",
+    "swap": "Espace d'échange",
+    "network": "Réseau",
+    "disk": "Disque",
+    "received": "Réception",
+    "sent": "Envoi",
+    "read": "Lecture",
+    "write": "Écriture",
+    "unknownDate": "date inconnue"
+  },
+  "units": {
+    "byte": "o",
+    "kb": "Ko",
+    "mb": "Mo",
+    "gb": "Go",
+    "tb": "To"
+  },
+  "errors": {
+    "unknown": "Une erreur inattendue est survenue.",
+    "internal_error": "Une erreur interne est survenue dans Plume.",
+    "path_outside_home": "Ce chemin se trouve en dehors de votre dossier personnel.",
+    "open_failed": "Impossible d'ouvrir le dossier.",
+    "command_failed": "La commande système a échoué.",
+    "pkexec_missing": "pkexec est introuvable : installez le paquet « polkit ».",
+    "permission_denied": "Autorisation refusée ou annulée.",
+    "unsupported_package_manager": "Ce gestionnaire de paquets n'est pas reconnu.",
+    "delete_failed": "Impossible de déplacer les fichiers vers la corbeille.",
+    "application_not_found": "Application introuvable.",
+    "manual_application": "Cette application a été installée manuellement. Plume ne supprime jamais un fichier déposé à la main.",
+    "unsupported_platform": "Cette fonction n'est disponible que sous Linux.",
+    "inventory_unavailable": "Impossible de lire la liste des applications.",
+    "missing_package_id": "Aucun identifiant de paquet n'a été trouvé pour cette application.",
+    "unknown_source": "Source de l'application inconnue.",
+    "resources_unavailable": "Impossible de lire l'état des ressources.",
+    "processes_unavailable": "Impossible de lire la liste des processus."
+  },
+  "updater": {
+    "banner": {
+      "available": "Plume {{version}} est disponible. Vous choisissez quand l'installer.",
+      "view": "Voir la mise à jour →"
+    },
+    "errors": {
+      "alreadyUpToDate": "Plume est déjà à jour : rien à installer.",
+      "appOnly": "La mise à jour automatique n'est disponible que dans l'application Plume.",
+      "signature": "La mise à jour n'a pas pu être vérifiée : sa signature est invalide. L'installation a été annulée par sécurité.",
+      "unsupported": "La mise à jour automatique n'est disponible que pour la version AppImage de Plume.",
+      "endpoint": "Aucune adresse de mise à jour n'est configurée. Contactez la personne qui développe Plume.",
+      "notFound": "Le serveur de mise à jour ne trouve pas de nouvelle version. Réessayez plus tard.",
+      "timeout": "Le serveur de mise à jour met trop de temps à répondre. Vérifiez votre connexion puis réessayez.",
+      "network": "Impossible de joindre le serveur de mise à jour. Vérifiez votre connexion Internet puis réessayez.",
+      "generic": "Impossible de mettre à jour Plume pour le moment. Réessayez plus tard."
+    }
+  },
+  "home": {
+    "title": "Accueil",
+    "subtitle": "L'état de votre ordinateur, en un coup d'œil.",
+    "temps": {
+      "none": "Aucun capteur de température détecté"
+    },
+    "memory": {
+      "detail": "utilisée sur {{total}}"
+    },
+    "swap": {
+      "detail": "utilisé sur {{total}}",
+      "none": "Aucun espace configuré"
+    },
+    "disk": {
+      "free": "Espace libre",
+      "detail": "sur {{total}}"
+    },
+    "apps": {
+      "title": "Ce qui utilise la mémoire",
+      "hint": "Les 5 programmes les plus gourmands en ce moment."
+    },
+    "heavy": {
+      "title": "Fichiers les plus lourds",
+      "hint": "Cliquez pour ouvrir le dossier.",
+      "loading": "Analyse de votre dossier personnel…"
+    },
+    "unused": {
+      "title": "Lourds et oubliés",
+      "hint": "Gros fichiers que vous n'ouvrez plus.",
+      "refresh": "Relancer l'analyse",
+      "loading": "Analyse…"
+    },
+    "scanDisabled": "L'analyse de votre dossier personnel est désactivée dans les Réglages.",
+    "obsolete": {
+      "title": "Programmes devenus inutiles",
+      "hint": "Installés pour d'autres programmes qui ont disparu depuis. Les retirer libère de la place sans rien casser.",
+      "remove": "Supprimer ({{count}})",
+      "empty": "Tout est propre, rien à retirer.",
+      "more_one": "+ {{count}} autre",
+      "more_other": "+ {{count}} autres"
+    }
+  },
+  "resources": {
+    "title": "Ressources",
+    "subtitle": "L'activité de votre ordinateur en temps réel, sur la dernière minute.",
+    "cpu": {
+      "hint_one": "{{percent}} au total · {{count}} cœur",
+      "hint_other": "{{percent}} au total · {{count}} cœurs"
+    },
+    "memorySwap": {
+      "title": "Mémoire et espace d'échange"
+    },
+    "on": "sur {{total}}",
+    "network": {
+      "totalReceived": "Total reçu {{total}}",
+      "totalSent": "Total envoyé {{total}}"
+    },
+    "disk": {
+      "totalRead": "Total lu {{total}}",
+      "totalWritten": "Total écrit {{total}}"
+    }
+  },
+  "processes": {
+    "title": "Processus",
+    "subtitle": "Les programmes en cours d'exécution, actualisés toutes les 2 secondes.",
+    "columns": {
+      "name": "Nom",
+      "cpu": "CPU",
+      "pid": "ID",
+      "memory": "Mémoire",
+      "read": "Lecture disque",
+      "write": "Écriture disque"
+    },
+    "sortColumns": {
+      "name": "nom",
+      "cpu": "cpu",
+      "pid": "id",
+      "memory": "mémoire",
+      "read": "lecture disque",
+      "write": "écriture disque"
+    },
+    "summary_one": "{{count}} processus · triés par {{column}} {{direction}}",
+    "summary_other": "{{count}} processus · triés par {{column}} {{direction}}",
+    "loading": "Lecture…",
+    "loadingTable": "Lecture des processus…",
+    "show": "Afficher",
+    "all": "Tous",
+    "limit_one": "{{count}} processus",
+    "limit_other": "{{count}} processus",
+    "ascending": "croissant",
+    "descending": "décroissant",
+    "sortBy": "Trier par {{column}}"
+  },
+  "updates": {
+    "title": "Mises à jour",
+    "subtitle": "Gardez votre système à jour et sécurisé.",
+    "system": {
+      "title": "Mises à jour du système",
+      "hint": "Paquets installés par votre distribution.",
+      "idle": "Cliquez sur « Rechercher ». Votre mot de passe sera demandé une seule fois.",
+      "checking": "Recherche en cours…",
+      "updating": "Mise à jour en cours, ne fermez pas Plume…",
+      "done": "Tout est à jour. Un redémarrage peut être utile.",
+      "latest": "Tout est à jour."
+    },
+    "available_one": "{{count}} mise à jour disponible",
+    "available_other": "{{count}} mises à jour disponibles",
+    "updateAll": "Tout mettre à jour",
+    "updateAllConfirm": "Oui, mettre à jour",
+    "app": {
+      "title": "Mise à jour de l'application",
+      "hint": "Plume se met à jour sans réinstallation. Vous choisissez le moment.",
+      "installed": "Version installée",
+      "idle": "Cliquez sur « Rechercher » pour vérifier s'il existe une version plus récente.",
+      "latest": "Plume est à jour.",
+      "newVersion": "Nouvelle version",
+      "published": "Publiée le",
+      "notes": "Notes de version",
+      "notesSoon": "Les notes de mise à jour seront bientôt disponibles.",
+      "restart": "Plume va redémarrer pour terminer l'installation.",
+      "install": "Installer et redémarrer",
+      "installing": "Installation en cours…",
+      "downloading": "Téléchargement… {{progress}} %",
+      "keepOpen": "Ne fermez pas Plume pendant la mise à jour."
+    }
+  },
+  "clean": {
+    "title": "Nettoyage",
+    "subtitle": "Libérez de la place dans votre dossier personnel. Rien n'est supprimé définitivement.",
+    "filters": {
+      "unused": "Moins utilisés",
+      "largest": "Plus volumineux"
+    },
+    "files": {
+      "title": "Vos fichiers",
+      "onlyFiles": "Fichiers seulement"
+    },
+    "scanDisabled": "L'analyse est désactivée dans les Réglages.",
+    "loading": "Analyse en cours…",
+    "empty": "Rien à signaler.",
+    "select": "Sélectionner {{name}}",
+    "selected_one": "{{count}} fichier sélectionné · {{size}}",
+    "selected_other": "{{count}} fichiers sélectionnés · {{size}}",
+    "trash": "Mettre à la corbeille",
+    "trashConfirm": "Oui, mettre à la corbeille",
+    "temp": {
+      "title": "Fichiers temporaires",
+      "hint": "Caches des programmes et corbeille. Ils se recréent tout seuls si besoin.",
+      "clear": "Vider ({{size}})",
+      "clearConfirm": "Oui, vider",
+      "empty": "Aucun fichier temporaire volumineux.",
+      "cache": "Cache de {{name}}",
+      "trash": "Corbeille"
+    }
+  },
+  "applications": {
+    "title": "Applications",
+    "subtitle": "Gérez les applications visibles dans le menu de votre bureau.",
+    "errors": {
+      "load": "Erreur lors du chargement des applications",
+      "search": "Erreur lors de la recherche",
+      "uninstall": "La désinstallation a échoué. Vérifiez que vous avez les droits d'administration.",
+      "uninstallGeneric": "Erreur lors de la désinstallation",
+      "details": "Erreur lors du chargement des détails"
+    },
+    "search": {
+      "title": "Rechercher une application",
+      "hint": "Recherchez parmi les applications du menu",
+      "placeholder": "Rechercher une application..."
+    },
+    "installed": {
+      "title": "Applications installées"
+    },
+    "found_one": "Trouvées : {{count}} application",
+    "found_other": "Trouvées : {{count}} applications",
+    "loading": "Chargement des applications...",
+    "empty": "Aucune application trouvée.",
+    "emptyHint": "Essayez une autre recherche.",
+    "showMore": "Afficher plus ({{count}})",
+    "source": {
+      "manual": "installée manuellement"
+    },
+    "uninstall": "Désinstaller",
+    "details": "Voir les détails",
+    "modal": {
+      "title": "Détails de l'application",
+      "loading": "Chargement des détails...",
+      "name": "Nom",
+      "package": "Paquet / identifiant",
+      "source": "Source",
+      "version": "Version",
+      "size": "Taille",
+      "description": "Description",
+      "exec": "Commande d'exécution",
+      "icon": "Icône",
+      "categories": "Catégories",
+      "desktopFile": "Fichier .desktop",
+      "manualNote": "Cette application a été installée à la main. Plume ne supprime pas son fichier .desktop automatiquement.",
+      "desktopContent": "Contenu du fichier .desktop",
+      "error": "Impossible de charger les détails de l'application."
+    }
+  },
+  "settings": {
+    "title": "Réglages",
+    "subtitle": "Adaptez Plume à vos goûts.",
+    "reset": "Réinitialiser",
+    "app": {
+      "title": "Application",
+      "hint": "Informations sur votre installation de Plume.",
+      "version": "Version de Plume",
+      "updatesNote": "Les mises à jour de Plume s'installent depuis la page « Mises à jour »."
+    },
+    "appearance": {
+      "title": "Apparence",
+      "theme": "Thème",
+      "themes": {
+        "light": "Clair",
+        "dark": "Sombre",
+        "system": "Système"
+      },
+      "font": "Police",
+      "fonts": {
+        "system": "Système",
+        "rounded": "Arrondie",
+        "serif": "Avec empattements",
+        "mono": "Monospace"
+      },
+      "fontSize": "Taille du texte · {{size}}px",
+      "background": "Couleur de fond ({{theme}})",
+      "lightTheme": "thème clair",
+      "darkTheme": "thème sombre",
+      "colors": {
+        "red": "Rouge",
+        "green": "Vert",
+        "blue": "Bleu"
+      },
+      "language": "Langue"
+    },
+    "permissions": {
+      "title": "Autorisations",
+      "hint": "Vous gardez le contrôle : chaque action peut être désactivée.",
+      "scanHome": {
+        "title": "Lire mon dossier personnel",
+        "description": "Nécessaire pour trouver les gros fichiers. Rien n'est envoyé sur Internet."
+      },
+      "deleteFiles": {
+        "title": "Mettre des fichiers à la corbeille",
+        "description": "Toujours après votre confirmation. Récupérable depuis la corbeille."
+      },
+      "systemChanges": {
+        "title": "Modifier le système",
+        "description": "Mises à jour et retrait de programmes. Votre mot de passe est demandé par le système."
+      }
+    },
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "text": "Plume fonctionne entièrement sur votre ordinateur. Aucune donnée n'est collectée ni envoyée. Elle lit uniquement votre dossier personnel (en ignorant les dossiers de dépendances comme node_modules ou vendor) et ne supprime jamais définitivement un de vos fichiers : ils vont à la corbeille. Les modifications du système passent par la fenêtre d'autorisation de votre distribution. Vos réglages sont conservés localement."
+    }
+  }
+}

@@ -289,12 +289,15 @@ fn open_in_file_manager(target: &std::path::Path) -> std::io::Result<()> {
 pub fn reveal(path: String) -> Result<(), String> {
     let p = std::path::PathBuf::from(&path);
     if !fsutil::is_inside(&fsutil::home(), &p) {
-        return Err("Chemin en dehors de votre dossier personnel".into());
+        return Err("path_outside_home".into());
     }
     let target = if p.is_dir() {
         p
     } else {
         p.parent().map(|x| x.to_path_buf()).unwrap_or(p)
     };
-    open_in_file_manager(&target).map_err(|e| e.to_string())
+    open_in_file_manager(&target).map_err(|e| {
+        eprintln!("Impossible d'ouvrir le dossier : {e}");
+        "open_failed".to_string()
+    })
 }
