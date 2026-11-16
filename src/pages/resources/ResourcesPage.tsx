@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { bytes } from "@/core/format";
+import { useTranslation } from "react-i18next";
+import { bytes, percentValue } from "@/core/format";
 import { Notice, PageHeader } from "@/core/ui";
 import { Chart, SERIES, useChartTheme } from "@/core/charts";
 import { Legend, type LegendItem } from "./components/Legend";
@@ -12,8 +13,6 @@ import type { ResourceSample, ResourceSnapshot } from "./types";
 const HISTORY = 60;
 
 const share = (part: number, total: number) => (total ? (part / total) * 100 : 0);
-const percent = (part: number, total: number) => `${share(part, total).toFixed(1)} %`;
-const rate = (value: number) => `${bytes(value)}/s`;
 
 const toSample = (s: ResourceSnapshot): ResourceSample => ({
   cpu: s.cpuCores,
@@ -26,10 +25,14 @@ const toSample = (s: ResourceSnapshot): ResourceSample => ({
 });
 
 export function ResourcesPage() {
+  const { t } = useTranslation();
   const theme = useChartTheme();
   const [latest, setLatest] = useState<ResourceSnapshot | null>(null);
   const [history, setHistory] = useState<ResourceSample[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const percent = (part: number, total: number) => percentValue(share(part, total), 1);
+  const rate = (value: number) => t("common.perSecond", { value: bytes(value) });
 
   useEffect(() => {
     let alive = true;
@@ -72,8 +75,8 @@ export function ResourcesPage() {
       labels,
       percent: true,
       series: [
-        { name: "Mémoire", color: SERIES[0], data: history.map((h) => h.ram) },
-        { name: "Espace d'échange", color: SERIES[3], data: history.map((h) => h.swap) },
+        { name: t("common.memory"), color: SERIES[0], data: history.map((h) => h.ram) },
+        { name: t("common.swap"), color: SERIES[3], data: history.map((h) => h.swap) },
       ],
     },
     theme,
@@ -83,8 +86,8 @@ export function ResourcesPage() {
     {
       labels,
       series: [
-        { name: "Réception", color: SERIES[4], data: history.map((h) => h.rx) },
-        { name: "Envoi", color: SERIES[1], data: history.map((h) => h.tx) },
+        { name: t("common.received"), color: SERIES[4], data: history.map((h) => h.rx) },
+        { name: t("common.sent"), color: SERIES[1], data: history.map((h) => h.tx) },
       ],
     },
     theme,
@@ -94,8 +97,8 @@ export function ResourcesPage() {
     {
       labels,
       series: [
-        { name: "Lecture", color: SERIES[4], data: history.map((h) => h.read) },
-        { name: "Écriture", color: SERIES[1], data: history.map((h) => h.write) },
+        { name: t("common.read"), color: SERIES[4], data: history.map((h) => h.read) },
+        { name: t("common.write"), color: SERIES[1], data: history.map((h) => h.write) },
       ],
     },
     theme,
@@ -105,83 +108,90 @@ export function ResourcesPage() {
     ? latest.cpuCores.map((usage, i) => ({
         color: SERIES[i % SERIES.length],
         label: `CPU ${i + 1}`,
-        value: `${usage.toFixed(1)} %`,
+        value: percentValue(usage, 1),
       }))
     : [];
 
   const memoryLegend: LegendItem[] = [
     {
       color: SERIES[0],
-      label: "Mémoire",
+      label: t("common.memory"),
       value: latest ? `${bytes(latest.ramUsed)} (${percent(latest.ramUsed, latest.ramTotal)})` : "…",
-      detail: latest ? `sur ${bytes(latest.ramTotal)}` : undefined,
+      detail: latest ? t("resources.on", { total: bytes(latest.ramTotal) }) : undefined,
     },
     {
       color: SERIES[3],
-      label: "Espace d'échange",
+      label: t("common.swap"),
       value: latest
         ? latest.swapTotal
           ? `${bytes(latest.swapUsed)} (${percent(latest.swapUsed, latest.swapTotal)})`
-          : "Aucun"
+          : t("common.none")
         : "…",
-      detail: latest && latest.swapTotal ? `sur ${bytes(latest.swapTotal)}` : undefined,
+      detail: latest && latest.swapTotal ? t("resources.on", { total: bytes(latest.swapTotal) }) : undefined,
     },
   ];
 
   const networkLegend: LegendItem[] = [
     {
       color: SERIES[4],
-      label: "Réception",
+      label: t("common.received"),
       value: latest ? rate(latest.netRx) : "…",
-      detail: latest ? `Total reçu ${bytes(latest.netRxTotal)}` : undefined,
+      detail: latest ? t("resources.network.totalReceived", { total: bytes(latest.netRxTotal) }) : undefined,
     },
     {
       color: SERIES[1],
-      label: "Envoi",
+      label: t("common.sent"),
       value: latest ? rate(latest.netTx) : "…",
-      detail: latest ? `Total envoyé ${bytes(latest.netTxTotal)}` : undefined,
+      detail: latest ? t("resources.network.totalSent", { total: bytes(latest.netTxTotal) }) : undefined,
     },
   ];
 
   const diskLegend: LegendItem[] = [
     {
       color: SERIES[4],
-      label: "Lecture",
+      label: t("common.read"),
       value: latest ? rate(latest.diskRead) : "…",
-      detail: latest ? `Total lu ${bytes(latest.diskReadTotal)}` : undefined,
+      detail: latest ? t("resources.disk.totalRead", { total: bytes(latest.diskReadTotal) }) : undefined,
     },
     {
       color: SERIES[1],
-      label: "Écriture",
+      label: t("common.write"),
       value: latest ? rate(latest.diskWrite) : "…",
-      detail: latest ? `Total écrit ${bytes(latest.diskWriteTotal)}` : undefined,
+      detail: latest ? t("resources.disk.totalWritten", { total: bytes(latest.diskWriteTotal) }) : undefined,
     },
   ];
 
   return (
     <>
-      <PageHeader title="Ressources" subtitle="L'activité de votre ordinateur en temps réel, sur la dernière minute." />
+      <PageHeader title={t("resources.title")} subtitle={t("resources.subtitle")} />
       {error && <Notice>{error}</Notice>}
 
       <ResourceSection
-        title="Processeur"
-        hint={latest ? `${latest.cpuGlobal.toFixed(0)} % au total · ${cores} cœur${cores > 1 ? "s" : ""}` : undefined}
+        title={t("common.cpu")}
+        hint={
+          latest
+            ? t("resources.cpu.hint", {
+                percent: percentValue(latest.cpuGlobal, 0),
+                count: cores,
+              })
+            : undefined
+        }
       >
         <Chart option={cpuOption} height={240} />
         <Legend items={cpuLegend} />
       </ResourceSection>
 
-      <ResourceSection title="Mémoire et espace d'échange">
+      <ResourceSection title={t("resources.memorySwap.title")}>
         <Chart option={memoryOption} height={180} />
         <Legend items={memoryLegend} />
       </ResourceSection>
 
-      <ResourceSection title="Réseau">
+      <ResourceSection title={t("common.network")}>
         <Chart option={networkOption} height={180} />
         <Legend items={networkLegend} />
       </ResourceSection>
 
-      <ResourceSection title="Disque">
+      <ResourceSection title={t("common.disk")}>
         <Chart option={diskOption} height={180} />
         <Legend items={diskLegend} />
       </ResourceSection>
