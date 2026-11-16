@@ -14,6 +14,7 @@
     "deleteDisabled": "Deletion is disabled in Settings.",
     "authorizationDisabled": "Permission disabled in Settings.",
     "openFolder": "Open folder",
+    "resizeSidebar": "Resize the navigation bar (double-click to reset)",
     "celsius": "{{value}} °C",
     "perSecond": "{{value}}/s",
     "cpu": "CPU",
@@ -299,6 +300,8 @@
         "mono": "Monospace"
       },
       "fontSize": "Text size · {{size}}px",
+      "interfaceV2": "Use the new interface",
+      "interfaceV2Hint": "Content framed in a rounded card, navigation bar on a darkened background.",
       "background": "Background color ({{theme}})",
       "lightTheme": "light theme",
       "darkTheme": "dark theme",
