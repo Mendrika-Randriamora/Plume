@@ -14,6 +14,7 @@
     "deleteDisabled": "La suppression est désactivée dans les Réglages.",
     "authorizationDisabled": "Autorisation désactivée dans les Réglages.",
     "openFolder": "Ouvrir le dossier",
+    "resizeSidebar": "Redimensionner la barre de navigation (double-clic pour réinitialiser)",
     "celsius": "{{value}} °C",
     "perSecond": "{{value}}/s",
     "cpu": "Processeur",
@@ -299,6 +300,8 @@
         "mono": "Monospace"
       },
       "fontSize": "Taille du texte · {{size}}px",
+      "interfaceV2": "Utiliser la nouvelle interface",
+      "interfaceV2Hint": "Contenu encadré dans une carte arrondie, barre de navigation sur fond assombri.",
       "background": "Couleur de fond ({{theme}})",
       "lightTheme": "thème clair",
       "darkTheme": "thème sombre",

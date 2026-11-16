@@ -116,6 +116,17 @@ export function SettingsPage() {
           <span>{t("settings.appearance.fontSize", { size: s.fontSize })}</span>
           <input type="range" min={13} max={20} value={s.fontSize} onChange={(e) => update({ fontSize: +e.target.value })} />
         </div>
+        <label className="field">
+          <span>
+            {t("settings.appearance.interfaceV2")}
+            <span className="muted small block">{t("settings.appearance.interfaceV2Hint")}</span>
+          </span>
+          <input
+            type="checkbox"
+            checked={s.interfaceV2}
+            onChange={(e) => update({ interfaceV2: e.target.checked })}
+          />
+        </label>
         <div className="field col">
           <span>
             {t("settings.appearance.background", {

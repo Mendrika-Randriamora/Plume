@@ -17,6 +17,7 @@ export function applyTheme(s: Settings) {
   const [r, g, b] = dark ? s.baseDark : s.baseLight;
   const root = document.documentElement;
   root.dataset.theme = dark ? "dark" : "light";
+  root.dataset.shell = s.interfaceV2 ? "card" : "flat";
   root.style.setProperty("--base", `rgb(${r}, ${g}, ${b})`);
   root.style.setProperty("--font", FONTS[s.font].stack);
   root.style.setProperty("--font-size", `${s.fontSize}px`);
