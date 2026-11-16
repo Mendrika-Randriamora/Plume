@@ -58,12 +58,12 @@ export function AppUpdateCard() {
               <span className="muted">{formatDate(update.date)}</span>
             </div>
           )}
-          {update.notes && (
-            <div className="field col">
-              <span>Notes de version</span>
-              <div className="update-notes small">{update.notes}</div>
+          <div className="field col">
+            <span>Notes de version</span>
+            <div className="update-notes small">
+              Les notes de mise à jour seront bientôt disponibles.
             </div>
-          )}
+          </div>
           <div className="update-action">
             <p className="small muted">Plume va redémarrer pour terminer l{`'`}installation.</p>
             <Button icon={Download} onClick={install}>Installer et redémarrer</Button>
