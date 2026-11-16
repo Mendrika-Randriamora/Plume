@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronUp, Cpu } from "lucide-react";
-import { bytes } from "@/core/format";
+import { bytes, percentValue } from "@/core/format";
 import { Card, Loading, Notice, PageHeader } from "@/core/ui";
 import { listProcesses } from "./api";
 import type { ProcessInfo, SortKey } from "./types";
@@ -8,25 +9,26 @@ import type { ProcessInfo, SortKey } from "./types";
 /** 0 = tout afficher. */
 const LIMITS = [25, 50, 100, 250, 500, 0];
 
-const COLUMNS: { key: SortKey; label: string; numeric?: boolean; disk?: boolean }[] = [
-  { key: "name", label: "Nom" },
-  { key: "cpu", label: "CPU", numeric: true },
-  { key: "pid", label: "ID", numeric: true },
-  { key: "memory", label: "Mémoire", numeric: true },
-  { key: "read", label: "Lecture disque", numeric: true, disk: true },
-  { key: "write", label: "Écriture disque", numeric: true, disk: true },
-];
+const COLUMNS = [
+  { key: "name", labelKey: "processes.columns.name", sortKey: "processes.sortColumns.name", numeric: false, disk: false },
+  { key: "cpu", labelKey: "processes.columns.cpu", sortKey: "processes.sortColumns.cpu", numeric: true, disk: false },
+  { key: "pid", labelKey: "processes.columns.pid", sortKey: "processes.sortColumns.pid", numeric: true, disk: false },
+  { key: "memory", labelKey: "processes.columns.memory", sortKey: "processes.sortColumns.memory", numeric: true, disk: false },
+  { key: "read", labelKey: "processes.columns.read", sortKey: "processes.sortColumns.read", numeric: true, disk: true },
+  { key: "write", labelKey: "processes.columns.write", sortKey: "processes.sortColumns.write", numeric: true, disk: true },
+] as const;
 
 const REFRESH_MS = 2000;
 
-const cpu = (value: number) => (value >= 0.05 ? `${value.toFixed(1)} %` : "—");
-const rate = (value: number) => (value ? `${bytes(value)}/s` : "—");
-
 export function ProcessesPage() {
+  const { t, i18n } = useTranslation();
   const [rows, setRows] = useState<ProcessInfo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [limit, setLimit] = useState(50);
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: "memory", desc: true });
+
+  const cpu = (value: number) => (value >= 0.05 ? percentValue(value, 1) : "—");
+  const rate = (value: number) => (value ? t("common.perSecond", { value: bytes(value) }) : "—");
 
   useEffect(() => {
     let alive = true;
@@ -52,33 +54,40 @@ export function ProcessesPage() {
     if (!rows) return [];
     const dir = sort.desc ? -1 : 1;
     const sorted = [...rows].sort((a, b) => {
-      if (sort.key === "name") return a.name.localeCompare(b.name) * dir;
+      if (sort.key === "name") return a.name.localeCompare(b.name, i18n.language) * dir;
       return (a[sort.key] - b[sort.key]) * dir;
     });
     return limit ? sorted.slice(0, limit) : sorted;
-  }, [rows, sort, limit]);
+  }, [rows, sort, limit, i18n.language]);
 
   // Nouvelle colonne : décroissant pour les nombres, croissant pour le nom.
   const toggle = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, desc: !s.desc } : { key, desc: key !== "name" }));
 
-  const sortLabel = COLUMNS.find((c) => c.key === sort.key)?.label ?? "";
+  const sortColumn = COLUMNS.find((c) => c.key === sort.key) ?? COLUMNS[0];
 
   return (
     <>
-      <PageHeader title="Processus" subtitle="Les programmes en cours d'exécution, actualisés toutes les 2 secondes." />
+      <PageHeader title={t("processes.title")} subtitle={t("processes.subtitle")} />
       {error && <Notice>{error}</Notice>}
 
       <div className="toolbar">
         <p className="muted small">
-          {rows ? `${rows.length} processus` : "Lecture…"} · triés par {sortLabel.toLowerCase()}{" "}
-          {sort.desc ? "décroissant" : "croissant"}
+          {rows
+            ? t("processes.summary", {
+                count: rows.length,
+                column: t(sortColumn.sortKey),
+                direction: t(sort.desc ? "processes.descending" : "processes.ascending"),
+              })
+            : t("processes.loading")}
         </p>
         <label className="row gap small">
-          Afficher
+          {t("processes.show")}
           <select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
             {LIMITS.map((n) => (
-              <option key={n} value={n}>{n === 0 ? "Tous" : `${n} processus`}</option>
+              <option key={n} value={n}>
+                {n === 0 ? t("processes.all") : t("processes.limit", { count: n })}
+              </option>
             ))}
           </select>
         </label>
@@ -86,7 +95,7 @@ export function ProcessesPage() {
 
       <Card>
         {!rows ? (
-          <Loading text="Lecture des processus…" />
+          <Loading text={t("processes.loadingTable")} />
         ) : (
           <div className="proc-table">
             <div className="proc-row head">
@@ -97,9 +106,9 @@ export function ProcessesPage() {
                     key={col.key}
                     className={`proc-sort ${col.numeric ? "num" : ""} ${col.disk ? "proc-disk" : ""} ${active ? "on" : ""}`}
                     onClick={() => toggle(col.key)}
-                    title={`Trier par ${col.label.toLowerCase()}`}
+                    title={t("processes.sortBy", { column: t(col.sortKey) })}
                   >
-                    {col.label}
+                    {t(col.labelKey)}
                     {active && (sort.desc ? <ChevronDown size={12} /> : <ChevronUp size={12} />)}
                   </button>
                 );
