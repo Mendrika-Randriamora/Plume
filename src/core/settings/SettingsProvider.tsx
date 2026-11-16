@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import i18n, { detectLang } from "@/core/i18n";
+import i18n, { systemLang } from "@/core/i18n";
 import { DEFAULTS, load, save, type Permissions, type Settings } from "./store";
 import { applyTheme } from "./theme";
 
@@ -30,7 +30,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     () =>
       setSettings({
         ...DEFAULTS,
-        lang: detectLang(),
+        lang: systemLang(),
         permissions: { ...DEFAULTS.permissions },
       }),
     [],

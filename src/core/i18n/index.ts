@@ -22,6 +22,13 @@ export function isLang(value: unknown): value is Lang {
   return typeof value === "string" && value in LANGS;
 }
 
+/** Langue du système, sans tenir compte du choix enregistré dans les réglages. */
+export function systemLang(): Lang {
+  return typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("fr")
+    ? "fr"
+    : "en";
+}
+
 /** Langue choisie dans les réglages, sinon langue du système (français par défaut). */
 export function detectLang(): Lang {
   try {
@@ -34,9 +41,7 @@ export function detectLang(): Lang {
     /* stockage illisible : on retombe sur la langue du système */
   }
 
-  return typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("fr")
-    ? "fr"
-    : "en";
+  return systemLang();
 }
 
 void i18n.use(initReactI18next).init({
