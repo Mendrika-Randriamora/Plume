@@ -45,7 +45,8 @@ pub async fn delete_to_trash(paths: Vec<String>) -> Result<(), String> {
 #[derive(Serialize)]
 pub struct TempItem {
     id: String,
-    label: String,
+    kind: String,
+    name: Option<String>,
     path: String,
     size: u64,
 }
@@ -67,7 +68,8 @@ pub async fn scan_temp() -> Result<Vec<TempItem>, String> {
                     let name = e.file_name().to_string_lossy().into_owned();
                     items.push(TempItem {
                         id: name.clone(),
-                        label: format!("Cache de {name}"),
+                        kind: "cache".into(),
+                        name: Some(name),
                         path: path.to_string_lossy().into_owned(),
                         size,
                     });
@@ -79,7 +81,8 @@ pub async fn scan_temp() -> Result<Vec<TempItem>, String> {
         if size > 0 {
             items.push(TempItem {
                 id: "trash".into(),
-                label: "Corbeille".into(),
+                kind: "trash".into(),
+                name: None,
                 path: t.to_string_lossy().into_owned(),
                 size,
             });
