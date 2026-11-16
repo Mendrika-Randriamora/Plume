@@ -2,6 +2,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { isTauri } from "@tauri-apps/api/core";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
+import { translate } from "@/core/i18n";
 
 /** Informations affichées à l'utilisateur quand une version plus récente existe. */
 export interface AvailableUpdate {
@@ -49,7 +50,7 @@ export async function checkForUpdate(): Promise<AvailableUpdate | null> {
 export async function installUpdate(onProgress?: ProgressHandler): Promise<void> {
   requireApp();
   const update = await findUpdate();
-  if (!update) throw new Error("Plume est déjà à jour : rien à installer.");
+  if (!update) throw new Error(translate("updater.errors.alreadyUpToDate"));
 
   try {
     let downloaded = 0;
@@ -83,7 +84,7 @@ async function findUpdate() {
 
 function requireApp() {
   if (!isTauri()) {
-    throw new Error("La mise à jour automatique n'est disponible que dans l'application Plume.");
+    throw new Error(translate("updater.errors.appOnly"));
   }
 }
 
@@ -99,22 +100,22 @@ function friendlyError(e: unknown): string {
   const raw = (typeof e === "string" ? e : (e as Error)?.message ?? "").trim();
 
   if (SIGNATURE.test(raw)) {
-    return "La mise à jour n'a pas pu être vérifiée : sa signature est invalide. L'installation a été annulée par sécurité.";
+    return translate("updater.errors.signature");
   }
   if (UNSUPPORTED.test(raw)) {
-    return "La mise à jour automatique n'est disponible que pour la version AppImage de Plume.";
+    return translate("updater.errors.unsupported");
   }
   if (ENDPOINT.test(raw)) {
-    return "Aucune adresse de mise à jour n'est configurée. Contactez la personne qui développe Plume.";
+    return translate("updater.errors.endpoint");
   }
   if (NOT_FOUND.test(raw)) {
-    return "Le serveur de mise à jour ne trouve pas de nouvelle version. Réessayez plus tard.";
+    return translate("updater.errors.notFound");
   }
   if (TIMEOUT.test(raw)) {
-    return "Le serveur de mise à jour met trop de temps à répondre. Vérifiez votre connexion puis réessayez.";
+    return translate("updater.errors.timeout");
   }
   if (NETWORK.test(raw)) {
-    return "Impossible de joindre le serveur de mise à jour. Vérifiez votre connexion Internet puis réessayez.";
+    return translate("updater.errors.network");
   }
-  return "Impossible de mettre à jour Plume pour le moment. Réessayez plus tard.";
+  return translate("updater.errors.generic");
 }

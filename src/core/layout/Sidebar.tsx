@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { pages } from "@/pages/registry";
 
 interface Props {
@@ -6,10 +7,12 @@ interface Props {
 }
 
 export function Sidebar({ current, onSelect }: Props) {
-  const render = (id: string, label: string, Icon: (typeof pages)[number]["icon"]) => (
+  const { t } = useTranslation();
+
+  const render = (id: string, label: (typeof pages)[number]["label"], Icon: (typeof pages)[number]["icon"]) => (
     <button key={id} className={`nav-item ${current === id ? "active" : ""}`} onClick={() => onSelect(id)}>
       <Icon size={18} strokeWidth={1.75} />
-      <span>{label}</span>
+      <span>{t(label)}</span>
     </button>
   );
   return (
