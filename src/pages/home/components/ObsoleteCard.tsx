@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { PackageCheck } from "lucide-react";
 import { Card, ConfirmButton, Empty, Loading } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
@@ -6,6 +7,7 @@ import { listObsolete, removeObsolete } from "../api";
 import type { ObsoleteInfo } from "../types";
 
 export function ObsoleteCard() {
+  const { t } = useTranslation();
   const allowed = usePermission("systemChanges");
   const [info, setInfo] = useState<ObsoleteInfo | null>(null);
   const [busy, setBusy] = useState(false);
@@ -32,26 +34,28 @@ export function ObsoleteCard() {
   const items = info?.items ?? [];
   return (
     <Card
-      title="Programmes devenus inutiles"
-      hint="Installés pour d'autres programmes qui ont disparu depuis. Les retirer libère de la place sans rien casser."
+      title={t("home.obsolete.title")}
+      hint={t("home.obsolete.hint")}
       action={
         items.length > 0 && allowed ? (
-          <ConfirmButton label={`Supprimer (${items.length})`} onConfirm={remove} busy={busy} />
+          <ConfirmButton label={t("home.obsolete.remove", { count: items.length })} onConfirm={remove} busy={busy} />
         ) : undefined
       }
     >
       {!info && !error && <Loading />}
-      {info && info.manager === "none" && <Empty icon={PackageCheck} text="Votre système n'est pas encore pris en charge." />}
-      {info && info.manager !== "none" && items.length === 0 && <Empty icon={PackageCheck} text="Tout est propre, rien à retirer." />}
+      {info && info.manager === "none" && <Empty icon={PackageCheck} text={t("common.unsupportedSystem")} />}
+      {info && info.manager !== "none" && items.length === 0 && <Empty icon={PackageCheck} text={t("home.obsolete.empty")} />}
       {items.length > 0 && (
         <p className="chips">
           {items.slice(0, 12).map((n) => (
             <span key={n} className="chip">{n}</span>
           ))}
-          {items.length > 12 && <span className="muted small">+ {items.length - 12} autres</span>}
+          {items.length > 12 && (
+            <span className="muted small">{t("home.obsolete.more", { count: items.length - 12 })}</span>
+          )}
         </p>
       )}
-      {items.length > 0 && !allowed && <p className="muted small">Autorisation désactivée dans les Réglages.</p>}
+      {items.length > 0 && !allowed && <p className="muted small">{t("common.authorizationDisabled")}</p>}
       {error && <p className="error small">{error}</p>}
     </Card>
   );
