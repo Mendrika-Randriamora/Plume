@@ -11,15 +11,13 @@ pub async fn scan_clean(
     limit: usize,
 ) -> Result<Vec<Entry>, String> {
     blocking(move || {
-        let mut v = scanner::scan(!only_files);
-        if filter == "unused" {
-            v.retain(|e| e.size >= 1_000_000);
-            v.sort_by_key(|e| e.last_used);
+        let limit = limit.min(500);
+        let (min_size, rank) = if filter == "unused" {
+            (1_000_000, scanner::Rank::Oldest)
         } else {
-            v.sort_by_key(|a| std::cmp::Reverse(a.size));
-        }
-        v.truncate(limit.min(500));
-        Ok(v)
+            (0, scanner::Rank::Largest)
+        };
+        Ok(scanner::top(limit, min_size, rank, !only_files))
     })
     .await
 }
