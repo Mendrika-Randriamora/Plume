@@ -28,6 +28,11 @@ export function gigabytes(n: number): string {
   return `${number(n, 2)} ${translate("units.gb")}`;
 }
 
+/** Octets → gigaoctets binaires (1024³) : même conversion que la page Accueil. */
+export function bytesToGigabytes(n: number): number {
+  return n / 1024 ** 3;
+}
+
 /** Pourcentage (0–100) formaté par Intl : espace et virgule propres à la langue. */
 export function percentValue(value: number, digits = 1): string {
   return new Intl.NumberFormat(i18n.language, {

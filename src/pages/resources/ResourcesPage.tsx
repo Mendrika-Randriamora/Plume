@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { bytes, percentValue } from "@/core/format";
+import { bytes, bytesToGigabytes, gigabytes, percentValue } from "@/core/format";
 import { Notice, PageHeader } from "@/core/ui";
 import { Chart, SERIES, useChartTheme } from "@/core/charts";
 import { Legend, type LegendItem } from "./components/Legend";
@@ -77,22 +77,29 @@ export function ResourcesPage() {
       }))
     : [];
 
+  // Mémoire et échange : même conversion que la page Accueil (octets → Gio,
+  // 1024³) pour afficher exactement les mêmes valeurs.
+  const ramUsed = latest ? bytesToGigabytes(latest.ramUsed) : 0;
+  const ramTotal = latest ? bytesToGigabytes(latest.ramTotal) : 0;
+  const swapUsed = latest ? bytesToGigabytes(latest.swapUsed) : 0;
+  const swapTotal = latest ? bytesToGigabytes(latest.swapTotal) : 0;
+
   const memoryLegend: LegendItem[] = [
     {
       color: SERIES[0],
       label: t("common.memory"),
-      value: latest ? `${bytes(latest.ramUsed)} (${percent(latest.ramUsed, latest.ramTotal)})` : "…",
-      detail: latest ? t("resources.on", { total: bytes(latest.ramTotal) }) : undefined,
+      value: latest ? `${gigabytes(ramUsed)} (${percent(ramUsed, ramTotal)})` : "…",
+      detail: latest ? t("resources.on", { total: gigabytes(ramTotal) }) : undefined,
     },
     {
       color: SERIES[3],
       label: t("common.swap"),
       value: latest
-        ? latest.swapTotal
-          ? `${bytes(latest.swapUsed)} (${percent(latest.swapUsed, latest.swapTotal)})`
+        ? swapTotal
+          ? `${gigabytes(swapUsed)} (${percent(swapUsed, swapTotal)})`
           : t("common.none")
         : "…",
-      detail: latest && latest.swapTotal ? t("resources.on", { total: bytes(latest.swapTotal) }) : undefined,
+      detail: latest && swapTotal ? t("resources.on", { total: gigabytes(swapTotal) }) : undefined,
     },
   ];
 
