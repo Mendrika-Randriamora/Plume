@@ -1,6 +1,6 @@
 use serde::Serialize;
 use std::{collections::HashMap, process::Command};
-use sysinfo::{Components, Disks, ProcessesToUpdate, System};
+use sysinfo::{Components, Disks, ProcessRefreshKind, ProcessesToUpdate, System};
 
 use crate::shared::{blocking, fsutil, scanner, scanner::Entry};
 
@@ -23,6 +23,8 @@ pub struct App {
 pub struct SystemStats {
     ram_total: f64,
     ram_used: f64,
+    swap_total: f64,
+    swap_used: f64,
     disk_total: u64,
     disk_free: u64,
     temps: Temps,
@@ -158,24 +160,44 @@ pub async fn system_stats() -> Result<SystemStats, String> {
     blocking(|| {
         let mut sys = System::new();
         sys.refresh_memory();
-        sys.refresh_processes(ProcessesToUpdate::All, true);
+        // Seule la mémoire des processus est utile ici : inutile de lire les
+        // lignes de commande et environnements de 1500 processus toutes les 5 s.
+        sys.refresh_processes_specifics(
+            ProcessesToUpdate::All,
+            true,
+            ProcessRefreshKind::new().with_memory(),
+        );
 
         // Mémoire par application (les processus du même nom sont regroupés)
-        let mut by_name: HashMap<String, u64> = HashMap::new();
+        let mut by_name: HashMap<String, (u64, Vec<(u32, u64)>)> = HashMap::new();
         for p in sys.processes().values() {
             if p.thread_kind().is_some() {
                 continue; // ignorer les threads (Linux)
             }
-            // Mesure réelle si disponible, sinon RSS / working set en secours
-            let mem = real_memory(p.pid().as_u32()).unwrap_or_else(|| p.memory());
-            *by_name
+            let rss = p.memory();
+            let group = by_name
                 .entry(p.name().to_string_lossy().into_owned())
-                .or_insert(0) += mem;
+                .or_insert((0, Vec::new()));
+            group.0 = group.0.saturating_add(rss);
+            group.1.push((p.pid().as_u32(), rss));
         }
 
-        let mut top_apps: Vec<App> = by_name
+        // On classe d'abord par RSS (gratuit), puis on ne lit le PSS que des
+        // candidats plausibles : /proc/<pid>/smaps_rollup coûte cher.
+        let mut ranked: Vec<_> = by_name.into_iter().collect();
+        ranked.sort_by_key(|(_, (rss, _))| std::cmp::Reverse(*rss));
+        ranked.truncate(12);
+
+        let mut top_apps: Vec<App> = ranked
             .into_iter()
-            .map(|(name, memory)| App { name, memory })
+            .map(|(name, (_, procs))| App {
+                name,
+                // Mesure réelle si disponible, sinon RSS / working set en secours
+                memory: procs
+                    .iter()
+                    .map(|(pid, rss)| real_memory(*pid).unwrap_or(*rss))
+                    .sum(),
+            })
             .collect();
 
         top_apps.sort_by_key(|a| std::cmp::Reverse(a.memory));
@@ -219,6 +241,8 @@ pub async fn system_stats() -> Result<SystemStats, String> {
         Ok(SystemStats {
             ram_total: bytes_to_go(sys.total_memory()),
             ram_used: bytes_to_go(sys.used_memory()),
+            swap_total: bytes_to_go(sys.total_swap()),
+            swap_used: bytes_to_go(sys.used_swap()),
             disk_total,
             disk_free,
             temps: Temps {
@@ -242,16 +266,7 @@ pub struct Highlights {
 #[tauri::command]
 pub async fn home_highlights() -> Result<Highlights, String> {
     blocking(|| {
-        let all = scanner::scan(false);
-
-        let mut heavy = all.clone();
-        heavy.sort_by_key(|a| std::cmp::Reverse(a.size));
-        heavy.truncate(5);
-
-        let mut unused: Vec<Entry> = all.into_iter().filter(|e| e.size >= 5_000_000).collect();
-        unused.sort_by_key(|e| e.last_used);
-        unused.truncate(5);
-
+        let (heavy, unused) = scanner::highlights(5, 5_000_000);
         Ok(Highlights { heavy, unused })
     })
     .await

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Cpu, HardDrive, MemoryStick, RefreshCw, Thermometer } from "lucide-react";
+import { ArrowLeftRight, Cpu, HardDrive, MemoryStick, RefreshCw } from "lucide-react";
 import { bytes, pct } from "@/core/format";
 import { Button, Card, Loading, Notice, PageHeader } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
@@ -45,6 +45,16 @@ export function HomePage() {
       <PageHeader title="Accueil" subtitle="L'état de votre ordinateur, en un coup d'œil." />
       {error && <Notice>{error}</Notice>}
 
+      {temps.length > 0 ? (
+        <p className="chips">
+          {temps.map(([l, t]) => (
+            <span key={l} className="chip">{l} · {t}</span>
+          ))}
+        </p>
+      ) : stats && (
+        <p className="chips"><span className="chip muted">Aucun capteur de température détecté</span></p>
+      )}
+
       <div className="grid-3">
         <Stat
           icon={MemoryStick}
@@ -54,26 +64,20 @@ export function HomePage() {
           meter={stats ? pct(stats.ramUsed, stats.ramTotal) : 0}
         />
         <Stat
+          icon={ArrowLeftRight}
+          label="Espace d'échange"
+          value={stats ? (stats.swapTotal ? `${stats.swapUsed.toFixed(2)} Go` : "Aucun") : "…"}
+          detail={stats ? (stats.swapTotal ? `utilisé sur ${stats.swapTotal.toFixed(2)} Go` : "Aucun espace configuré") : undefined}
+          meter={stats ? pct(stats.swapUsed, stats.swapTotal) : 0}
+        />
+        <Stat
           icon={HardDrive}
           label="Espace libre"
           value={stats ? bytes(stats.diskFree) : "…"}
           detail={stats ? `sur ${bytes(stats.diskTotal)}` : undefined}
           meter={stats ? 100 - pct(stats.diskFree, stats.diskTotal) : 0}
         />
-        <Stat
-          icon={Thermometer}
-          label="Température moyenne"
-          value={temps.length ? "" : "Indisponible"}
-          detail={temps.length ? undefined : "Aucun capteur détecté"}
-        />
       </div>
-      {temps.length > 0 && (
-        <p className="chips">
-          {temps.map(([l, t]) => (
-            <span key={l} className="chip">{l} · {t}</span>
-          ))}
-        </p>
-      )}
 
       <Card title="Ce qui utilise la mémoire" hint="Les 5 programmes les plus gourmands en ce moment.">
         {!stats ? <Loading /> : (

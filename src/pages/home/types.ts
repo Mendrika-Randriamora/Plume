@@ -1,6 +1,8 @@
 export interface SystemStats {
   ramTotal: number;
   ramUsed: number;
+  swapTotal: number;
+  swapUsed: number;
   diskTotal: number;
   diskFree: number;
   temps: { cpu: number | null; gpu: number | null; ram: number | null };
