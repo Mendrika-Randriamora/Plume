@@ -7,6 +7,7 @@ fn main() {
     let mut builder = tauri::Builder::default()
         .manage(modules::applications::ApplicationsState::default())
         .manage(modules::resources::ResourcesState::default())
+        .manage(modules::processes::ProcessesState::default())
         .plugin(tauri_plugin_process::init());
 
     // Les mises à jour automatiques ne concernent que les bureaux (Linux, Windows, macOS).
@@ -21,6 +22,7 @@ fn main() {
             modules::home::home_highlights,
             modules::home::reveal,
             modules::resources::resource_snapshot,
+            modules::processes::list_processes,
             modules::updates::check_updates,
             modules::updates::apply_updates,
             modules::updates::list_obsolete,
