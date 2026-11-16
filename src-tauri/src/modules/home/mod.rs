@@ -1,8 +1,48 @@
 use serde::Serialize;
-use std::{collections::HashMap, process::Command};
+use std::{
+    collections::HashMap,
+    process::Command,
+    sync::{Arc, Mutex},
+    time::{Duration, Instant},
+};
 use sysinfo::{Components, Disks, ProcessRefreshKind, ProcessesToUpdate, System};
 
 use crate::shared::{blocking, fsutil, scanner, scanner::Entry};
+
+/// État partagé entre les relevés : recréer les objets sysinfo à chaque appel
+/// obligeait à relire tout /proc, /sys/class/hwmon et les points de montage.
+pub struct HomeState {
+    inner: Arc<Mutex<HomeInner>>,
+}
+
+struct HomeInner {
+    sys: System,
+    components: Components,
+    disks: Disks,
+    /// Température GPU de secours (`nvidia-smi`), mise en cache : lancer un
+    /// processus toutes les 5 s coûterait bien plus que lire un capteur.
+    gpu: Option<f32>,
+    gpu_at: Option<Instant>,
+}
+
+impl Default for HomeState {
+    fn default() -> Self {
+        Self {
+            inner: Arc::new(Mutex::new(HomeInner {
+                sys: System::new(),
+                components: Components::new_with_refreshed_list(),
+                disks: Disks::new_with_refreshed_list(),
+                gpu: None,
+                gpu_at: None,
+            })),
+        }
+    }
+}
+
+/// Durée de validité du relevé `nvidia-smi`.
+const GPU_TTL: Duration = Duration::from_secs(30);
+/// Nombre maximal de lectures PSS par relevé (une lecture = un fichier /proc).
+const PSS_BUDGET: usize = 40;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -156,13 +196,15 @@ fn real_memory(_pid: u32) -> Option<u64> {
 }
 
 #[tauri::command]
-pub async fn system_stats() -> Result<SystemStats, String> {
-    blocking(|| {
-        let mut sys = System::new();
-        sys.refresh_memory();
+pub async fn system_stats(state: tauri::State<'_, HomeState>) -> Result<SystemStats, String> {
+    let inner = state.inner.clone();
+    blocking(move || {
+        let mut i = inner.lock().map_err(|_| "stats_unavailable".to_string())?;
+
+        i.sys.refresh_memory();
         // Seule la mémoire des processus est utile ici : inutile de lire les
         // lignes de commande et environnements de 1500 processus toutes les 5 s.
-        sys.refresh_processes_specifics(
+        i.sys.refresh_processes_specifics(
             ProcessesToUpdate::All,
             true,
             ProcessRefreshKind::new().with_memory(),
@@ -170,7 +212,7 @@ pub async fn system_stats() -> Result<SystemStats, String> {
 
         // Mémoire par application (les processus du même nom sont regroupés)
         let mut by_name: HashMap<String, (u64, Vec<(u32, u64)>)> = HashMap::new();
-        for p in sys.processes().values() {
+        for p in i.sys.processes().values() {
             if p.thread_kind().is_some() {
                 continue; // ignorer les threads (Linux)
             }
@@ -183,11 +225,13 @@ pub async fn system_stats() -> Result<SystemStats, String> {
         }
 
         // On classe d'abord par RSS (gratuit), puis on ne lit le PSS que des
-        // candidats plausibles : /proc/<pid>/smaps_rollup coûte cher.
+        // candidats plausibles : /proc/<pid>/smaps_rollup coûte cher. Le budget
+        // borne le nombre de fichiers lus, même pour un navigateur à 50 processus.
         let mut ranked: Vec<_> = by_name.into_iter().collect();
         ranked.sort_by_key(|(_, (rss, _))| std::cmp::Reverse(*rss));
         ranked.truncate(12);
 
+        let mut budget = PSS_BUDGET;
         let mut top_apps: Vec<App> = ranked
             .into_iter()
             .map(|(name, (_, procs))| App {
@@ -195,7 +239,15 @@ pub async fn system_stats() -> Result<SystemStats, String> {
                 // Mesure réelle si disponible, sinon RSS / working set en secours
                 memory: procs
                     .iter()
-                    .map(|(pid, rss)| real_memory(*pid).unwrap_or(*rss))
+                    .map(|(pid, rss)| {
+                        let measured = if budget > 0 {
+                            budget -= 1;
+                            real_memory(*pid)
+                        } else {
+                            None
+                        };
+                        measured.unwrap_or(*rss)
+                    })
                     .sum(),
             })
             .collect();
@@ -203,10 +255,11 @@ pub async fn system_stats() -> Result<SystemStats, String> {
         top_apps.sort_by_key(|a| std::cmp::Reverse(a.memory));
         top_apps.truncate(5);
 
-        // Températures
-        let comps = Components::new_with_refreshed_list();
+        // Températures : on relit les capteurs existants au lieu de re-scanner
+        // /sys/class/hwmon.
+        i.components.refresh();
         let (mut cpu, mut gpu, mut ram) = (vec![], vec![], vec![]);
-        for c in comps.iter() {
+        for c in i.components.iter() {
             let l = c.label().to_lowercase();
             let t = c.temperature();
             if ["amdgpu", "nouveau", "nvidia", "gpu"]
@@ -225,12 +278,24 @@ pub async fn system_stats() -> Result<SystemStats, String> {
                 cpu.push(t);
             }
         }
-        let gpu = avg(gpu).or_else(gpu_from_nvidia_smi);
+        // Un capteur hwmon est gratuit ; nvidia-smi ne sert que de secours et
+        // son résultat est réutilisé quelques dizaines de secondes.
+        let gpu = match avg(gpu) {
+            Some(t) => Some(t),
+            None => {
+                if i.gpu_at.is_none_or(|at| at.elapsed() >= GPU_TTL) {
+                    i.gpu = gpu_from_nvidia_smi();
+                    i.gpu_at = Some(Instant::now());
+                }
+                i.gpu
+            }
+        };
 
         // Disque qui contient le dossier personnel
+        i.disks.refresh();
         let home = fsutil::home();
-        let disks = Disks::new_with_refreshed_list();
-        let disk = disks
+        let disk = i
+            .disks
             .iter()
             .filter(|d| home.starts_with(d.mount_point()))
             .max_by_key(|d| d.mount_point().as_os_str().len());
@@ -239,10 +304,10 @@ pub async fn system_stats() -> Result<SystemStats, String> {
             .unwrap_or((0, 0));
 
         Ok(SystemStats {
-            ram_total: bytes_to_go(sys.total_memory()),
-            ram_used: bytes_to_go(sys.used_memory()),
-            swap_total: bytes_to_go(sys.total_swap()),
-            swap_used: bytes_to_go(sys.used_swap()),
+            ram_total: bytes_to_go(i.sys.total_memory()),
+            ram_used: bytes_to_go(i.sys.used_memory()),
+            swap_total: bytes_to_go(i.sys.total_swap()),
+            swap_used: bytes_to_go(i.sys.used_swap()),
             disk_total,
             disk_free,
             temps: Temps {

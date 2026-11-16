@@ -4,7 +4,7 @@ import { RefreshCw, Search } from "lucide-react";
 import { Button, Card, Loading, Notice, PageHeader } from "@/core/ui";
 import { translate } from "@/core/i18n";
 import { usePermission } from "@/core/settings/SettingsProvider";
-import { refreshApplications, searchApplications, uninstallApplication, getApplicationDetails } from "./api";
+import { refreshApplications, listApplications, searchApplications, uninstallApplication, getApplicationDetails } from "./api";
 import { AppList } from "./components/AppList";
 import { AppDetailsModal } from "./components/AppDetailsModal";
 import type { Application, ApplicationDetails } from "./types";
@@ -30,23 +30,34 @@ export function ApplicationsPage() {
   const [details, setDetails] = useState<ApplicationDetails | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
-  const loadApplications = useCallback(async () => {
-    setLoading(true);
-    setError(undefined);
-    try {
-      const apps = await refreshApplications();
-      setApplications(apps);
-      setResults(apps);
-      setVisibleCount(PAGE_SIZE);
-    } catch (e: unknown) {
-      setError(errorMessage(e, translate("applications.errors.load")));
-    } finally {
-      setLoading(false);
-    }
+  const apply = useCallback((apps: Application[]) => {
+    setApplications(apps);
+    setResults(apps);
+    setVisibleCount(PAGE_SIZE);
   }, []);
 
+  /**
+   * `reload` = false s'appuie sur l'inventaire gardé en mémoire par Rust (retour
+   * sur la page instantané) ; `true` force un nouveau scan (bouton Actualiser,
+   * après une désinstallation).
+   */
+  const loadApplications = useCallback(
+    async (reload = false) => {
+      setLoading(true);
+      setError(undefined);
+      try {
+        apply(await (reload ? refreshApplications() : listApplications()));
+      } catch (e: unknown) {
+        setError(errorMessage(e, translate("applications.errors.load")));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [apply],
+  );
+
   useEffect(() => {
-    loadApplications();
+    void loadApplications();
   }, [loadApplications]);
 
   // La recherche est débouncée et ne filtre que le cache mémoire côté Rust.
@@ -90,7 +101,7 @@ export function ApplicationsPage() {
     try {
       const success = await uninstallApplication(desktopId);
       if (success) {
-        await loadApplications();
+        await loadApplications(true);
       } else {
         setError(translate("applications.errors.uninstall"));
       }
@@ -139,7 +150,7 @@ export function ApplicationsPage() {
         title={t("applications.title")}
         subtitle={t("applications.subtitle")}
         action={
-          <Button icon={RefreshCw} busy={loading} onClick={loadApplications}>
+          <Button icon={RefreshCw} busy={loading} onClick={() => loadApplications(true)}>
             {t("common.refresh")}
           </Button>
         }

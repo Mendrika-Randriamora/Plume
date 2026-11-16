@@ -27,7 +27,9 @@ export function Chart({ option, height = 200 }: { option: EChartsCoreOption; hei
   }, []);
 
   useEffect(() => {
-    chart.current?.setOption(option, true);
+    // Fusion plutôt que remplacement complet : à un relevé par seconde, seules
+    // les séries changent, inutile de reconstruire axes, grille et infobulles.
+    chart.current?.setOption(option, { replaceMerge: ["series"], lazyUpdate: true });
   }, [option]);
 
   return <div ref={el} className="chart" style={{ height }} />;

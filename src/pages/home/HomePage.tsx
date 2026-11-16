@@ -4,36 +4,32 @@ import { ArrowLeftRight, Cpu, HardDrive, MemoryStick, RefreshCw } from "lucide-r
 import { bytes, gigabytes, pct } from "@/core/format";
 import { Button, Card, Loading, Notice, PageHeader } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
-import { homeHighlights, reveal, systemStats } from "./api";
+import { reveal } from "./api";
+import { loadHighlights, useHomeLive } from "./live";
 import { FileList } from "./components/FileList";
 import { ObsoleteCard } from "./components/ObsoleteCard";
 import { Stat } from "./components/Stat";
-import type { FileEntry, Highlights, SystemStats } from "./types";
+import type { FileEntry } from "./types";
 
 export function HomePage() {
   const { t } = useTranslation();
   const canScan = usePermission("scanHome");
-  const [stats, setStats] = useState<SystemStats | null>(null);
-  const [hl, setHl] = useState<Highlights | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { stats, highlights: hl, scanning, error: liveError } = useHomeLive();
   const [error, setError] = useState<string | null>(null);
+  const message = error ?? liveError;
 
   const deg = (temp: number | null) =>
     temp === null ? null : t("common.celsius", { value: Math.round(temp) });
 
+  // Les relevés système tournent déjà en continu (voir App) ; le scan du
+  // dossier personnel, lui, n'est lancé qu'une fois puis conservé en cache.
   useEffect(() => {
-    const tick = () => systemStats().then(setStats).catch((e) => setError(e.message));
-    tick();
-    const id = setInterval(tick, 5000);
-    return () => clearInterval(id);
-  }, []);
+    if (canScan) void loadHighlights();
+  }, [canScan]);
 
   const scan = useCallback(() => {
-    if (!canScan) return;
-    setLoading(true);
-    homeHighlights().then(setHl).catch((e) => setError(e.message)).finally(() => setLoading(false));
+    if (canScan) void loadHighlights(true);
   }, [canScan]);
-  useEffect(scan, [scan]);
 
   const open = (f: FileEntry) => reveal(f.path).catch((e) => setError(e.message));
 
@@ -50,7 +46,7 @@ export function HomePage() {
   return (
     <>
       <PageHeader title={t("home.title")} subtitle={t("home.subtitle")} />
-      {error && <Notice>{error}</Notice>}
+      {message && <Notice>{message}</Notice>}
 
       {temps.length > 0 ? (
         <p className="chips">
@@ -114,7 +110,7 @@ export function HomePage() {
           <Card
             title={t("home.unused.title")}
             hint={t("home.unused.hint")}
-            action={<Button variant="ghost" icon={RefreshCw} busy={loading} onClick={scan} aria-label={t("home.unused.refresh")} />}
+            action={<Button variant="ghost" icon={RefreshCw} busy={scanning} onClick={scan} aria-label={t("home.unused.refresh")} />}
           >
             {!hl ? <Loading text={t("home.unused.loading")} /> : <FileList files={hl.unused} showDate onOpen={open} />}
           </Card>
