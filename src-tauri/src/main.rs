@@ -6,6 +6,7 @@ mod shared;
 fn main() {
     let mut builder = tauri::Builder::default()
         .manage(modules::applications::ApplicationsState::default())
+        .manage(modules::home::HomeState::default())
         .manage(modules::resources::ResourcesState::default())
         .manage(modules::processes::ProcessesState::default())
         .plugin(tauri_plugin_process::init());

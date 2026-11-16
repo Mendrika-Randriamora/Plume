@@ -1,29 +1,30 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PackageCheck } from "lucide-react";
 import { Card, ConfirmButton, Empty, Loading } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
-import { listObsolete, removeObsolete } from "../api";
-import type { ObsoleteInfo } from "../types";
+import { removeObsolete } from "../api";
+import { loadObsolete, useHomeLive } from "../live";
 
 export function ObsoleteCard() {
   const { t } = useTranslation();
   const allowed = usePermission("systemChanges");
-  const [info, setInfo] = useState<ObsoleteInfo | null>(null);
+  const { obsolete: info } = useHomeLive();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(() => {
-    listObsolete().then(setInfo).catch((e) => setError(e.message));
+  // Liste mise en cache par le magasin partagé : pas de nouvel appel au
+  // gestionnaire de paquets à chaque retour sur la page.
+  useEffect(() => {
+    void loadObsolete();
   }, []);
-  useEffect(refresh, [refresh]);
 
   const remove = async () => {
     setBusy(true);
     setError(null);
     try {
       await removeObsolete();
-      refresh();
+      await loadObsolete(true);
     } catch (e) {
       setError((e as Error).message);
     } finally {
