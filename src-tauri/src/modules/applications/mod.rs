@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::sync::RwLock;
 
 #[cfg(target_os = "linux")]
-use crate::modules::updates::{detect, run_root, Manager};
+use crate::modules::updates::{detect, exec_root, run_root, Manager};
 #[cfg(target_os = "linux")]
 use crate::shared::blocking;
 #[cfg(target_os = "linux")]
@@ -16,6 +16,8 @@ use std::fs;
 use std::path::Path;
 #[cfg(target_os = "linux")]
 use std::process::Command;
+#[cfg(target_os = "linux")]
+use std::time::Duration;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Application {
@@ -176,6 +178,27 @@ pub async fn uninstall_application(
     }
 }
 
+#[tauri::command]
+pub async fn launch_application(
+    desktop_id: String,
+    state: tauri::State<'_, ApplicationsState>,
+) -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    {
+        // L'identifiant vient du front : on le valide dans l'inventaire en mémoire.
+        let entry =
+            find_cached(&state, &desktop_id)?.ok_or_else(|| "application_not_found".to_string())?;
+
+        blocking(move || launch_entry(&entry)).await
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = (desktop_id, state);
+        Err("unsupported_platform".into())
+    }
+}
+
 fn cached_entries(state: &ApplicationsState) -> Result<Option<Vec<CachedApplication>>, String> {
     let guard = state
         .entries
@@ -221,7 +244,7 @@ fn scan_inventory() -> Result<Vec<CachedApplication>, String> {
 
     let owner_paths: Vec<PathBuf> = parsed
         .iter()
-        .filter(|entry| origin_from_path(&entry.path).is_none())
+        .filter(|entry| origin_from_path(&entry.path, &entry.entry).is_none())
         .map(|entry| entry.path.clone())
         .collect();
     let owners = find_owners(&owner_paths, manager);
@@ -229,7 +252,7 @@ fn scan_inventory() -> Result<Vec<CachedApplication>, String> {
     let mut entries: Vec<CachedApplication> = parsed
         .into_iter()
         .map(|parsed| {
-            if let Some((origin, package_name)) = origin_from_path(&parsed.path) {
+            if let Some((origin, package_name)) = origin_from_path(&parsed.path, &parsed.entry) {
                 build_cached(parsed, origin, package_name)
             } else if let Some(package_name) = owners.get(&parsed.path) {
                 build_cached(parsed, source.to_string(), package_name.clone())
@@ -326,17 +349,165 @@ fn uninstall_entry(entry: &CachedApplication) -> Result<(), String> {
     }
 
     match entry.app.source.as_str() {
-        "apt" => run_root(&["apt-get", "remove", "-y", package])?,
-        "dnf" => run_root(&["dnf", "remove", "-y", package])?,
-        "pacman" => run_root(&["pacman", "-Rs", "--noconfirm", package])?,
-        "flatpak" => run_root(&["flatpak", "uninstall", "-y", package])?,
-        "snap" => run_root(&["snap", "remove", package])?,
+        "apt" => {
+            run_root(&["apt-get", "remove", "-y", package])?;
+        }
+        "dnf" => {
+            run_root(&["dnf", "remove", "-y", package])?;
+        }
+        "pacman" => {
+            run_root(&["pacman", "-Rs", "--noconfirm", package])?;
+        }
+        "flatpak" => {
+            run_root(&["flatpak", "uninstall", "-y", package])?;
+        }
+        "snap" => remove_snap(package)?,
         other => {
             eprintln!("Source d'application inconnue : {other}");
             return Err("unknown_source".into());
         }
     };
     Ok(())
+}
+
+/// Délai maximal d'attente d'une suppression de snap déjà lancée (instantané des
+/// données utilisateur compris, ce qui peut prendre plusieurs minutes).
+#[cfg(target_os = "linux")]
+const SNAP_REMOVAL_TIMEOUT: Duration = Duration::from_secs(600);
+
+/// Un snap ne doit être nommé qu'avec des minuscules, chiffres, `-` et `_`
+/// (les instances parallèles utilisent `_`).
+#[cfg(target_os = "linux")]
+fn is_valid_snap_name(value: &str) -> bool {
+    !value.is_empty()
+        && value
+            .chars()
+            .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-' || ch == '_')
+}
+
+/// `snap remove` échoue si une suppression est déjà en cours pour ce snap
+/// (tentative précédente encore active, double clic). On attend alors la fin de
+/// cette suppression au lieu de signaler un faux échec.
+#[cfg(target_os = "linux")]
+fn remove_snap(package: &str) -> Result<(), String> {
+    if !is_valid_snap_name(package) {
+        return Err("missing_package_id".into());
+    }
+
+    let out = exec_root(&["snap", "remove", package])?;
+    if out.success {
+        return Ok(());
+    }
+
+    match out.code {
+        Some(126) | Some(127) => return Err("permission_denied".into()),
+        _ => {}
+    }
+
+    if out.stderr.contains("\"remove-snap\" change in progress") {
+        return wait_for_snap_removal(package);
+    }
+
+    out.log_failure();
+    if out.stderr.contains("is not installed") {
+        Err("application_not_found".into())
+    } else if out.stderr.contains("is not removable") || out.stderr.contains("is being used") {
+        Err("snap_in_use".into())
+    } else {
+        Err("command_failed".into())
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn wait_for_snap_removal(package: &str) -> Result<(), String> {
+    let mut remaining = SNAP_REMOVAL_TIMEOUT.as_secs();
+    while remaining > 0 {
+        std::thread::sleep(Duration::from_secs(1));
+        remaining -= 1;
+
+        if !snap_is_installed(package) {
+            return Ok(());
+        }
+        // Plus aucune opération en cours alors que le snap est toujours là :
+        // la suppression existante a échoué, inutile d'attendre davantage.
+        if snap_changes_finished() {
+            return Err("command_failed".into());
+        }
+    }
+    Err("snap_change_in_progress".into())
+}
+
+#[cfg(target_os = "linux")]
+fn snap_is_installed(package: &str) -> bool {
+    Command::new("snap")
+        .args(["list", package])
+        .env("LC_ALL", "C")
+        .output()
+        .map(|out| out.status.success())
+        .unwrap_or(true)
+}
+
+/// Vrai si `snap changes` ne montre plus aucune opération active. Les statuts
+/// du démon sont stables (non traduits) : Done, Error, Undone, Abort.
+#[cfg(target_os = "linux")]
+fn snap_changes_finished() -> bool {
+    let Ok(out) = Command::new("snap")
+        .arg("changes")
+        .env("LC_ALL", "C")
+        .output()
+    else {
+        return false;
+    };
+
+    changes_are_finished(&String::from_utf8_lossy(&out.stdout))
+}
+
+/// Vrai si toutes les lignes de `snap changes` sont dans un état terminal.
+#[cfg(target_os = "linux")]
+fn changes_are_finished(output: &str) -> bool {
+    let mut saw_change = false;
+    for line in output.lines().skip(1) {
+        if line.trim().is_empty() {
+            continue;
+        }
+        saw_change = true;
+        let Some(status) = line.split_whitespace().nth(1) else {
+            return false;
+        };
+        if !matches!(status, "Done" | "Error" | "Undone" | "Abort") {
+            return false;
+        }
+    }
+    saw_change
+}
+
+/// `gio launch` applique les règles XDG du fichier `.desktop` (Exec, Terminal,
+/// Path). En son absence, on exécute directement la commande déclarée.
+#[cfg(target_os = "linux")]
+fn launch_entry(entry: &CachedApplication) -> Result<(), String> {
+    if Command::new("gio")
+        .arg("launch")
+        .arg(&entry.path)
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false)
+    {
+        return Ok(());
+    }
+
+    let content = fs::read_to_string(&entry.path).map_err(|_| "launch_failed".to_string())?;
+    let exec = parse_desktop_entry(&content)
+        .get("Exec")
+        .map(clean_exec)
+        .filter(|exec| !exec.is_empty())
+        .ok_or_else(|| "launch_failed".to_string())?;
+
+    Command::new("sh")
+        .arg("-c")
+        .arg(exec)
+        .spawn()
+        .map(|_| ())
+        .map_err(|_| "launch_failed".to_string())
 }
 
 // ---------- Découverte des fichiers .desktop ----------
@@ -664,7 +835,7 @@ fn clean_exec(exec: &str) -> String {
 // ---------- Origine et propriétaire des paquets ----------
 
 #[cfg(target_os = "linux")]
-fn origin_from_path(path: &Path) -> Option<(String, String)> {
+fn origin_from_path(path: &Path, entry: &DesktopEntry) -> Option<(String, String)> {
     let path_text = path.to_string_lossy();
 
     if path_text.contains("/flatpak/exports/") {
@@ -673,9 +844,19 @@ fn origin_from_path(path: &Path) -> Option<(String, String)> {
     }
 
     if path_text.starts_with("/var/lib/snapd/desktop/") {
-        let file_stem = path.file_stem()?.to_string_lossy();
-        let snap_name = file_stem.split('_').next().unwrap_or(&file_stem);
-        return Some(("snap".to_string(), snap_name.to_string()));
+        // `X-SnapInstanceName` est la source fiable ; le préfixe du nom de fichier
+        // ne suffit pas pour les instances parallèles (nom contenant `_`).
+        let snap_name = entry
+            .get("X-SnapInstanceName")
+            .map(str::trim)
+            .filter(|name| is_valid_snap_name(name))
+            .map(str::to_string)
+            .or_else(|| {
+                let file_stem = path.file_stem()?.to_string_lossy();
+                let prefix = file_stem.split('_').next().unwrap_or(&file_stem);
+                is_valid_snap_name(prefix).then(|| prefix.to_string())
+            })?;
+        return Some(("snap".to_string(), snap_name));
     }
 
     None
@@ -1050,17 +1231,38 @@ fn snap_metadata() -> HashMap<String, PackageMeta> {
             continue;
         };
         let version = fields.next().unwrap_or_default();
+        let revision = fields.next().unwrap_or_default();
 
         metadata.insert(
             name.to_string(),
             PackageMeta {
                 version: (!version.is_empty() && version != "—" && version != "-")
                     .then(|| version.to_string()),
-                size: None,
+                size: snap_size(name, revision),
             },
         );
     }
     metadata
+}
+
+/// Taille du fichier `.snap` installé : `snap list` n'expose pas l'espace occupé,
+/// mais le fichier squashfs correspondant à la révision active donne la taille
+/// réellement stockée sur le disque (identique à l'« installed » de `snap info`).
+#[cfg(target_os = "linux")]
+fn snap_size(name: &str, revision: &str) -> Option<u64> {
+    let safe_name = !name.is_empty()
+        && name
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == '_');
+    // Les snaps installés hors boutique ont une révision du type « x1 ».
+    let safe_revision =
+        !revision.is_empty() && revision.chars().all(|ch| ch.is_ascii_alphanumeric());
+    if !safe_name || !safe_revision {
+        return None;
+    }
+
+    let path = Path::new("/var/lib/snapd/snaps").join(format!("{name}_{revision}.snap"));
+    fs::metadata(path).ok().map(|metadata| metadata.len())
 }
 
 /// `Installed-Size` de dpkg est exprimé en Kio.
@@ -1301,27 +1503,60 @@ mod tests {
 
     #[test]
     fn detecte_lorigine_par_chemin() {
+        let no_entry = DesktopEntry::default();
         assert_eq!(
-            origin_from_path(Path::new(
-                "/var/lib/flatpak/exports/share/applications/org.gimp.GIMP.desktop"
-            )),
+            origin_from_path(
+                Path::new("/var/lib/flatpak/exports/share/applications/org.gimp.GIMP.desktop"),
+                &no_entry
+            ),
             Some(("flatpak".to_string(), "org.gimp.GIMP".to_string()))
         );
         assert_eq!(
-            origin_from_path(Path::new(
-                "/home/alice/.local/share/flatpak/exports/share/applications/org.mozilla.firefox.desktop"
-            )),
+            origin_from_path(
+                Path::new(
+                    "/home/alice/.local/share/flatpak/exports/share/applications/org.mozilla.firefox.desktop"
+                ),
+                &no_entry
+            ),
             Some(("flatpak".to_string(), "org.mozilla.firefox".to_string()))
         );
         assert_eq!(
-            origin_from_path(Path::new(
-                "/var/lib/snapd/desktop/applications/firefox_firefox.desktop"
-            )),
+            origin_from_path(
+                Path::new("/var/lib/snapd/desktop/applications/firefox_firefox.desktop"),
+                &no_entry
+            ),
             Some(("snap".to_string(), "firefox".to_string()))
         );
         assert_eq!(
-            origin_from_path(Path::new("/usr/share/applications/gedit.desktop")),
+            origin_from_path(
+                Path::new("/usr/share/applications/gedit.desktop"),
+                &no_entry
+            ),
             None
+        );
+    }
+
+    #[test]
+    fn utilise_le_nom_dinstance_snap_du_fichier_desktop() {
+        let entry =
+            parse_desktop_entry("[Desktop Entry]\nType=Application\nX-SnapInstanceName=foo_bar\n");
+        assert_eq!(
+            origin_from_path(
+                Path::new("/var/lib/snapd/desktop/applications/foo_bar_app.desktop"),
+                &entry
+            ),
+            Some(("snap".to_string(), "foo_bar".to_string()))
+        );
+
+        // Nom d'instance invalide : on retombe sur le préfixe du fichier.
+        let invalid =
+            parse_desktop_entry("[Desktop Entry]\nType=Application\nX-SnapInstanceName=../evil\n");
+        assert_eq!(
+            origin_from_path(
+                Path::new("/var/lib/snapd/desktop/applications/foo_app.desktop"),
+                &invalid
+            ),
+            Some(("snap".to_string(), "foo".to_string()))
         );
     }
 
@@ -1340,5 +1575,29 @@ mod tests {
         assert_eq!(parse_human_size("512 Kio"), Some(512 * 1024));
         assert_eq!(parse_human_size(""), None);
         assert_eq!(parse_human_size("inconnue"), None);
+    }
+
+    #[test]
+    fn rejette_les_noms_de_snap_douteux() {
+        assert_eq!(snap_size("../etc", "1"), None);
+        assert_eq!(snap_size("firefox", "../../etc/passwd"), None);
+        assert_eq!(snap_size("firefox", ""), None);
+        assert_eq!(snap_size("", "1"), None);
+        assert!(!is_valid_snap_name("../evil"));
+        assert!(!is_valid_snap_name("Firefox"));
+        assert!(is_valid_snap_name("firefox_esr"));
+    }
+
+    #[test]
+    fn detecte_la_fin_des_operations_snap() {
+        let done = "Identifiant État Descendance Prêt Résumé\n\
+                    299 Done hier à 15 h 43 hier à 15 h 49 Supprimer le paquet Snap \"steam\"\n";
+        assert!(changes_are_finished(done));
+
+        let in_progress = "ID Status Spawn Ready Summary\n\
+                           301 Doing today at 15:43 today at 15:49 Remove snap \"foo\"\n";
+        assert!(!changes_are_finished(in_progress));
+
+        assert!(!changes_are_finished(""));
     }
 }

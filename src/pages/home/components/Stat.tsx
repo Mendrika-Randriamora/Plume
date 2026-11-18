@@ -9,13 +9,16 @@ export function Stat({ icon: Icon, label, value, detail, meter }: {
   detail?: string;
   meter?: number;
 }) {
+  // <50 % : couleur neutre ; 50–75 % : orange ; ≥75 % : rouge.
+  const tone = meter === undefined ? undefined : meter >= 75 ? "danger" : meter >= 50 ? "warn" : undefined;
+
   return (
     <div className="card stat">
       <div className="stat-label muted small">
         <Icon size={15} strokeWidth={1.75} /> {label}
       </div>
-      <div className="stat-value">{value}</div>
-      {meter !== undefined && <Meter value={meter} />}
+      <div className={`stat-value${tone ? ` ${tone}` : ""}`}>{value}</div>
+      {meter !== undefined && <Meter value={meter} tone={tone} />}
       {detail && <div className="muted small">{detail}</div>}
     </div>
   );

@@ -48,8 +48,26 @@ fn run(cmd: &str, args: &[&str]) -> Result<(String, i32), String> {
     ))
 }
 
+/// Sortie d'une commande administrateur, conservée pour les appelants qui
+/// doivent réagir à un message précis (ex. suppression de snap déjà en cours).
+pub(crate) struct RootOutput {
+    pub success: bool,
+    pub code: Option<i32>,
+    pub stdout: String,
+    pub stderr: String,
+}
+
+impl RootOutput {
+    pub(crate) fn log_failure(&self) {
+        eprintln!(
+            "Commande administrateur échouée : {}",
+            self.stderr.lines().last().unwrap_or("erreur inconnue")
+        );
+    }
+}
+
 /// Lance une commande administrateur via pkexec (fenêtre de mot de passe du système).
-pub(crate) fn run_root(args: &[&str]) -> Result<String, String> {
+pub(crate) fn exec_root(args: &[&str]) -> Result<RootOutput, String> {
     if !has("pkexec") {
         return Err("pkexec_missing".into());
     }
@@ -63,17 +81,22 @@ pub(crate) fn run_root(args: &[&str]) -> Result<String, String> {
             eprintln!("Impossible de lancer pkexec : {e}");
             "command_failed".to_string()
         })?;
-    match out.status.code() {
-        Some(0) => Ok(String::from_utf8_lossy(&out.stdout).into_owned()),
+
+    Ok(RootOutput {
+        success: out.status.success(),
+        code: out.status.code(),
+        stdout: String::from_utf8_lossy(&out.stdout).into_owned(),
+        stderr: String::from_utf8_lossy(&out.stderr).into_owned(),
+    })
+}
+
+pub(crate) fn run_root(args: &[&str]) -> Result<String, String> {
+    let out = exec_root(args)?;
+    match out.code {
+        Some(0) => Ok(out.stdout),
         Some(126) | Some(127) => Err("permission_denied".into()),
         _ => {
-            eprintln!(
-                "Commande administrateur échouée : {}",
-                String::from_utf8_lossy(&out.stderr)
-                    .lines()
-                    .last()
-                    .unwrap_or("erreur inconnue")
-            );
+            out.log_failure();
             Err("command_failed".into())
         }
     }

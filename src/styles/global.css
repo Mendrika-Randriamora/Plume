@@ -2,11 +2,14 @@
 :root {
   --ink: #3a362f;
   --base: rgb(243, 237, 227);
+  /* États de stockage (mémoire, swap, disque). */
+  --warn: #bd6f0a;
+  --danger: #c23b2e;
   --font: system-ui, sans-serif;
   --font-size: 15px;
   --radius: 12px;
 }
-:root[data-theme="dark"] { --ink: #e8e5de; }
+:root[data-theme="dark"] { --ink: #e8e5de; --warn: #e8a53c; --danger: #f47163; }
 :root {
   --bg: var(--base);
   --surface: color-mix(in srgb, var(--base) 93%, var(--ink));
@@ -90,9 +93,13 @@ body.resizing { cursor: col-resize; user-select: none; }
 @media (max-width: 1000px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
 .stat { display: flex; flex-direction: column; gap: 8px; }
 .stat-label { display: flex; align-items: center; gap: 6px; }
-.stat-value { font-size: 1.7em; font-weight: 600; min-height: 1.3em; }
+.stat-value { font-size: 1.7em; font-weight: 600; min-height: 1.3em; transition: color 0.3s; }
+.stat-value.warn { color: var(--warn); }
+.stat-value.danger { color: var(--danger); }
 .meter { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
-.meter > div { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s; }
+.meter > div { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s, background 0.3s; }
+.meter.warn > div { background: var(--warn); }
+.meter.danger > div { background: var(--danger); }
 
 /* Graphiques (page Ressources) */
 .section-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 0; border: 0; background: none; text-align: left; }
@@ -123,6 +130,8 @@ body.resizing { cursor: col-resize; user-select: none; }
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .list-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 8px; border: 0; background: none; border-radius: 8px; text-align: left; }
 button.list-row:hover { background: var(--hover); }
+/* Double-clic pour lancer : on évite la sélection de texte parasite. */
+.app-name { color: inherit; text-decoration: none; cursor: pointer; user-select: none; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .chip { background: var(--hover); border-radius: 999px; padding: 3px 11px; font-size: 0.85em; }
 

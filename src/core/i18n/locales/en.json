@@ -52,6 +52,9 @@
     "inventory_unavailable": "Couldn't read the application list.",
     "missing_package_id": "No package identifier was found for this application.",
     "unknown_source": "Unknown application source.",
+    "launch_failed": "Couldn't launch the application.",
+    "snap_change_in_progress": "A removal is already in progress for this application. Wait for it to finish, then refresh the list.",
+    "snap_in_use": "This snap is used by other snaps (base or runtime) and can't be removed.",
     "resources_unavailable": "Couldn't read system resources.",
     "processes_unavailable": "Couldn't read the process list."
   },
@@ -242,6 +245,10 @@
       "hint": "Search the applications in your menu",
       "placeholder": "Search for an application..."
     },
+    "filter": {
+      "label": "Package manager",
+      "all": "All"
+    },
     "installed": {
       "title": "Installed applications"
     },
@@ -249,7 +256,7 @@
     "found_other": "Found: {{count}} applications",
     "loading": "Loading applications...",
     "empty": "No applications found.",
-    "emptyHint": "Try another search.",
+    "emptyHint": "Try another search or package manager.",
     "showMore": "Show more ({{count}})",
     "source": {
       "manual": "installed manually"

@@ -52,6 +52,9 @@
     "inventory_unavailable": "Impossible de lire la liste des applications.",
     "missing_package_id": "Aucun identifiant de paquet n'a été trouvé pour cette application.",
     "unknown_source": "Source de l'application inconnue.",
+    "launch_failed": "Impossible de lancer l'application.",
+    "snap_change_in_progress": "Une suppression est déjà en cours pour cette application. Patientez jusqu'à la fin, puis actualisez la liste.",
+    "snap_in_use": "Ce snap est utilisé par d'autres snaps (base ou runtime) et ne peut pas être supprimé.",
     "resources_unavailable": "Impossible de lire l'état des ressources.",
     "processes_unavailable": "Impossible de lire la liste des processus."
   },
@@ -242,6 +245,10 @@
       "hint": "Recherchez parmi les applications du menu",
       "placeholder": "Rechercher une application..."
     },
+    "filter": {
+      "label": "Gestionnaire",
+      "all": "Tous"
+    },
     "installed": {
       "title": "Applications installées"
     },
@@ -249,7 +256,7 @@
     "found_other": "Trouvées : {{count}} applications",
     "loading": "Chargement des applications...",
     "empty": "Aucune application trouvée.",
-    "emptyHint": "Essayez une autre recherche.",
+    "emptyHint": "Essayez une autre recherche ou un autre gestionnaire.",
     "showMore": "Afficher plus ({{count}})",
     "source": {
       "manual": "installée manuellement"
