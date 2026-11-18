@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RefreshCw, Search } from "lucide-react";
 import { Button, Card, Loading, Notice, PageHeader } from "@/core/ui";
 import { translate } from "@/core/i18n";
 import { usePermission } from "@/core/settings/SettingsProvider";
-import { refreshApplications, listApplications, searchApplications, uninstallApplication, getApplicationDetails } from "./api";
+import { refreshApplications, listApplications, searchApplications, uninstallApplication, getApplicationDetails, launchApplication } from "./api";
 import { AppList } from "./components/AppList";
 import { AppDetailsModal } from "./components/AppDetailsModal";
-import type { Application, ApplicationDetails } from "./types";
+import type { Application, ApplicationDetails, ApplicationSource } from "./types";
 
 const PAGE_SIZE = 100;
 const SEARCH_DEBOUNCE_MS = 150;
+/** Ordre d'affichage des gestionnaires dans le filtre. */
+const SOURCE_ORDER: ApplicationSource[] = ["apt", "snap", "flatpak", "dnf", "pacman", "manuel"];
+
+type SourceFilter = "all" | ApplicationSource;
 
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
@@ -24,6 +28,7 @@ export function ApplicationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [isUninstalling, setIsUninstalling] = useState<string | undefined>(undefined);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -90,6 +95,30 @@ export function ApplicationsPage() {
     };
   }, [searchQuery, applications]);
 
+  // Gestionnaires réellement présents sur la machine : seuls ceux-là sont proposés.
+  const availableSources = useMemo(() => {
+    const present = new Set(applications.map((app) => app.source));
+    return SOURCE_ORDER.filter((source) => present.has(source));
+  }, [applications]);
+
+  // Un gestionnaire peut disparaître après une désinstallation : on retombe sur « tous ».
+  useEffect(() => {
+    if (sourceFilter !== "all" && !availableSources.includes(sourceFilter)) {
+      setSourceFilter("all");
+    }
+  }, [availableSources, sourceFilter]);
+
+  const handleSourceChange = useCallback((value: string) => {
+    setSourceFilter(value as SourceFilter);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
+
+  const sourceLabel = useCallback(
+    (source: ApplicationSource) =>
+      source === "manuel" ? t("applications.source.manual") : source,
+    [t],
+  );
+
   const handleUninstall = useCallback(async (desktopId: string) => {
     if (!allowed) {
       setError(translate("common.systemChangesDisabled"));
@@ -114,6 +143,15 @@ export function ApplicationsPage() {
 
   const handleDetails = useCallback((desktopId: string) => {
     setSelectedId(desktopId);
+  }, []);
+
+  const handleLaunch = useCallback(async (desktopId: string) => {
+    setError(undefined);
+    try {
+      await launchApplication(desktopId);
+    } catch (e: unknown) {
+      setError(errorMessage(e, translate("errors.launch_failed")));
+    }
   }, []);
 
   const closeDetails = useCallback(() => {
@@ -141,8 +179,17 @@ export function ApplicationsPage() {
     }
   }, [selectedId, loadDetails]);
 
-  const visibleApplications = results.slice(0, visibleCount);
-  const remaining = results.length - visibleApplications.length;
+  // Filtre purement frontend : il s'applique aussi aux résultats de recherche.
+  const filteredResults = useMemo(
+    () =>
+      sourceFilter === "all"
+        ? results
+        : results.filter((app) => app.source === sourceFilter),
+    [results, sourceFilter],
+  );
+
+  const visibleApplications = filteredResults.slice(0, visibleCount);
+  const remaining = filteredResults.length - visibleApplications.length;
 
   return (
     <>
@@ -174,14 +221,35 @@ export function ApplicationsPage() {
 
       <Card
         title={t("applications.installed.title")}
-        hint={t("applications.found", { count: results.length })}
+        hint={t("applications.found", { count: filteredResults.length })}
+        action={
+          availableSources.length > 0 ? (
+            <label className="row gap small">
+              {t("applications.filter.label")}
+              <select
+                value={sourceFilter}
+                onChange={(e) => handleSourceChange(e.target.value)}
+                aria-label={t("applications.filter.label")}
+              >
+                <option value="all">{t("applications.filter.all")}</option>
+                {availableSources.map((source) => (
+                  <option key={source} value={source}>
+                    {sourceLabel(source)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : undefined
+        }
       >
         {loading ? (
           <Loading text={t("applications.loading")} />
-        ) : results.length === 0 ? (
+        ) : filteredResults.length === 0 ? (
           <div className="empty">
             <p>{t("applications.empty")}</p>
-            {searchQuery && <p className="muted small">{t("applications.emptyHint")}</p>}
+            {(searchQuery || sourceFilter !== "all") && (
+              <p className="muted small">{t("applications.emptyHint")}</p>
+            )}
           </div>
         ) : (
           <>
@@ -189,6 +257,7 @@ export function ApplicationsPage() {
               applications={visibleApplications}
               onUninstall={handleUninstall}
               onDetails={handleDetails}
+              onLaunch={handleLaunch}
               isUninstalling={isUninstalling}
               allowed={allowed}
             />

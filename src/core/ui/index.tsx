@@ -48,15 +48,15 @@ export function ConfirmButton({ label, confirmLabel, onConfirm, busy, disabled, 
   if (!armed) return <Button icon={icon} disabled={disabled} busy={busy} onClick={() => setArmed(true)}>{label}</Button>;
   return (
     <span className="row gap">
-      <Button onClick={() => { setArmed(false); onConfirm(); }}>{confirmLabel ?? t("common.confirm")}</Button>
-      <Button variant="ghost" onClick={() => setArmed(false)}>{t("common.cancel")}</Button>
+      <Button disabled={disabled} busy={busy} onClick={() => { setArmed(false); onConfirm(); }}>{confirmLabel ?? t("common.confirm")}</Button>
+      <Button variant="ghost" disabled={busy} onClick={() => setArmed(false)}>{t("common.cancel")}</Button>
     </span>
   );
 }
 
-export function Meter({ value }: { value: number }) {
+export function Meter({ value, tone }: { value: number; tone?: "warn" | "danger" }) {
   return (
-    <div className="meter">
+    <div className={`meter${tone ? ` ${tone}` : ""}`}>
       <div style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
     </div>
   );

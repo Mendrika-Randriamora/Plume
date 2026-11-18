@@ -22,3 +22,8 @@ export async function getApplicationDetails(desktopId: string): Promise<Applicat
 export async function uninstallApplication(desktopId: string): Promise<boolean> {
   return await call<boolean>("uninstall_application", { desktopId });
 }
+
+/** Lance l'application via son fichier `.desktop` (règles XDG / `gio launch`). */
+export async function launchApplication(desktopId: string): Promise<void> {
+  await call<void>("launch_application", { desktopId });
+}

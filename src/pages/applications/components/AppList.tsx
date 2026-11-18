@@ -8,11 +8,12 @@ interface Props {
   applications: Application[];
   onUninstall: (desktopId: string) => void;
   onDetails: (desktopId: string) => void;
+  onLaunch: (desktopId: string) => void;
   isUninstalling?: string;
   allowed: boolean;
 }
 
-export function AppList({ applications, onUninstall, onDetails, isUninstalling, allowed }: Props) {
+export function AppList({ applications, onUninstall, onDetails, onLaunch, isUninstalling, allowed }: Props) {
   const { t } = useTranslation();
 
   return (
@@ -21,7 +22,14 @@ export function AppList({ applications, onUninstall, onDetails, isUninstalling, 
         <li key={app.id}>
           <div className="list-row static">
             <span className="grow">
-              <span className="ellipsis">{app.name}</span>
+              <a
+                className="ellipsis app-name"
+                href="#"
+                onClick={(event) => event.preventDefault()}
+                onDoubleClick={() => onLaunch(app.id)}
+              >
+                {app.name}
+              </a>
               <span className="muted small ellipsis">
                 {app.source === "manuel" ? t("applications.source.manual") : app.source}
               </span>
@@ -31,7 +39,8 @@ export function AppList({ applications, onUninstall, onDetails, isUninstalling, 
               <ConfirmButton
                 label={t("applications.uninstall")}
                 onConfirm={() => onUninstall(app.id)}
-                disabled={!allowed || isUninstalling === app.id}
+                disabled={!allowed || isUninstalling !== undefined}
+                busy={isUninstalling === app.id}
                 icon={Trash2}
               />
               <Button
