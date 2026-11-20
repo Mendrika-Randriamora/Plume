@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronUp, Cpu } from "lucide-react";
 import { bytes, percentValue } from "@/core/format";
 import { Card, Loading, Notice, PageHeader } from "@/core/ui";
+import { useSettings } from "@/core/settings/SettingsProvider";
 import { listProcesses } from "./api";
 import type { ProcessInfo, SortKey } from "./types";
 
@@ -18,10 +19,10 @@ const COLUMNS = [
   { key: "write", labelKey: "processes.columns.write", sortKey: "processes.sortColumns.write", numeric: true, disk: true },
 ] as const;
 
-const REFRESH_MS = 2000;
-
 export function ProcessesPage() {
   const { t, i18n } = useTranslation();
+  const { settings } = useSettings();
+  const interval = settings.refreshInterval;
   const [rows, setRows] = useState<ProcessInfo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [limit, setLimit] = useState(50);
@@ -43,12 +44,12 @@ export function ProcessesPage() {
           if (alive) setError((e as Error).message);
         });
     tick();
-    const id = setInterval(tick, REFRESH_MS);
+    const id = setInterval(tick, interval);
     return () => {
       alive = false;
       clearInterval(id);
     };
-  }, []);
+  }, [interval]);
 
   const visible = useMemo(() => {
     if (!rows) return [];
@@ -68,7 +69,7 @@ export function ProcessesPage() {
 
   return (
     <>
-      <PageHeader title={t("processes.title")} subtitle={t("processes.subtitle")} />
+      <PageHeader title={t("processes.title")} subtitle={t("processes.subtitle", { seconds: interval / 1000 })} />
       {error && <Notice>{error}</Notice>}
 
       <div className="toolbar">

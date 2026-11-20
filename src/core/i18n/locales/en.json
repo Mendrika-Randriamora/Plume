@@ -17,6 +17,7 @@
     "resizeSidebar": "Resize the navigation bar (double-click to reset)",
     "collapseSidebar": "Collapse the navigation bar",
     "expandSidebar": "Expand the navigation bar",
+    "back": "Back",
     "celsius": "{{value}} °C",
     "perSecond": "{{value}}/s",
     "cpu": "CPU",
@@ -141,7 +142,7 @@
   },
   "processes": {
     "title": "Processes",
-    "subtitle": "Running programs, refreshed every 2 seconds.",
+    "subtitle": "Running programs, refreshed every {{seconds}} s.",
     "columns": {
       "name": "Name",
       "cpu": "CPU",
@@ -291,10 +292,14 @@
       "title": "Application",
       "hint": "Information about your Plume installation.",
       "version": "Plume version",
+      "refresh": "Refresh rate",
+      "refreshHint": "Interval between live data samples (Home, Resources and Processes).",
+      "refreshSeconds": "{{seconds}} s",
       "updatesNote": "Plume updates are installed from the “Updates” page."
     },
     "appearance": {
       "title": "Appearance",
+      "hint": "Theme, language, font and interface colors.",
       "theme": "Theme",
       "themes": {
         "light": "Light",
@@ -308,17 +313,13 @@
         "serif": "Serif",
         "mono": "Monospace"
       },
-      "fontSize": "Text size · {{size}}px",
+      "fontSize": "Text size (px)",
       "interfaceV2": "Use the new interface",
       "interfaceV2Hint": "Content framed in a rounded card, navigation bar on a darkened background.",
       "background": "Background color ({{theme}})",
+      "textColor": "Text color ({{theme}})",
       "lightTheme": "light theme",
       "darkTheme": "dark theme",
-      "colors": {
-        "red": "Red",
-        "green": "Green",
-        "blue": "Blue"
-      },
       "language": "Language"
     },
     "permissions": {
@@ -339,6 +340,7 @@
     },
     "privacy": {
       "title": "Privacy policy",
+      "hint": "How Plume handles your data.",
       "text": "Plume runs entirely on your computer. No data is collected or sent. It only reads your home folder (ignoring dependency folders such as node_modules or vendor) and never permanently deletes your files: they go to the trash. System changes go through your distribution's permission prompt. Your settings are stored locally."
     }
   }

@@ -17,8 +17,10 @@ export default function App() {
 
   // Relevés continus, même quand la page n'est pas affichée : Accueil et
   // Ressources s'ouvrent avec des données déjà prêtes, sans temps d'attente.
-  usePolling(sampleResources, 1000);
-  usePolling(sampleHomeStats, 5000);
+  // L'intervalle est réglable depuis les préférences.
+  const refresh = settings.refreshInterval;
+  usePolling(() => sampleResources(refresh), refresh);
+  usePolling(sampleHomeStats, refresh);
 
   // Le parcours du dossier personnel est coûteux : un seul scan, lancé en
   // arrière-plan au démarrage, puis conservé en mémoire. La liste des paquets

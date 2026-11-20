@@ -138,6 +138,15 @@ body.resizing { cursor: col-resize; user-select: none; }
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .list-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 8px; border: 0; background: none; border-radius: 8px; text-align: left; }
 button.list-row:hover { background: var(--hover); }
+
+/* Réglages : liste des sections puis vue détaillée (façon GNOME). */
+.settings-list { display: flex; flex-direction: column; gap: 2px; }
+.settings-row { display: flex; align-items: center; gap: 14px; width: 100%; padding: 13px 10px; border: 0; border-radius: 10px; background: none; text-align: left; }
+.settings-row:hover { background: var(--hover); }
+.settings-icon { display: flex; align-items: center; justify-content: center; flex: none; width: 34px; height: 34px; border-radius: 9px; background: var(--hover); color: var(--muted); }
+.settings-row:hover .settings-icon { color: var(--ink); }
+.settings-row-title { display: block; font-weight: 500; }
+.settings-chevron { flex: none; color: var(--muted); }
 /* Double-clic pour lancer : on évite la sélection de texte parasite. */
 .app-name { color: inherit; text-decoration: none; cursor: pointer; user-select: none; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -158,6 +167,16 @@ button.list-row:hover { background: var(--hover); }
 .perm { padding: 8px 0; align-items: flex-start; }
 input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; margin-top: 2px; }
 input[type="range"] { accent-color: var(--accent); width: 100%; }
+/* Couleur et taille de texte : contrôles compacts dans les réglages. */
+input[type="number"] { width: 78px; background-color: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+input[type="number"]:hover { border-color: var(--muted); }
+input[type="number"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+input[type="color"] { width: 44px; height: 30px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); cursor: pointer; }
+input[type="color"]:hover { border-color: var(--muted); }
+input[type="color"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 5px; }
+input[type="color"]::-moz-color-swatch { border: 0; border-radius: 5px; }
 /* WebKit rend les <select> avec le thème GTK natif (clair) : on désactive
    l'apparence native pour garder le fond et le texte du thème de l'app. */
 select {
