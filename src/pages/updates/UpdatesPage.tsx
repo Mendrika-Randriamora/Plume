@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, Download, Search } from "lucide-react";
+import { CheckCircle2, Download, Search, RefreshCw } from "lucide-react";
 import { Button, Card, ConfirmButton, Empty, Notice, PageHeader } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
 import { AppUpdateCard } from "./components/AppUpdateCard";
@@ -55,8 +55,8 @@ export function UpdatesPage() {
         title={t("updates.system.title")}
         hint={t("updates.system.hint")}
         action={
-          <Button icon={Search} busy={phase === "checking"} disabled={!allowed || phase === "updating"} onClick={search}>
-            {t("common.search")}
+          <Button variant="ghost" icon={RefreshCw} busy={phase === "checking"} disabled={!allowed || phase === "updating"} onClick={search}>
+            {t("common.refresh")}
           </Button>
         }
       >

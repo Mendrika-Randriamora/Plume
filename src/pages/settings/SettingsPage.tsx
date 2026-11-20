@@ -194,9 +194,6 @@ export function SettingsPage() {
               ))}
             </select>
           </div>
-          <p className="small muted">
-            {t("settings.app.updatesNote")}
-          </p>
         </Card>
       )}
 

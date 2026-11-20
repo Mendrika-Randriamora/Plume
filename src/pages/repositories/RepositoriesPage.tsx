@@ -152,9 +152,9 @@ export function RepositoriesPage() {
             icon={RefreshCw}
             busy={busy || acting}
             onClick={() => void load()}
-            aria-label={t("repositories.refresh")}
-            title={t("repositories.refresh")}
-          />
+            title={t("repositories.refresh")}>
+            {t("repositories.refresh")}
+            </Button>
         }
       />
 

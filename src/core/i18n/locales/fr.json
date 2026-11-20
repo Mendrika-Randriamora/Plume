@@ -236,7 +236,7 @@
   "disk": {
     "title": "Disques",
     "subtitle": "Toutes les partitions détectées, internes comme externes.",
-    "refresh": "Actualiser",
+    "refresh": "Rafraîchir",
     "loading": "Recherche des partitions…",
     "empty": "Aucune partition détectée.",
     "error": "Impossible de lister les partitions.",

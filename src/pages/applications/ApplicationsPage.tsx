@@ -197,7 +197,7 @@ export function ApplicationsPage() {
         title={t("applications.title")}
         subtitle={t("applications.subtitle")}
         action={
-          <Button icon={RefreshCw} busy={loading} onClick={() => loadApplications(true)}>
+          <Button variant="ghost" icon={RefreshCw} busy={loading} onClick={() => loadApplications(true)}>
             {t("common.refresh")}
           </Button>
         }

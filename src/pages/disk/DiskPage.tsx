@@ -50,9 +50,10 @@ export function DiskPage() {
             icon={RefreshCw}
             busy={busy}
             onClick={() => void load()}
-            aria-label={t("disk.refresh")}
-            title={t("disk.refresh")}
-          />
+            // aria-label={t("disk.refresh")}
+            title={t("disk.refresh")} >
+            {t("disk.refresh")}
+            </Button>
         }
       />
 
