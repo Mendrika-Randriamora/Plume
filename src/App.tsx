@@ -37,10 +37,12 @@ export default function App() {
       <div className={`shell ${settings.interfaceV2 ? "shell-card" : ""}`}>
         <Sidebar current={current} onSelect={setCurrent} />
         <main className="content">
-          <UpdateBanner />
-          <Suspense fallback={<Loading />}>
-            <Page />
-          </Suspense>
+          <div className="page">
+            <UpdateBanner />
+            <Suspense fallback={<Loading />}>
+              <Page />
+            </Suspense>
+          </div>
         </main>
       </div>
     </NavContext.Provider>

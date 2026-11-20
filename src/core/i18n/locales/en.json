@@ -15,6 +15,8 @@
     "authorizationDisabled": "Permission disabled in Settings.",
     "openFolder": "Open folder",
     "resizeSidebar": "Resize the navigation bar (double-click to reset)",
+    "collapseSidebar": "Collapse the navigation bar",
+    "expandSidebar": "Expand the navigation bar",
     "celsius": "{{value}} °C",
     "perSecond": "{{value}}/s",
     "cpu": "CPU",
