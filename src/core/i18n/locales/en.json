@@ -233,6 +233,26 @@
       "trash": "Trash"
     }
   },
+  "disk": {
+    "title": "Disks",
+    "subtitle": "All detected partitions, internal and external.",
+    "refresh": "Refresh",
+    "loading": "Looking for partitions…",
+    "empty": "No partition detected.",
+    "error": "Couldn't list partitions.",
+    "efi": "EFI",
+    "internal": "Internal",
+    "external": "External",
+    "readOnly": "Read-only",
+    "kindUnknown": "Unknown type",
+    "freeOf": "free of {{total}}",
+    "used": "{{percent}}% used",
+    "summary": {
+      "total": "Total capacity",
+      "free": "Free space",
+      "partitions": "Partitions"
+    }
+  },
   "applications": {
     "title": "Applications",
     "subtitle": "Manage the applications shown in your desktop menu.",

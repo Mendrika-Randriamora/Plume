@@ -233,6 +233,26 @@
       "trash": "Corbeille"
     }
   },
+  "disk": {
+    "title": "Disques",
+    "subtitle": "Toutes les partitions détectées, internes comme externes.",
+    "refresh": "Actualiser",
+    "loading": "Recherche des partitions…",
+    "empty": "Aucune partition détectée.",
+    "error": "Impossible de lister les partitions.",
+    "efi": "EFI",
+    "internal": "Interne",
+    "external": "Externe",
+    "readOnly": "Lecture seule",
+    "kindUnknown": "Type inconnu",
+    "freeOf": "libres sur {{total}}",
+    "used": "{{percent}} % utilisé",
+    "summary": {
+      "total": "Capacité totale",
+      "free": "Espace libre",
+      "partitions": "Partitions"
+    }
+  },
   "applications": {
     "title": "Applications",
     "subtitle": "Gérez les applications visibles dans le menu de votre bureau.",

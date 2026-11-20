@@ -24,6 +24,7 @@ fn main() {
             modules::home::reveal,
             modules::resources::resource_snapshot,
             modules::processes::list_processes,
+            modules::disk::list_partitions,
             modules::updates::check_updates,
             modules::updates::apply_updates,
             modules::updates::list_obsolete,

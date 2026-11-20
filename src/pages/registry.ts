@@ -5,6 +5,7 @@ import { page as resources } from "./resources";
 import { page as processes } from "./processes";
 import { page as updates } from "./updates";
 import { page as clean } from "./clean";
+import { page as disk } from "./disk";
 import { page as settings } from "./settings";
 import { page as applications } from "./applications";
 
@@ -15,6 +16,7 @@ export type PageTitleKey =
   | "processes.title"
   | "updates.title"
   | "clean.title"
+  | "disk.title"
   | "applications.title"
   | "settings.title";
 
@@ -27,4 +29,4 @@ export interface PageDef {
 }
 
 /** Pour ajouter une page : créer un dossier dans src/pages avec un index.ts exportant `page`, puis l'ajouter ici. */
-export const pages: PageDef[] = [home, resources, processes, updates, clean, applications, settings];
+export const pages: PageDef[] = [home, resources, processes, updates, clean, disk, applications, settings];
