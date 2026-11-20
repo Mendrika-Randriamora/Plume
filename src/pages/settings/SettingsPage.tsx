@@ -29,6 +29,18 @@ const FONT_LABELS = {
   mono: "settings.appearance.fonts.mono",
 } as const;
 
+/** Couleurs de texte proposées, adaptées à chaque thème. */
+const TEXT_PALETTE = [
+  { labelKey: "settings.appearance.textPalette.default", light: "#3a362f", dark: "#e8e5de" },
+  { labelKey: "settings.appearance.textPalette.contrast", light: "#000000", dark: "#ffffff" },
+  { labelKey: "settings.appearance.textPalette.gray", light: "#6b7280", dark: "#9ca3af" },
+  { labelKey: "settings.appearance.textPalette.blue", light: "#1d4ed8", dark: "#93c5fd" },
+  { labelKey: "settings.appearance.textPalette.green", light: "#15803d", dark: "#86efac" },
+  { labelKey: "settings.appearance.textPalette.orange", light: "#c2410c", dark: "#fdba74" },
+  { labelKey: "settings.appearance.textPalette.red", light: "#b91c1c", dark: "#fca5a5" },
+  { labelKey: "settings.appearance.textPalette.purple", light: "#7e22ce", dark: "#d8b4fe" },
+] as const;
+
 const PERMS = [
   [
     "scanHome",
@@ -247,14 +259,34 @@ export function SettingsPage() {
               aria-label={t("settings.appearance.background", { theme: themeLabel })}
             />
           </div>
-          <div className="field">
-            <span>{t("settings.appearance.textColor", { theme: themeLabel })}</span>
-            <input
-              type="color"
-              value={toHex(ink)}
-              onChange={(e) => setText(e.target.value)}
-              aria-label={t("settings.appearance.textColor", { theme: themeLabel })}
-            />
+          <div className="field col">
+            <div className="color-field-head">
+              <span>{t("settings.appearance.textColor", { theme: themeLabel })}</span>
+              <input
+                type="color"
+                value={toHex(ink)}
+                onChange={(e) => setText(e.target.value)}
+                aria-label={t("settings.appearance.textColor", { theme: themeLabel })}
+              />
+            </div>
+            <div className="color-palette" role="group" aria-label={t("settings.appearance.textPalette.title")}>
+              {TEXT_PALETTE.map(({ labelKey, light, dark: darkColor }) => {
+                const value = dark ? darkColor : light;
+                const active = toHex(ink).toLowerCase() === value.toLowerCase();
+                return (
+                  <button
+                    key={labelKey}
+                    type="button"
+                    className={`color-swatch ${active ? "on" : ""}`}
+                    style={{ background: value }}
+                    title={t(labelKey)}
+                    aria-label={t(labelKey)}
+                    aria-pressed={active}
+                    onClick={() => setText(value)}
+                  />
+                );
+              })}
+            </div>
           </div>
         </Card>
       )}

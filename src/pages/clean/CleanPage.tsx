@@ -119,6 +119,7 @@ export function CleanPage() {
             <span>{t("clean.selected", { count: picked.size, size: bytes(pickedSize) })}</span>
             <ConfirmButton
               icon={Trash2}
+              iconOnly
               label={t("clean.trash")}
               confirmLabel={t("clean.trashConfirm")}
               onConfirm={remove}

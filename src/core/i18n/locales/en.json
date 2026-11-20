@@ -304,6 +304,48 @@
       "error": "Couldn't load application details."
     }
   },
+  "repositories": {
+    "title": "Repositories",
+    "subtitle": "Manage the package repositories of your distribution.",
+    "refresh": "Refresh",
+    "loading": "Loading repositories…",
+    "empty": "No repository configured.",
+    "unknownDistro": "unknown distribution",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "managed": "Managed by Plume",
+    "enable": "Enable",
+    "disable": "Disable",
+    "remove": "Remove",
+    "removeConfirm": "Yes, remove",
+    "pacmanHint": "On Arch, repositories are enabled and disabled in /etc/pacman.conf. This page lets you inspect them and manage repositories added by Plume.",
+    "list": {
+      "title": "Configured repositories",
+      "hint": "{{manager}} · {{distro}}"
+    },
+    "add": {
+      "title": "Add a repository",
+      "hint": "A Plume configuration file is created. Removal deletes the targeted entry from the system configuration file.",
+      "name": "Name",
+      "namePlaceholder": "Custom repository",
+      "url": "URL",
+      "suite": "Suite / version",
+      "components": "Components",
+      "gpgKey": "GPG key (optional)",
+      "submit": "Add repository",
+      "rootHint": "A system authorization will be requested."
+    },
+    "errors": {
+      "load": "Couldn't load repositories.",
+      "exists": "A repository with this name already exists.",
+      "managedOnly": "Only repositories added by Plume can be removed here.",
+      "invalid": "Invalid information. Check the URL and fields.",
+      "pkexec": "The system authorization tool (pkexec) is missing.",
+      "unsupported": "This operation isn't supported for this package manager.",
+      "command": "The system command failed.",
+      "generic": "An error occurred."
+    }
+  },
   "settings": {
     "title": "Settings",
     "subtitle": "Make Plume your own.",
@@ -338,6 +380,17 @@
       "interfaceV2Hint": "Content framed in a rounded card, navigation bar on a darkened background.",
       "background": "Background color ({{theme}})",
       "textColor": "Text color ({{theme}})",
+      "textPalette": {
+        "title": "Text color palette",
+        "default": "Default",
+        "contrast": "Maximum contrast",
+        "gray": "Gray",
+        "blue": "Blue",
+        "green": "Green",
+        "orange": "Orange",
+        "red": "Red",
+        "purple": "Purple"
+      },
       "lightTheme": "light theme",
       "darkTheme": "dark theme",
       "language": "Language"

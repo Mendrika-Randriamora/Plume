@@ -35,17 +35,33 @@ export function Button({ icon: Icon, busy, variant = "solid", children, ...rest 
 }
 
 /** Bouton en deux temps : évite les suppressions accidentelles sans fenêtre pop-up. */
-export function ConfirmButton({ label, confirmLabel, onConfirm, busy, disabled, icon }: {
+export function ConfirmButton({ label, confirmLabel, onConfirm, busy, disabled, icon, iconOnly }: {
   label: string;
   confirmLabel?: string;
   onConfirm: () => void;
   busy?: boolean;
   disabled?: boolean;
   icon?: LucideIcon;
+  iconOnly?: boolean;
 }) {
   const { t } = useTranslation();
   const [armed, setArmed] = useState(false);
-  if (!armed) return <Button icon={icon} disabled={disabled} busy={busy} onClick={() => setArmed(true)}>{label}</Button>;
+  if (!armed) {
+    return (
+      <Button
+        icon={icon}
+        variant={iconOnly ? "ghost" : "solid"}
+        className={iconOnly ? "icon-btn" : undefined}
+        disabled={disabled}
+        busy={busy}
+        aria-label={iconOnly ? label : undefined}
+        title={iconOnly ? label : undefined}
+        onClick={() => setArmed(true)}
+      >
+        {iconOnly ? null : label}
+      </Button>
+    );
+  }
   return (
     <span className="row gap">
       <Button disabled={disabled} busy={busy} onClick={() => { setArmed(false); onConfirm(); }}>{confirmLabel ?? t("common.confirm")}</Button>

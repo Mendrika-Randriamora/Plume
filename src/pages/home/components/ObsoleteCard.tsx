@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { PackageCheck } from "lucide-react";
+import { PackageCheck, Trash2 } from "lucide-react";
 import { Card, ConfirmButton, Empty, Loading } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
 import { removeObsolete } from "../api";
@@ -39,7 +39,7 @@ export function ObsoleteCard() {
       hint={t("home.obsolete.hint")}
       action={
         items.length > 0 && allowed ? (
-          <ConfirmButton label={t("home.obsolete.remove", { count: items.length })} onConfirm={remove} busy={busy} />
+          <ConfirmButton label={t("home.obsolete.remove", { count: items.length })} icon={Trash2} iconOnly onConfirm={remove} busy={busy} />
         ) : undefined
       }
     >

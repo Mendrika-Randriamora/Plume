@@ -304,6 +304,48 @@
       "error": "Impossible de charger les détails de l'application."
     }
   },
+  "repositories": {
+    "title": "Dépôts",
+    "subtitle": "Gérez les dépôts de paquets de votre distribution.",
+    "refresh": "Actualiser",
+    "loading": "Chargement des dépôts…",
+    "empty": "Aucun dépôt configuré.",
+    "unknownDistro": "distribution inconnue",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "managed": "Géré par Plume",
+    "enable": "Activer",
+    "disable": "Désactiver",
+    "remove": "Supprimer",
+    "removeConfirm": "Oui, supprimer",
+    "pacmanHint": "Sous Arch, l'activation et la désactivation des dépôts se font dans /etc/pacman.conf. Cette page permet de les consulter et de gérer les dépôts ajoutés par Plume.",
+    "list": {
+      "title": "Dépôts configurés",
+      "hint": "{{manager}} · {{distro}}"
+    },
+    "add": {
+      "title": "Ajouter un dépôt",
+      "hint": "Un fichier de configuration Plume est créé. La suppression retire l'entrée ciblée du fichier de configuration du système.",
+      "name": "Nom",
+      "namePlaceholder": "Dépôt personnalisé",
+      "url": "URL",
+      "suite": "Suite / version",
+      "components": "Composants",
+      "gpgKey": "Clé GPG (facultatif)",
+      "submit": "Ajouter le dépôt",
+      "rootHint": "Une autorisation système sera demandée."
+    },
+    "errors": {
+      "load": "Impossible de charger les dépôts.",
+      "exists": "Un dépôt portant ce nom existe déjà.",
+      "managedOnly": "Seuls les dépôts ajoutés par Plume peuvent être supprimés ici.",
+      "invalid": "Informations invalides. Vérifiez l'URL et les champs.",
+      "pkexec": "L'outil d'autorisation système (pkexec) est introuvable.",
+      "unsupported": "Cette opération n'est pas prise en charge pour ce gestionnaire.",
+      "command": "La commande système a échoué.",
+      "generic": "Une erreur est survenue."
+    }
+  },
   "settings": {
     "title": "Réglages",
     "subtitle": "Adaptez Plume à vos goûts.",
@@ -338,6 +380,17 @@
       "interfaceV2Hint": "Contenu encadré dans une carte arrondie, barre de navigation sur fond assombri.",
       "background": "Couleur de fond ({{theme}})",
       "textColor": "Couleur du texte ({{theme}})",
+      "textPalette": {
+        "title": "Palette de couleurs du texte",
+        "default": "Par défaut",
+        "contrast": "Contraste maximal",
+        "gray": "Gris",
+        "blue": "Bleu",
+        "green": "Vert",
+        "orange": "Orange",
+        "red": "Rouge",
+        "purple": "Violet"
+      },
       "lightTheme": "thème clair",
       "darkTheme": "thème sombre",
       "language": "Langue"
