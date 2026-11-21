@@ -169,7 +169,58 @@
     "limit_other": "{{count}} processus",
     "ascending": "croissant",
     "descending": "décroissant",
-    "sortBy": "Trier par {{column}}"
+    "sortBy": "Trier par {{column}}",
+    "contextHint": "Clic droit pour arrêter, redémarrer ou voir les détails",
+    "menu": {
+      "title": "Actions du processus",
+      "stop": "Arrêter le processus",
+      "restart": "Redémarrer le processus",
+      "details": "Voir les détails"
+    },
+    "status": {
+      "run": "En cours",
+      "sleep": "En veille",
+      "idle": "Inactif",
+      "stop": "Arrêté",
+      "zombie": "Zombie",
+      "dead": "Terminé",
+      "tracing": "Traçage",
+      "wakekill": "Réveil interrompu",
+      "waking": "En réveil",
+      "parked": "En attente",
+      "lockBlocked": "Verrou bloqué",
+      "diskSleep": "Attente disque"
+    },
+    "details": {
+      "title": "Détails du processus",
+      "loading": "Lecture des détails…",
+      "error": "Impossible de lire les détails de ce processus.",
+      "name": "Nom",
+      "pid": "ID",
+      "parent": "Processus parent",
+      "user": "Utilisateur",
+      "status": "Statut",
+      "cpu": "CPU",
+      "memory": "Mémoire",
+      "started": "Démarré le",
+      "uptime": "Durée d'exécution",
+      "read": "Disque lu",
+      "write": "Disque écrit",
+      "exe": "Exécutable",
+      "cwd": "Répertoire de travail",
+      "cmd": "Commande"
+    },
+    "errors": {
+      "notFound": "Ce processus n'existe plus.",
+      "permission": "Autorisation refusée : ce processus appartient à un autre utilisateur.",
+      "protected": "Ce processus est protégé et ne peut pas être arrêté depuis Plume.",
+      "restartUnsupported": "Ce processus ne peut pas être relancé automatiquement.",
+      "stopTimeout": "Le processus ne s'est pas arrêté à temps.",
+      "restartFailed": "Le processus a été arrêté mais n'a pas pu être relancé.",
+      "unsupported": "Cette action n'est pas prise en charge sur ce système.",
+      "pkexec": "L'outil d'autorisation système (pkexec) est introuvable.",
+      "generic": "L'action a échoué."
+    }
   },
   "updates": {
     "title": "Mises à jour",

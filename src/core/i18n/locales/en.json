@@ -169,7 +169,58 @@
     "limit_other": "{{count}} processes",
     "ascending": "ascending",
     "descending": "descending",
-    "sortBy": "Sort by {{column}}"
+    "sortBy": "Sort by {{column}}",
+    "contextHint": "Right-click to stop, restart or view details",
+    "menu": {
+      "title": "Process actions",
+      "stop": "Stop process",
+      "restart": "Restart process",
+      "details": "View details"
+    },
+    "status": {
+      "run": "Running",
+      "sleep": "Sleeping",
+      "idle": "Idle",
+      "stop": "Stopped",
+      "zombie": "Zombie",
+      "dead": "Dead",
+      "tracing": "Tracing",
+      "wakekill": "Wakekill",
+      "waking": "Waking",
+      "parked": "Parked",
+      "lockBlocked": "Lock blocked",
+      "diskSleep": "Uninterruptible sleep"
+    },
+    "details": {
+      "title": "Process details",
+      "loading": "Reading details…",
+      "error": "Couldn't read this process's details.",
+      "name": "Name",
+      "pid": "ID",
+      "parent": "Parent process",
+      "user": "User",
+      "status": "Status",
+      "cpu": "CPU",
+      "memory": "Memory",
+      "started": "Started",
+      "uptime": "Uptime",
+      "read": "Disk read",
+      "write": "Disk written",
+      "exe": "Executable",
+      "cwd": "Working directory",
+      "cmd": "Command"
+    },
+    "errors": {
+      "notFound": "This process no longer exists.",
+      "permission": "Permission denied: this process belongs to another user.",
+      "protected": "This process is protected and can't be stopped from Plume.",
+      "restartUnsupported": "This process can't be restarted automatically.",
+      "stopTimeout": "The process didn't stop in time.",
+      "restartFailed": "The process was stopped but couldn't be restarted.",
+      "unsupported": "This action isn't supported on this system.",
+      "pkexec": "The system authorization tool (pkexec) is missing.",
+      "generic": "The action failed."
+    }
   },
   "updates": {
     "title": "Updates",
