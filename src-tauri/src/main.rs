@@ -27,6 +27,7 @@ fn main() {
             modules::disk::list_partitions,
             modules::repositories::list_repositories,
             modules::repositories::add_repository,
+            modules::repositories::update_repository,
             modules::repositories::remove_repository,
             modules::repositories::set_repository_enabled,
             modules::updates::check_updates,

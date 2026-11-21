@@ -324,6 +324,7 @@
       "hint": "{{manager}} · {{distro}}"
     },
     "add": {
+      "open": "New repository",
       "title": "Add a repository",
       "hint": "A Plume configuration file is created. Removal deletes the targeted entry from the system configuration file.",
       "name": "Name",
@@ -334,6 +335,12 @@
       "gpgKey": "GPG key (optional)",
       "submit": "Add repository",
       "rootHint": "A system authorization will be requested."
+    },
+    "edit": {
+      "title": "Edit repository",
+      "hint": "Changes are applied to the existing entry in the configuration file.",
+      "submit": "Save",
+      "doubleClick": "Double-click to edit"
     },
     "errors": {
       "load": "Couldn't load repositories.",

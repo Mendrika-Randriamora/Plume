@@ -324,6 +324,7 @@
       "hint": "{{manager}} · {{distro}}"
     },
     "add": {
+      "open": "Nouveau dépôt",
       "title": "Ajouter un dépôt",
       "hint": "Un fichier de configuration Plume est créé. La suppression retire l'entrée ciblée du fichier de configuration du système.",
       "name": "Nom",
@@ -334,6 +335,12 @@
       "gpgKey": "Clé GPG (facultatif)",
       "submit": "Ajouter le dépôt",
       "rootHint": "Une autorisation système sera demandée."
+    },
+    "edit": {
+      "title": "Modifier le dépôt",
+      "hint": "Les modifications sont appliquées à l'entrée existante du fichier de configuration.",
+      "submit": "Enregistrer",
+      "doubleClick": "Double-cliquez pour modifier"
     },
     "errors": {
       "load": "Impossible de charger les dépôts.",

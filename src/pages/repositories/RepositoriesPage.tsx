@@ -16,24 +16,12 @@ import {
   listRepositories,
   removeRepository,
   setRepositoryEnabled,
+  updateRepository,
 } from "./api";
-import type { Repository, RepositoryInfo } from "./api";
+import type { AddRepositoryInput, Repository, RepositoryInfo } from "./api";
+import { RepositoryModal } from "./components/RepositoryModal";
 
-interface Form {
-  name: string;
-  url: string;
-  suite: string;
-  components: string;
-  gpgKey: string;
-}
-
-const EMPTY_FORM: Form = {
-  name: "",
-  url: "",
-  suite: "",
-  components: "",
-  gpgKey: "",
-};
+type ModalState = { mode: "add" } | { mode: "edit"; repository: Repository } | null;
 
 export function RepositoriesPage() {
   const { t } = useTranslation();
@@ -42,7 +30,7 @@ export function RepositoriesPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [acting, setActing] = useState(false);
-  const [form, setForm] = useState<Form>(EMPTY_FORM);
+  const [modal, setModal] = useState<ModalState>(null);
 
   const load = useCallback(async () => {
     setBusy(true);
@@ -50,10 +38,6 @@ export function RepositoriesPage() {
       const next = await listRepositories();
       setInfo(next);
       setError(null);
-      setForm((current) => ({
-        ...current,
-        suite: current.suite || next.codename || "",
-      }));
     } catch {
       setError(t("repositories.errors.load"));
     } finally {
@@ -99,26 +83,25 @@ export function RepositoriesPage() {
     }
   };
 
-  const updateField = (key: keyof Form, value: string) =>
-    setForm((current) => ({ ...current, [key]: value }));
-
-  const add = () =>
-    run(async () => {
-      await addRepository({
-        name: form.name,
-        url: form.url,
-        suite: form.suite,
-        components: form.components,
-        gpgKey: form.gpgKey,
-      });
-      setForm((current) => ({
-        ...current,
-        name: "",
-        url: "",
-        components: "",
-        gpgKey: "",
-      }));
-    });
+  const submit = async (input: AddRepositoryInput): Promise<string | null> => {
+    if (!modal) return null;
+    setActing(true);
+    setError(null);
+    try {
+      if (modal.mode === "edit") {
+        await updateRepository({ id: modal.repository.id, ...input });
+      } else {
+        await addRepository(input);
+      }
+      await load();
+      setModal(null);
+      return null;
+    } catch (e) {
+      return message((e as Error).message);
+    } finally {
+      setActing(false);
+    }
+  };
 
   const toggle = (repo: Repository) =>
     run(() => setRepositoryEnabled(repo.id, !repo.enabled));
@@ -147,14 +130,25 @@ export function RepositoriesPage() {
         title={t("repositories.title")}
         subtitle={t("repositories.subtitle")}
         action={
-          <Button
-            variant="ghost"
-            icon={RefreshCw}
-            busy={busy || acting}
-            onClick={() => void load()}
-            title={t("repositories.refresh")}>
-            {t("repositories.refresh")}
+          <div className="row gap">
+            <Button
+              variant="ghost"
+              icon={RefreshCw}
+              busy={busy || acting}
+              onClick={() => void load()}
+              title={t("repositories.refresh")}>
+              {t("repositories.refresh")}
             </Button>
+            {info?.manager !== "none" && (
+              <Button
+                icon={Plus}
+                disabled={!allowed || acting || !info}
+                onClick={() => setModal({ mode: "add" })}
+              >
+                {t("repositories.add.open")}
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -176,9 +170,21 @@ export function RepositoriesPage() {
               <ul className="list repo-list">
                 {info.repositories.map((repo) => (
                   <li key={repo.id} className="repo-row">
-                    <div className="grow">
+                    <div
+                      className={`grow repo-main${allowed ? " editable" : ""}`}
+                      onDoubleClick={
+                        allowed ? () => setModal({ mode: "edit", repository: repo }) : undefined
+                      }
+                      title={allowed ? t("repositories.edit.doubleClick") : undefined}
+                    >
                       <div className="row gap repo-title">
-                        <span className="repo-name">{repo.name}</span>
+                        <a
+                          className="repo-name repo-link"
+                          href="#"
+                          onClick={(event) => event.preventDefault()}
+                        >
+                          {repo.name}
+                        </a>
                         <span className={`chip ${repo.enabled ? "" : "muted"}`}>
                           {repo.enabled ? t("repositories.enabled") : t("repositories.disabled")}
                         </span>
@@ -217,78 +223,19 @@ export function RepositoriesPage() {
               </ul>
             )}
           </Card>
-
-          <Card title={t("repositories.add.title")} hint={t("repositories.add.hint")}>
-            <div className="repo-form">
-              <label className="field col">
-                <span>{t("repositories.add.name")}</span>
-                <input
-                  className="text-input"
-                  value={form.name}
-                  placeholder={t("repositories.add.namePlaceholder")}
-                  onChange={(e) => updateField("name", e.target.value)}
-                />
-              </label>
-              <label className="field col">
-                <span>{t("repositories.add.url")}</span>
-                <input
-                  className="text-input"
-                  value={form.url}
-                  placeholder="https://"
-                  onChange={(e) => updateField("url", e.target.value)}
-                />
-              </label>
-
-              {info.manager === "apt" && (
-                <>
-                  <label className="field col">
-                    <span>{t("repositories.add.suite")}</span>
-                    <input
-                      className="text-input"
-                      value={form.suite}
-                      placeholder="noble"
-                      onChange={(e) => updateField("suite", e.target.value)}
-                    />
-                  </label>
-                  <label className="field col">
-                    <span>{t("repositories.add.components")}</span>
-                    <input
-                      className="text-input"
-                      value={form.components}
-                      placeholder="main"
-                      onChange={(e) => updateField("components", e.target.value)}
-                    />
-                  </label>
-                </>
-              )}
-
-              {info.manager === "dnf" && (
-                <label className="field col">
-                  <span>{t("repositories.add.gpgKey")}</span>
-                  <input
-                    className="text-input"
-                    value={form.gpgKey}
-                    placeholder="https://"
-                    onChange={(e) => updateField("gpgKey", e.target.value)}
-                  />
-                </label>
-              )}
-            </div>
-
-            <div className="repo-add-foot">
-              <span className="muted small">{t("repositories.add.rootHint")}</span>
-              <Button
-                icon={Plus}
-                busy={acting}
-                disabled={!allowed || !form.name.trim() || !form.url.trim()}
-                onClick={() => void add()}
-              >
-                {t("repositories.add.submit")}
-              </Button>
-            </div>
-          </Card>
         </>
       )}
+
+      <RepositoryModal
+        mode={modal?.mode ?? "add"}
+        isOpen={modal !== null}
+        onClose={() => setModal(null)}
+        manager={info?.manager ?? "none"}
+        codename={info?.codename ?? null}
+        allowed={allowed}
+        repository={modal?.mode === "edit" ? modal.repository : null}
+        onSubmit={submit}
+      />
     </>
   );
 }

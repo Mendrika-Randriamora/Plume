@@ -10,6 +10,9 @@ export interface Repository {
   managed: boolean;
   source: string;
   details: string;
+  suite: string;
+  components: string;
+  gpgKey: string;
 }
 
 export interface RepositoryInfo {
@@ -31,6 +34,20 @@ export const listRepositories = () => call<RepositoryInfo>("list_repositories");
 
 export const addRepository = (input: AddRepositoryInput) =>
   call<void>("add_repository", {
+    name: input.name,
+    url: input.url,
+    suite: input.suite,
+    components: input.components,
+    gpgKey: input.gpgKey,
+  });
+
+export interface UpdateRepositoryInput extends AddRepositoryInput {
+  id: string;
+}
+
+export const updateRepository = (input: UpdateRepositoryInput) =>
+  call<void>("update_repository", {
+    id: input.id,
     name: input.name,
     url: input.url,
     suite: input.suite,

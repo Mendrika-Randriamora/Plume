@@ -26,6 +26,9 @@ pub struct Repository {
     managed: bool,
     source: String,
     details: String,
+    suite: String,
+    components: String,
+    gpg_key: String,
 }
 
 #[derive(Serialize)]
@@ -200,12 +203,19 @@ fn apt_repos_from_list(path: &Path, content: &str) -> Vec<Repository> {
             let (url, suite, components) = parse_apt_deb(body)?;
             Some(Repository {
                 id: format!("apt|list|{}|{}", path.display(), index),
-                name: if suite.is_empty() { url.clone() } else { suite },
+                name: if suite.is_empty() {
+                    url.clone()
+                } else {
+                    suite.clone()
+                },
                 url,
                 enabled,
                 managed,
                 source: source.clone(),
                 details: components.join(" "),
+                suite,
+                components: components.join(" "),
+                gpg_key: String::new(),
             })
         })
         .collect()
@@ -252,14 +262,22 @@ fn apt_repos_from_sources(path: &Path, content: &str) -> Vec<Repository> {
 
         let url = uris.join(" ");
         let suite = suites.join(" ");
+        let components = components.join(" ");
         repos.push(Repository {
             id: format!("apt|sources|{}|{}", path.display(), index),
-            name: if suite.is_empty() { url.clone() } else { suite },
+            name: if suite.is_empty() {
+                url.clone()
+            } else {
+                suite.clone()
+            },
             url,
             enabled,
             managed,
             source: source.clone(),
-            details: components.join(" "),
+            details: components.clone(),
+            suite,
+            components,
+            gpg_key: String::new(),
         });
     }
 
@@ -390,6 +408,93 @@ fn apt_remove(id: &RepoId) -> Result<(), String> {
     }
 }
 
+fn apt_update(id: &RepoId, url: &str, suite: &str, components: &str) -> Result<(), String> {
+    if !is_safe_path(&id.path, APT_DIR) && id.path != Path::new(APT_MAIN) {
+        return Err("invalid_path".into());
+    }
+    let content = fs::read_to_string(&id.path).map_err(|_| "read_failed".to_string())?;
+
+    let next = if id.kind == "list" {
+        let mut lines: Vec<String> = content.lines().map(String::from).collect();
+        let index: usize = id.key.parse().map_err(|_| "invalid_id".to_string())?;
+        let line = lines.get_mut(index).ok_or("repo_not_found")?;
+        let trimmed = line.trim_start();
+        let indent = &line[..line.len() - trimmed.len()];
+        let (commented, body) = match trimmed.strip_prefix('#') {
+            Some(rest) => (true, rest.trim_start()),
+            None => (false, trimmed),
+        };
+        let kind = body.split_whitespace().next().ok_or("repo_not_found")?;
+        if kind != "deb" && kind != "deb-src" {
+            return Err("repo_not_found".into());
+        }
+        // On conserve les options éventuelles (`[arch=...]`, `signed-by=...`).
+        let rest = body[kind.len()..].trim_start();
+        let options = if rest.starts_with('[') {
+            let end = rest.find(']').ok_or("repo_not_found")?;
+            &rest[..=end]
+        } else {
+            ""
+        };
+        let mut next_body = format!("{kind} ");
+        if !options.is_empty() {
+            next_body.push_str(options);
+            next_body.push(' ');
+        }
+        next_body.push_str(url);
+        next_body.push(' ');
+        next_body.push_str(suite);
+        next_body.push(' ');
+        next_body.push_str(components);
+        *line = format!("{indent}{}{next_body}", if commented { "# " } else { "" });
+        lines.join("\n") + "\n"
+    } else {
+        let mut stanzas: Vec<String> = content.split("\n\n").map(String::from).collect();
+        let index: usize = id.key.parse().map_err(|_| "invalid_id".to_string())?;
+        let stanza = stanzas.get_mut(index).ok_or("repo_not_found")?;
+        let mut lines: Vec<String> = stanza.lines().map(String::from).collect();
+        let mut seen_uris = false;
+        let mut seen_suites = false;
+        let mut seen_components = false;
+
+        for line in &mut lines {
+            let Some((key, _)) = line.split_once(':') else {
+                continue;
+            };
+            match key.trim().to_ascii_lowercase().as_str() {
+                "uris" => {
+                    *line = format!("URIs: {url}");
+                    seen_uris = true;
+                }
+                "suites" => {
+                    *line = format!("Suites: {suite}");
+                    seen_suites = true;
+                }
+                "components" => {
+                    *line = format!("Components: {components}");
+                    seen_components = true;
+                }
+                _ => {}
+            }
+        }
+
+        if !seen_uris {
+            lines.insert(0, format!("URIs: {url}"));
+        }
+        if !seen_suites {
+            lines.push(format!("Suites: {suite}"));
+        }
+        if !seen_components && !components.is_empty() {
+            lines.push(format!("Components: {components}"));
+        }
+
+        *stanza = lines.join("\n");
+        stanzas.join("\n\n") + "\n"
+    };
+
+    root_write(&id.path, &next)
+}
+
 // ---------------------------------------------------------------------------
 // DNF
 // ---------------------------------------------------------------------------
@@ -437,6 +542,9 @@ fn push_dnf_repo(
         managed,
         source: path.display().to_string(),
         details: id.to_string(),
+        suite: String::new(),
+        components: String::new(),
+        gpg_key: values.get("gpgkey").cloned().unwrap_or_default(),
     });
 }
 
@@ -551,6 +659,100 @@ fn dnf_remove(id: &RepoId) -> Result<(), String> {
     }
 }
 
+fn dnf_update(id: &RepoId, name: &str, url: &str, gpg_key: &str) -> Result<(), String> {
+    if !is_safe_path(&id.path, DNF_DIR) {
+        return Err("invalid_path".into());
+    }
+    let content = fs::read_to_string(&id.path).map_err(|_| "read_failed".to_string())?;
+    let lines: Vec<String> = content.lines().map(String::from).collect();
+
+    let mut start = None;
+    let mut end = lines.len();
+    for (index, line) in lines.iter().enumerate() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') && trimmed.ends_with(']') {
+            if start.is_some() {
+                end = index;
+                break;
+            }
+            if trimmed[1..trimmed.len() - 1] == id.key {
+                start = Some(index);
+            }
+        }
+    }
+    let start = start.ok_or("repo_not_found")?;
+
+    let mut body: Vec<String> = lines[start + 1..end].to_vec();
+    let mut has_name = false;
+    let mut has_url = false;
+    let mut has_gpgcheck = false;
+    let mut has_gpgkey = false;
+
+    for line in &mut body {
+        let trimmed = line.trim();
+        if trimmed.starts_with('#') || trimmed.starts_with(';') {
+            continue;
+        }
+        let Some((key, _)) = trimmed.split_once('=') else {
+            continue;
+        };
+        match key.trim().to_ascii_lowercase().as_str() {
+            "name" => {
+                *line = format!("name={name}");
+                has_name = true;
+            }
+            "baseurl" | "metalink" | "mirrorlist" => {
+                if has_url {
+                    *line = format!("# {trimmed}");
+                } else {
+                    *line = format!("baseurl={url}");
+                    has_url = true;
+                }
+            }
+            "gpgcheck" => {
+                *line = format!("gpgcheck={}", if gpg_key.is_empty() { 0 } else { 1 });
+                has_gpgcheck = true;
+            }
+            "gpgkey" => {
+                if gpg_key.is_empty() {
+                    *line = String::new();
+                } else {
+                    *line = format!("gpgkey={gpg_key}");
+                    has_gpgkey = true;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    body.retain(|line| !line.is_empty());
+    if !has_name {
+        body.insert(0, format!("name={name}"));
+    }
+    if !has_url {
+        body.push(format!("baseurl={url}"));
+    }
+    if gpg_key.is_empty() {
+        if !has_gpgcheck {
+            body.push("gpgcheck=0".into());
+        }
+    } else {
+        if !has_gpgcheck {
+            body.push("gpgcheck=1".into());
+        }
+        if !has_gpgkey {
+            body.push(format!("gpgkey={gpg_key}"));
+        }
+    }
+
+    let mut next: Vec<String> = lines[..start].to_vec();
+    next.push(lines[start].clone());
+    next.extend(body);
+    next.extend(lines[end..].iter().cloned());
+
+    root_write(&id.path, &(next.join("\n") + "\n"))
+}
+
 // ---------------------------------------------------------------------------
 // Pacman
 // ---------------------------------------------------------------------------
@@ -605,6 +807,9 @@ fn pacman_repo(name: &str, servers: Vec<String>) -> Repository {
         managed: name.starts_with("plume-"),
         source: PACMAN_CONF.to_string(),
         details: name.to_string(),
+        suite: String::new(),
+        components: String::new(),
+        gpg_key: String::new(),
     }
 }
 
@@ -633,6 +838,53 @@ fn pacman_remove(id: &RepoId) -> Result<(), String> {
     }
 
     root_write(Path::new(PACMAN_CONF), &(output.join("\n") + "\n"))
+}
+
+fn pacman_update(id: &RepoId, url: &str) -> Result<(), String> {
+    if id.path != Path::new(PACMAN_CONF) || id.kind != "section" || id.key == "options" {
+        return Err("invalid_id".into());
+    }
+    let content = fs::read_to_string(PACMAN_CONF).map_err(|_| "read_failed".to_string())?;
+    let mut lines: Vec<String> = content.lines().map(String::from).collect();
+    let mut in_section = false;
+    let mut found = false;
+    let mut written = false;
+
+    for line in &mut lines {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') && trimmed.ends_with(']') {
+            in_section = trimmed[1..trimmed.len() - 1] == id.key;
+            found |= in_section;
+            continue;
+        }
+        if in_section {
+            if let Some((key, _)) = trimmed.split_once('=') {
+                if key.trim().eq_ignore_ascii_case("server") && !written {
+                    *line = format!("Server = {url}");
+                    written = true;
+                }
+            }
+        }
+    }
+
+    if !found {
+        return Err("repo_not_found".into());
+    }
+
+    if !written {
+        let index = lines
+            .iter()
+            .position(|line| {
+                let trimmed = line.trim();
+                trimmed.starts_with('[')
+                    && trimmed.ends_with(']')
+                    && trimmed[1..trimmed.len() - 1] == id.key
+            })
+            .ok_or("repo_not_found")?;
+        lines.insert(index + 1, format!("Server = {url}"));
+    }
+
+    root_write(Path::new(PACMAN_CONF), &(lines.join("\n") + "\n"))
 }
 
 // ---------------------------------------------------------------------------
@@ -726,6 +978,64 @@ pub async fn add_repository(
                 root_write(Path::new(PACMAN_CONF), &next)
             }
             Manager::None => Err("unsupported_package_manager".into()),
+        }
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn update_repository(
+    id: String,
+    name: String,
+    url: String,
+    suite: String,
+    components: String,
+    gpg_key: String,
+) -> Result<(), String> {
+    blocking(move || {
+        let id = parse_id(&id)?;
+        let name = clean(&name)?;
+        let url = clean(&url)?;
+        let suite = clean(&suite)?;
+        let components = clean(&components)?;
+        let gpg_key = clean(&gpg_key)?;
+
+        if url.is_empty() {
+            return Err("invalid_input".into());
+        }
+
+        match id.manager.as_str() {
+            "apt" => {
+                if suite.is_empty() {
+                    return Err("invalid_input".into());
+                }
+                // Le format .list n'accepte qu'une seule suite et une seule URL.
+                if id.kind == "list"
+                    && (url.split_whitespace().count() != 1
+                        || suite.split_whitespace().count() != 1)
+                {
+                    return Err("invalid_input".into());
+                }
+                let components = if components.is_empty() {
+                    "main".to_string()
+                } else {
+                    components
+                };
+                apt_update(&id, &url, &suite, &components)
+            }
+            "dnf" => {
+                if name.is_empty() || url.split_whitespace().count() != 1 {
+                    return Err("invalid_input".into());
+                }
+                dnf_update(&id, &name, &url, &gpg_key)
+            }
+            "pacman" => {
+                if url.split_whitespace().count() != 1 {
+                    return Err("invalid_input".into());
+                }
+                pacman_update(&id, &url)
+            }
+            _ => Err("unsupported_package_manager".into()),
         }
     })
     .await

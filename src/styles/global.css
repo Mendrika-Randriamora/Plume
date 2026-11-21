@@ -152,6 +152,11 @@ button.list-row:hover { background: var(--hover); }
 .repo-row + .repo-row { border-top: 1px solid var(--line); }
 .repo-title { flex-wrap: wrap; gap: 8px; }
 .repo-name { font-weight: 500; }
+.repo-main { padding: 4px 6px; margin: -4px -6px; border-radius: 8px; }
+.repo-main.editable { cursor: pointer; user-select: none; }
+.repo-main.editable:hover { background: var(--hover); }
+.repo-main.editable:hover .repo-link { text-decoration: underline; }
+.repo-link { color: inherit; text-decoration: none; }
 .repo-actions { flex: none; }
 .repo-form { display: flex; flex-direction: column; margin-bottom: 12px; }
 .repo-form .field { gap: 6px; }
@@ -260,6 +265,8 @@ label.field { cursor: pointer; }
 .modal { background: var(--surface); border-radius: var(--radius); width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
 .modal-content { padding: 20px; }
+.modal-content .repo-form { margin-top: 16px; }
+.modal-content .repo-add-foot { margin-top: 16px; }
 .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .detail-item { display: flex; flex-direction: column; gap: 4px; }
 .detail-item.full-width { grid-column: 1 / -1; }
