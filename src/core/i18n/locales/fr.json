@@ -161,8 +161,16 @@
     },
     "summary_one": "{{count}} processus · triés par {{column}} {{direction}}",
     "summary_other": "{{count}} processus · triés par {{column}} {{direction}}",
+    "summaryFiltered_one": "{{count}} processus correspondant sur {{total}} · « {{query}} »",
+    "summaryFiltered_other": "{{count}} processus correspondant sur {{total}} · « {{query}} »",
     "loading": "Lecture…",
     "loadingTable": "Lecture des processus…",
+    "search": {
+      "placeholder": "Rechercher un processus…",
+      "clear": "Effacer la recherche"
+    },
+    "emptySearch": "Aucun processus ne correspond à « {{query}} ».",
+    "empty": "Aucun processus à afficher.",
     "show": "Afficher",
     "all": "Tous",
     "limit_one": "{{count}} processus",

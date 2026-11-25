@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ChevronUp, Cpu } from "lucide-react";
+import { ChevronDown, ChevronUp, Cpu, Search, X } from "lucide-react";
 import { bytes, percentValue } from "@/core/format";
-import { Card, Loading, Notice, PageHeader } from "@/core/ui";
+import { Card, Empty, Loading, Notice, PageHeader } from "@/core/ui";
 import { usePermission, useSettings } from "@/core/settings/SettingsProvider";
 import { listProcesses, processDetails, restartProcess, stopProcess } from "./api";
 import type { ProcessDetails, ProcessInfo, SortKey } from "./types";
@@ -36,6 +36,7 @@ export function ProcessesPage() {
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [limit, setLimit] = useState(50);
+  const [query, setQuery] = useState("");
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: "memory", desc: true });
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [detailsProcess, setDetailsProcess] = useState<ProcessInfo | null>(null);
@@ -127,15 +128,22 @@ export function ProcessesPage() {
     setDetailsError(null);
   };
 
-  const visible = useMemo(() => {
+  const search = query.trim().toLowerCase();
+
+  const filtered = useMemo(() => {
     if (!rows) return [];
+    if (!search) return rows;
+    return rows.filter((p) => p.name.toLowerCase().includes(search) || String(p.pid).includes(search));
+  }, [rows, search]);
+
+  const visible = useMemo(() => {
     const dir = sort.desc ? -1 : 1;
-    const sorted = [...rows].sort((a, b) => {
+    const sorted = [...filtered].sort((a, b) => {
       if (sort.key === "name") return a.name.localeCompare(b.name, i18n.language) * dir;
       return (a[sort.key] - b[sort.key]) * dir;
     });
     return limit ? sorted.slice(0, limit) : sorted;
-  }, [rows, sort, limit, i18n.language]);
+  }, [filtered, sort, limit, i18n.language]);
 
   // Nouvelle colonne : décroissant pour les nombres, croissant pour le nom.
   const toggle = (key: SortKey) =>
@@ -153,11 +161,17 @@ export function ProcessesPage() {
       <div className="toolbar">
         <p className="muted small">
           {rows
-            ? t("processes.summary", {
-                count: rows.length,
-                column: t(sortColumn.sortKey),
-                direction: t(sort.desc ? "processes.descending" : "processes.ascending"),
-              })
+            ? search
+              ? t("processes.summaryFiltered", {
+                  count: filtered.length,
+                  total: rows.length,
+                  query: query.trim(),
+                })
+              : t("processes.summary", {
+                  count: rows.length,
+                  column: t(sortColumn.sortKey),
+                  direction: t(sort.desc ? "processes.descending" : "processes.ascending"),
+                })
             : t("processes.loading")}
         </p>
         <label className="row gap small">
@@ -173,6 +187,30 @@ export function ProcessesPage() {
       </div>
 
       <Card>
+        <div className="proc-search">
+          <Search size={15} strokeWidth={1.75} />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t("processes.search.placeholder")}
+            aria-label={t("processes.search.placeholder")}
+          />
+          {query && (
+            <button
+              type="button"
+              className="proc-search-clear"
+              onClick={() => setQuery("")}
+              title={t("processes.search.clear")}
+              aria-label={t("processes.search.clear")}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        <div className="proc-divider" />
+
         {!rows ? (
           <Loading text={t("processes.loadingTable")} />
         ) : (
@@ -194,27 +232,34 @@ export function ProcessesPage() {
               })}
             </div>
 
-            {visible.map((p) => (
-              <div
-                key={p.pid}
-                className="proc-row"
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  setMenu({ x: event.clientX, y: event.clientY, process: p });
-                }}
-                title={t("processes.contextHint")}
-              >
-                <div className="proc-name">
-                  <Cpu size={15} strokeWidth={1.75} />
-                  <span className="ellipsis" title={`${p.name} (${p.pid})`}>{p.name}</span>
+            {filtered.length === 0 ? (
+              <Empty
+                icon={Search}
+                text={search ? t("processes.emptySearch", { query: query.trim() }) : t("processes.empty")}
+              />
+            ) : (
+              visible.map((p) => (
+                <div
+                  key={p.pid}
+                  className="proc-row"
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    setMenu({ x: event.clientX, y: event.clientY, process: p });
+                  }}
+                  title={t("processes.contextHint")}
+                >
+                  <div className="proc-name">
+                    <Cpu size={15} strokeWidth={1.75} />
+                    <span className="ellipsis" title={`${p.name} (${p.pid})`}>{p.name}</span>
+                  </div>
+                  <div className="proc-cell num">{cpu(p.cpu)}</div>
+                  <div className="proc-cell num muted">{p.pid}</div>
+                  <div className="proc-cell num">{bytes(p.memory)}</div>
+                  <div className="proc-cell num proc-disk">{rate(p.read)}</div>
+                  <div className="proc-cell num proc-disk">{rate(p.write)}</div>
                 </div>
-                <div className="proc-cell num">{cpu(p.cpu)}</div>
-                <div className="proc-cell num muted">{p.pid}</div>
-                <div className="proc-cell num">{bytes(p.memory)}</div>
-                <div className="proc-cell num proc-disk">{rate(p.read)}</div>
-                <div className="proc-cell num proc-disk">{rate(p.write)}</div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         )}
       </Card>

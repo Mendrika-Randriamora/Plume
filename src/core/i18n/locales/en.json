@@ -161,8 +161,16 @@
     },
     "summary_one": "{{count}} process · sorted by {{column}} {{direction}}",
     "summary_other": "{{count}} processes · sorted by {{column}} {{direction}}",
+    "summaryFiltered_one": "{{count}} matching process out of {{total}} · “{{query}}”",
+    "summaryFiltered_other": "{{count}} matching processes out of {{total}} · “{{query}}”",
     "loading": "Reading…",
     "loadingTable": "Reading processes…",
+    "search": {
+      "placeholder": "Search for a process…",
+      "clear": "Clear search"
+    },
+    "emptySearch": "No process matches “{{query}}”.",
+    "empty": "No process to display.",
     "show": "Show",
     "all": "All",
     "limit_one": "{{count}} process",
