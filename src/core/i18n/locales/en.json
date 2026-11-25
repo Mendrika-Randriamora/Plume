@@ -478,6 +478,10 @@
       "systemChanges": {
         "title": "Change the system",
         "description": "Updates and program removal. Your password is requested by the system."
+      },
+      "internetAccess": {
+        "title": "Allow internet access",
+        "description": "Required for Plume updates: check and download. Your internet connection is only used for that."
       }
     },
     "privacy": {

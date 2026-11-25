@@ -9,6 +9,7 @@ export interface Permissions {
   scanHome: boolean; // lire les fichiers de /home
   deleteFiles: boolean; // envoyer des fichiers à la corbeille
   systemChanges: boolean; // mises à jour et suppression de paquets (mot de passe requis)
+  internetAccess: boolean; // autorisation à accès Internet pour les mises à jour
 }
 
 export interface Settings {
@@ -45,7 +46,7 @@ export const DEFAULTS: Settings = {
   sidebarWidth: SIDEBAR_DEFAULT,
   interfaceV2: true,
   iconLibrary: "sketchy",
-  permissions: { scanHome: true, deleteFiles: true, systemChanges: true },
+  permissions: { scanHome: true, deleteFiles: true, systemChanges: true, internetAccess: true },
 };
 
 const KEY = "plume.settings.v1";

@@ -478,6 +478,10 @@
       "systemChanges": {
         "title": "Modifier le système",
         "description": "Mises à jour et retrait de programmes. Votre mot de passe est demandé par le système."
+      },
+      "internetAccess": {
+        "title": "Autoriser l'accès à Internet",
+        "description": "Nécessaire pour les mises à jour de Plume : vérification et téléchargement. Votre connexion Internet est sollicitée uniquement pour cela."
       }
     },
     "privacy": {

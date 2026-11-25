@@ -48,6 +48,11 @@ const PERMS = [
     "settings.permissions.systemChanges.title",
     "settings.permissions.systemChanges.description",
   ],
+  [
+    "internetAccess",
+    "settings.permissions.internetAccess.title",
+    "settings.permissions.internetAccess.description",
+  ],
 ] as const;
 
 /** Sections affichées dans la liste des réglages, façon GNOME. */

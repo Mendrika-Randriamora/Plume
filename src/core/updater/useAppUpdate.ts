@@ -1,5 +1,6 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { checkForUpdate, installUpdate, type AvailableUpdate } from "./index";
+import { usePermission } from "@/core/settings/SettingsProvider";
 
 export type UpdaterPhase = "idle" | "checking" | "latest" | "available" | "installing";
 
@@ -71,13 +72,26 @@ export async function installNow() {
 /**
  * Accès à l'état de mise à jour.
  * `autoCheck` lance la vérification silencieuse du démarrage (une seule fois par session).
+ * Les vérifications et installations passent par l'autorisation `internetAccess` :
+ * sans elle, Plume ne contacte pas le serveur de mise à jour.
  */
 export function useAppUpdate(autoCheck = false) {
+  const allowed = usePermission("internetAccess");
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   useEffect(() => {
-    if (autoCheck) void checkSilently();
-  }, [autoCheck]);
+    if (autoCheck && allowed) void checkSilently();
+  }, [autoCheck, allowed]);
 
-  return { ...snapshot, search: checkNow, install: installNow };
+  const search = useCallback(async () => {
+    if (!allowed) return;
+    await checkNow();
+  }, [allowed]);
+
+  const install = useCallback(async () => {
+    if (!allowed) return;
+    await installNow();
+  }, [allowed]);
+
+  return { ...snapshot, allowed, search, install };
 }
