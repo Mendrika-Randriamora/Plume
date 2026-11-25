@@ -2441,7 +2441,7 @@ dependencies = [
 
 [[package]]
 name = "plume"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "dirs 5.0.1",
  "gio",
