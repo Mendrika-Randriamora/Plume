@@ -1,20 +1,11 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ArrowLeft,
-  ChevronRight,
-  Info,
-  Lock,
-  Palette,
-  RotateCcw,
-  ShieldCheck,
-} from "lucide-react";
-import { Button, Card, PageHeader } from "@/core/ui";
+import { ArrowLeft, Button, Card, ChevronRight, Info, Lock, PageHeader, Palette, RotateCcw, ShieldCheck } from "@/core/ui";
 import { getCurrentVersion } from "@/core/updater";
 import i18n, { LANGS, type Lang } from "@/core/i18n";
 import { useSettings } from "@/core/settings/SettingsProvider";
 import { resolveDark, FONTS } from "@/core/settings/theme";
-import type { FontKey, Permissions, Rgb, ThemeMode } from "@/core/settings/store";
+import type { FontKey, IconLibrary, Permissions, Rgb, ThemeMode } from "@/core/settings/store";
 
 const THEMES = [
   ["light", "settings.appearance.themes.light"],
@@ -56,6 +47,11 @@ const PERMS = [
     "systemChanges",
     "settings.permissions.systemChanges.title",
     "settings.permissions.systemChanges.description",
+  ],
+  [
+    "internetAccess",
+    "settings.permissions.internetAccess.title",
+    "settings.permissions.internetAccess.description",
   ],
 ] as const;
 
@@ -235,6 +231,13 @@ export function SettingsPage() {
               value={s.fontSize}
               onChange={(e) => setFontSize(Number(e.target.value))}
             />
+          </div>
+          <div className="field">
+            <span>{t("settings.appearance.iconLibrary")}</span>
+            <select value={s.iconLibrary} onChange={(e) => update({ iconLibrary: e.target.value as IconLibrary })}>
+              <option value="sketchy">{t("settings.appearance.iconLibrarySketchy")}</option>
+              <option value="lucide">{t("settings.appearance.iconLibraryLucide")}</option>
+            </select>
           </div>
           <label className="field">
             <span>

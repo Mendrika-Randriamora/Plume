@@ -1,6 +1,49 @@
 import { useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, type LucideIcon } from "lucide-react";
+import { Loader2 } from "./icons";
+import type { AppIcon } from "./icons";
+
+export {
+  Activity,
+  ArrowLeft,
+  ArrowLeftRight,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Cpu,
+  Download,
+  FileText,
+  Folder,
+  FolderOpen,
+  Grid3X3,
+  HardDrive,
+  Home,
+  Info,
+  Loader2,
+  Lock,
+  MemoryStick,
+  Package,
+  PackageCheck,
+  Palette,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
+  Power,
+  PowerOff,
+  RefreshCw,
+  RotateCcw,
+  RotateCw,
+  Search,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Square,
+  SquarePlay,
+  Trash2,
+  X,
+} from "./icons";
+export type { AppIcon, AppIconProps } from "./icons";
 
 export function Card({ title, hint, action, children }: { title?: string; hint?: string; action?: ReactNode; children: ReactNode }) {
   return (
@@ -20,7 +63,7 @@ export function Card({ title, hint, action, children }: { title?: string; hint?:
 }
 
 interface BtnProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  icon?: LucideIcon;
+  icon?: AppIcon;
   busy?: boolean;
   variant?: "solid" | "ghost";
 }
@@ -41,7 +84,7 @@ export function ConfirmButton({ label, confirmLabel, onConfirm, busy, disabled, 
   onConfirm: () => void;
   busy?: boolean;
   disabled?: boolean;
-  icon?: LucideIcon;
+  icon?: AppIcon;
   iconOnly?: boolean;
 }) {
   const { t } = useTranslation();
@@ -78,7 +121,7 @@ export function Meter({ value, tone }: { value: number; tone?: "warn" | "danger"
   );
 }
 
-export function Empty({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
+export function Empty({ icon: Icon, text }: { icon: AppIcon; text: string }) {
   return (
     <div className="empty">
       <Icon size={22} strokeWidth={1.5} />

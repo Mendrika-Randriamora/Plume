@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, X } from "lucide-react";
-import { Button, Notice } from "@/core/ui";
+import { Button, Notice, Plus, X } from "@/core/ui";
 import type { AddRepositoryInput, PackageManager, Repository } from "../api";
 
 interface Props {

@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { X } from "lucide-react";
-import { Button, Loading } from "@/core/ui";
+import { Button, Loading, X } from "@/core/ui";
 import { bytes, percentValue } from "@/core/format";
 import type { ProcessDetails } from "../types";
 

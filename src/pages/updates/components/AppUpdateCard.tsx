@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, Download, RefreshCw } from "lucide-react";
-import { Button, Card, Meter, Notice } from "@/core/ui";
+import { Button, Card, CheckCircle2, Download, Meter, Notice, RefreshCw } from "@/core/ui";
 import { formatDate } from "@/core/format";
 import { getCurrentVersion } from "@/core/updater";
 import { useAppUpdate } from "@/core/updater/useAppUpdate";
@@ -9,7 +8,7 @@ import { useAppUpdate } from "@/core/updater/useAppUpdate";
 /** Mise à jour de Plume elle-même (AppImage), séparée des mises à jour du système. */
 export function AppUpdateCard() {
   const { t } = useTranslation();
-  const { phase, update, progress, error, search, install } = useAppUpdate();
+  const { phase, update, progress, error, allowed, search, install } = useAppUpdate();
   const [version, setVersion] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,7 +26,7 @@ export function AppUpdateCard() {
             className="icon-btn"
             icon={RefreshCw}
             busy={phase === "checking"}
-            disabled={phase === "installing"}
+            disabled={!allowed || phase === "installing"}
             onClick={search}
             title={t("common.search")}
             aria-label={t("common.search")}
@@ -40,6 +39,8 @@ export function AppUpdateCard() {
           <CheckCircle2 size={16} strokeWidth={1.75} /> {t("updates.app.latest")}
         </p>
       )}
+
+      {!allowed && phase !== "installing" && <Notice>{t("common.authorizationDisabled")}</Notice>}
 
       {error && <Notice>{error}</Notice>}
 
@@ -63,7 +64,7 @@ export function AppUpdateCard() {
           </div>
           <div className="update-action">
             <p className="small muted">{t("updates.app.restart")}</p>
-            <Button icon={Download} onClick={install}>{t("updates.app.install")}</Button>
+            <Button icon={Download} onClick={install} disabled={!allowed}>{t("updates.app.install")}</Button>
           </div>
         </>
       )}

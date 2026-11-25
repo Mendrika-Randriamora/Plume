@@ -1,15 +1,15 @@
 import { useTranslation } from "react-i18next";
-import { Download } from "lucide-react";
+import { Download } from "@/core/ui";
 import { useNav } from "@/core/layout/nav";
 import { useAppUpdate } from "./useAppUpdate";
 
 /** Bandeau discret affiché uniquement quand une nouvelle version de Plume existe. */
 export function UpdateBanner() {
   const { t } = useTranslation();
-  const { phase, update } = useAppUpdate(true);
+  const { phase, update, allowed } = useAppUpdate(true);
   const { go } = useNav();
 
-  if (phase !== "available" || !update) return null;
+  if (phase !== "available" || !update || !allowed) return null;
 
   return (
     <button className="notice update-banner row gap" onClick={() => go("updates")}>

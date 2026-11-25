@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { Trash2, Info } from "lucide-react";
 import { bytes } from "@/core/format";
-import { ConfirmButton, Button } from "@/core/ui";
+import { Button, ConfirmButton, Info, Trash2 } from "@/core/ui";
 import type { Application } from "../types";
 
 interface Props {

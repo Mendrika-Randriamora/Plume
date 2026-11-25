@@ -1,5 +1,5 @@
+import { Package } from "@/core/ui";
 import { lazy } from "react";
-import { Package } from "lucide-react";
 
 const RepositoriesPage = lazy(() =>
   import("./RepositoriesPage").then((m) => ({ default: m.RepositoriesPage })),

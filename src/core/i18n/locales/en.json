@@ -427,7 +427,7 @@
     },
     "appearance": {
       "title": "Appearance",
-      "hint": "Theme, language, font and interface colors.",
+      "hint": "Theme, language, font, colors and interface icons.",
       "theme": "Theme",
       "themes": {
         "light": "Light",
@@ -442,6 +442,9 @@
         "mono": "Monospace"
       },
       "fontSize": "Text size (px)",
+      "iconLibrary": "Icon library",
+      "iconLibrarySketchy": "Sketchy",
+      "iconLibraryLucide": "Lucide",
       "interfaceV2": "Use the new interface",
       "interfaceV2Hint": "Content framed in a rounded card, navigation bar on a darkened background.",
       "background": "Background color ({{theme}})",
@@ -475,6 +478,10 @@
       "systemChanges": {
         "title": "Change the system",
         "description": "Updates and program removal. Your password is requested by the system."
+      },
+      "internetAccess": {
+        "title": "Allow internet access",
+        "description": "Required for Plume updates: check and download. Your internet connection is only used for that."
       }
     },
     "privacy": {

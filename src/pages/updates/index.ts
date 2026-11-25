@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw } from "@/core/ui";
 
 const UpdatesPage = lazy(() => import("./UpdatesPage").then((m) => ({ default: m.UpdatesPage })));
 

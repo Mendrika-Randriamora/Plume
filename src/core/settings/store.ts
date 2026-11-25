@@ -3,11 +3,13 @@ import { detectLang, isLang, type Lang } from "@/core/i18n";
 export type Rgb = [number, number, number];
 export type ThemeMode = "light" | "dark" | "system";
 export type FontKey = "system" | "serif" | "rounded" | "mono";
+export type IconLibrary = "lucide" | "sketchy";
 
 export interface Permissions {
   scanHome: boolean; // lire les fichiers de /home
   deleteFiles: boolean; // envoyer des fichiers à la corbeille
   systemChanges: boolean; // mises à jour et suppression de paquets (mot de passe requis)
+  internetAccess: boolean; // autorisation à accès Internet pour les mises à jour
 }
 
 export interface Settings {
@@ -22,6 +24,7 @@ export interface Settings {
   textDark: Rgb;
   sidebarWidth: number; // largeur de la barre de navigation (px)
   interfaceV2: boolean; // page encadrée dans une carte arrondie
+  iconLibrary: IconLibrary; // bibliothèque d'icônes de l'interface (lucide, sketchy)
   permissions: Permissions;
 }
 
@@ -42,7 +45,8 @@ export const DEFAULTS: Settings = {
   textDark: [232, 229, 222], // encre claire sur fond sombre
   sidebarWidth: SIDEBAR_DEFAULT,
   interfaceV2: true,
-  permissions: { scanHome: true, deleteFiles: true, systemChanges: true },
+  iconLibrary: "sketchy",
+  permissions: { scanHome: true, deleteFiles: true, systemChanges: true, internetAccess: true },
 };
 
 const KEY = "plume.settings.v1";
@@ -65,6 +69,7 @@ export function load(): Settings {
           ? Math.min(60_000, Math.max(500, Math.round(p.refreshInterval)))
           : DEFAULTS.refreshInterval,
       permissions: { ...DEFAULTS.permissions, ...p.permissions },
+      iconLibrary: p.iconLibrary === "lucide" || p.iconLibrary === "sketchy" ? p.iconLibrary : DEFAULTS.iconLibrary,
     };
   } catch {
     return DEFAULTS;

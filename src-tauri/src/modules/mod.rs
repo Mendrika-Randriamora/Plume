@@ -1,3 +1,4 @@
+pub mod appearance;
 pub mod applications;
 pub mod clean;
 pub mod disk;

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { HardDrive, RefreshCw } from "lucide-react";
+import { Button, Card, Empty, HardDrive, Loading, Meter, Notice, PageHeader, RefreshCw } from "@/core/ui";
 import { bytes, pct } from "@/core/format";
-import { Button, Card, Empty, Loading, Meter, Notice, PageHeader } from "@/core/ui";
 import { listPartitions } from "./api";
 import type { Partition } from "./api";
 

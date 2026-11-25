@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/core/ui";
 import { page as home } from "./home";
 import { page as resources } from "./resources";
 import { page as processes } from "./processes";
@@ -25,7 +25,7 @@ export type PageTitleKey =
 export interface PageDef {
   id: string;
   label: PageTitleKey;
-  icon: LucideIcon;
+  icon: AppIcon;
   component: ComponentType;
   position?: "top" | "bottom";
 }
