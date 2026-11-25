@@ -1,3 +1,4 @@
+import { call } from "@/core/ipc";
 import type { FontKey, Settings } from "./store";
 
 export const FONTS: Record<FontKey, { stack: string }> = {
@@ -23,4 +24,18 @@ export function applyTheme(s: Settings) {
   root.style.setProperty("--ink", `rgb(${tr}, ${tg}, ${tb})`);
   root.style.setProperty("--font", FONTS[s.font].stack);
   root.style.setProperty("--font-size", `${s.fontSize}px`);
+}
+
+/** Dernier thème appliqué à l'icône de l'application (null = pas encore appliqué). */
+let appliedIconDark: boolean | null = null;
+
+/** Aligne l'icône native (fenêtre et entrée .desktop) sur le thème actif. */
+export function syncAppIcon(s: Settings) {
+  const dark = resolveDark(s);
+  if (dark === appliedIconDark) return;
+  appliedIconDark = dark;
+  void call("sync_app_icon", { dark }).catch(() => {
+    /* mode navigateur (hors Tauri) : aucune fenêtre native à mettre à jour */
+    appliedIconDark = null;
+  });
 }

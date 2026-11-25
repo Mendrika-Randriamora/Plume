@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import i18n, { systemLang } from "@/core/i18n";
 import { DEFAULTS, load, save, type Permissions, type Settings } from "./store";
-import { applyTheme } from "./theme";
+import { applyTheme, syncAppIcon } from "./theme";
 
 interface Ctx {
   settings: Settings;
@@ -16,11 +16,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     applyTheme(settings);
+    syncAppIcon(settings);
     save(settings);
     if (i18n.language !== settings.lang) void i18n.changeLanguage(settings.lang);
     if (settings.theme !== "system") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const on = () => applyTheme(settings);
+    const on = () => {
+      applyTheme(settings);
+      syncAppIcon(settings);
+    };
     mq.addEventListener("change", on);
     return () => mq.removeEventListener("change", on);
   }, [settings]);

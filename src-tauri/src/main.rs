@@ -4,6 +4,11 @@ mod modules;
 mod shared;
 
 fn main() {
+    // Sous Wayland, GNOME résout l'icône depuis le fichier .desktop dès
+    // l'apparition de la fenêtre : l'entrée doit donc exister avant Tauri.
+    #[cfg(target_os = "linux")]
+    modules::appearance::prepare_desktop_entry();
+
     let mut builder = tauri::Builder::default()
         .manage(modules::applications::ApplicationsState::default())
         .manage(modules::home::HomeState::default())
@@ -19,6 +24,7 @@ fn main() {
 
     builder
         .invoke_handler(tauri::generate_handler![
+            modules::appearance::sync_app_icon,
             modules::home::system_stats,
             modules::home::home_highlights,
             modules::home::reveal,
