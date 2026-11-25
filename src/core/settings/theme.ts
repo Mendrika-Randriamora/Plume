@@ -15,10 +15,12 @@ export function resolveDark(s: Settings): boolean {
 export function applyTheme(s: Settings) {
   const dark = resolveDark(s);
   const [r, g, b] = dark ? s.baseDark : s.baseLight;
+  const [tr, tg, tb] = dark ? s.textDark : s.textLight;
   const root = document.documentElement;
   root.dataset.theme = dark ? "dark" : "light";
   root.dataset.shell = s.interfaceV2 ? "card" : "flat";
   root.style.setProperty("--base", `rgb(${r}, ${g}, ${b})`);
+  root.style.setProperty("--ink", `rgb(${tr}, ${tg}, ${tb})`);
   root.style.setProperty("--font", FONTS[s.font].stack);
   root.style.setProperty("--font-size", `${s.fontSize}px`);
 }

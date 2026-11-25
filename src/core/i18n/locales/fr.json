@@ -15,6 +15,9 @@
     "authorizationDisabled": "Autorisation désactivée dans les Réglages.",
     "openFolder": "Ouvrir le dossier",
     "resizeSidebar": "Redimensionner la barre de navigation (double-clic pour réinitialiser)",
+    "collapseSidebar": "Réduire la barre de navigation",
+    "expandSidebar": "Déployer la barre de navigation",
+    "back": "Retour",
     "celsius": "{{value}} °C",
     "perSecond": "{{value}}/s",
     "cpu": "Processeur",
@@ -139,7 +142,7 @@
   },
   "processes": {
     "title": "Processus",
-    "subtitle": "Les programmes en cours d'exécution, actualisés toutes les 2 secondes.",
+    "subtitle": "Les programmes en cours d'exécution, actualisés toutes les {{seconds}} s.",
     "columns": {
       "name": "Nom",
       "cpu": "CPU",
@@ -158,15 +161,74 @@
     },
     "summary_one": "{{count}} processus · triés par {{column}} {{direction}}",
     "summary_other": "{{count}} processus · triés par {{column}} {{direction}}",
+    "summaryFiltered_one": "{{count}} processus correspondant sur {{total}} · « {{query}} »",
+    "summaryFiltered_other": "{{count}} processus correspondant sur {{total}} · « {{query}} »",
     "loading": "Lecture…",
     "loadingTable": "Lecture des processus…",
+    "search": {
+      "placeholder": "Rechercher un processus…",
+      "clear": "Effacer la recherche"
+    },
+    "emptySearch": "Aucun processus ne correspond à « {{query}} ».",
+    "empty": "Aucun processus à afficher.",
     "show": "Afficher",
     "all": "Tous",
     "limit_one": "{{count}} processus",
     "limit_other": "{{count}} processus",
     "ascending": "croissant",
     "descending": "décroissant",
-    "sortBy": "Trier par {{column}}"
+    "sortBy": "Trier par {{column}}",
+    "contextHint": "Clic droit pour arrêter, redémarrer ou voir les détails",
+    "menu": {
+      "title": "Actions du processus",
+      "stop": "Arrêter le processus",
+      "restart": "Redémarrer le processus",
+      "details": "Voir les détails"
+    },
+    "status": {
+      "run": "En cours",
+      "sleep": "En veille",
+      "idle": "Inactif",
+      "stop": "Arrêté",
+      "zombie": "Zombie",
+      "dead": "Terminé",
+      "tracing": "Traçage",
+      "wakekill": "Réveil interrompu",
+      "waking": "En réveil",
+      "parked": "En attente",
+      "lockBlocked": "Verrou bloqué",
+      "diskSleep": "Attente disque"
+    },
+    "details": {
+      "title": "Détails du processus",
+      "loading": "Lecture des détails…",
+      "error": "Impossible de lire les détails de ce processus.",
+      "name": "Nom",
+      "pid": "ID",
+      "parent": "Processus parent",
+      "user": "Utilisateur",
+      "status": "Statut",
+      "cpu": "CPU",
+      "memory": "Mémoire",
+      "started": "Démarré le",
+      "uptime": "Durée d'exécution",
+      "read": "Disque lu",
+      "write": "Disque écrit",
+      "exe": "Exécutable",
+      "cwd": "Répertoire de travail",
+      "cmd": "Commande"
+    },
+    "errors": {
+      "notFound": "Ce processus n'existe plus.",
+      "permission": "Autorisation refusée : ce processus appartient à un autre utilisateur.",
+      "protected": "Ce processus est protégé et ne peut pas être arrêté depuis Plume.",
+      "restartUnsupported": "Ce processus ne peut pas être relancé automatiquement.",
+      "stopTimeout": "Le processus ne s'est pas arrêté à temps.",
+      "restartFailed": "Le processus a été arrêté mais n'a pas pu être relancé.",
+      "unsupported": "Cette action n'est pas prise en charge sur ce système.",
+      "pkexec": "L'outil d'autorisation système (pkexec) est introuvable.",
+      "generic": "L'action a échoué."
+    }
   },
   "updates": {
     "title": "Mises à jour",
@@ -230,6 +292,26 @@
       "trash": "Corbeille"
     }
   },
+  "disk": {
+    "title": "Disques",
+    "subtitle": "Toutes les partitions détectées, internes comme externes.",
+    "refresh": "Rafraîchir",
+    "loading": "Recherche des partitions…",
+    "empty": "Aucune partition détectée.",
+    "error": "Impossible de lister les partitions.",
+    "efi": "EFI",
+    "internal": "Interne",
+    "external": "Externe",
+    "readOnly": "Lecture seule",
+    "kindUnknown": "Type inconnu",
+    "freeOf": "libres sur {{total}}",
+    "used": "{{percent}} % utilisé",
+    "summary": {
+      "total": "Capacité totale",
+      "free": "Espace libre",
+      "partitions": "Partitions"
+    }
+  },
   "applications": {
     "title": "Applications",
     "subtitle": "Gérez les applications visibles dans le menu de votre bureau.",
@@ -281,6 +363,55 @@
       "error": "Impossible de charger les détails de l'application."
     }
   },
+  "repositories": {
+    "title": "Dépôts",
+    "subtitle": "Gérez les dépôts de paquets de votre distribution.",
+    "refresh": "Actualiser",
+    "loading": "Chargement des dépôts…",
+    "empty": "Aucun dépôt configuré.",
+    "unknownDistro": "distribution inconnue",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "managed": "Géré par Plume",
+    "enable": "Activer",
+    "disable": "Désactiver",
+    "remove": "Supprimer",
+    "removeConfirm": "Oui, supprimer",
+    "pacmanHint": "Sous Arch, l'activation et la désactivation des dépôts se font dans /etc/pacman.conf. Cette page permet de les consulter et de gérer les dépôts ajoutés par Plume.",
+    "list": {
+      "title": "Dépôts configurés",
+      "hint": "{{manager}} · {{distro}}"
+    },
+    "add": {
+      "open": "Nouveau dépôt",
+      "title": "Ajouter un dépôt",
+      "hint": "Un fichier de configuration Plume est créé. La suppression retire l'entrée ciblée du fichier de configuration du système.",
+      "name": "Nom",
+      "namePlaceholder": "Dépôt personnalisé",
+      "url": "URL",
+      "suite": "Suite / version",
+      "components": "Composants",
+      "gpgKey": "Clé GPG (facultatif)",
+      "submit": "Ajouter le dépôt",
+      "rootHint": "Une autorisation système sera demandée."
+    },
+    "edit": {
+      "title": "Modifier le dépôt",
+      "hint": "Les modifications sont appliquées à l'entrée existante du fichier de configuration.",
+      "submit": "Enregistrer",
+      "doubleClick": "Double-cliquez pour modifier"
+    },
+    "errors": {
+      "load": "Impossible de charger les dépôts.",
+      "exists": "Un dépôt portant ce nom existe déjà.",
+      "managedOnly": "Seuls les dépôts ajoutés par Plume peuvent être supprimés ici.",
+      "invalid": "Informations invalides. Vérifiez l'URL et les champs.",
+      "pkexec": "L'outil d'autorisation système (pkexec) est introuvable.",
+      "unsupported": "Cette opération n'est pas prise en charge pour ce gestionnaire.",
+      "command": "La commande système a échoué.",
+      "generic": "Une erreur est survenue."
+    }
+  },
   "settings": {
     "title": "Réglages",
     "subtitle": "Adaptez Plume à vos goûts.",
@@ -289,10 +420,14 @@
       "title": "Application",
       "hint": "Informations sur votre installation de Plume.",
       "version": "Version de Plume",
+      "refresh": "Fréquence de rafraîchissement",
+      "refreshHint": "Intervalle entre deux relevés des données en direct (Accueil, Ressources et Processus).",
+      "refreshSeconds": "{{seconds}} s",
       "updatesNote": "Les mises à jour de Plume s'installent depuis la page « Mises à jour »."
     },
     "appearance": {
       "title": "Apparence",
+      "hint": "Thème, langue, police et couleurs de l'interface.",
       "theme": "Thème",
       "themes": {
         "light": "Clair",
@@ -306,17 +441,24 @@
         "serif": "Avec empattements",
         "mono": "Monospace"
       },
-      "fontSize": "Taille du texte · {{size}}px",
+      "fontSize": "Taille du texte (px)",
       "interfaceV2": "Utiliser la nouvelle interface",
       "interfaceV2Hint": "Contenu encadré dans une carte arrondie, barre de navigation sur fond assombri.",
       "background": "Couleur de fond ({{theme}})",
+      "textColor": "Couleur du texte ({{theme}})",
+      "textPalette": {
+        "title": "Palette de couleurs du texte",
+        "default": "Par défaut",
+        "contrast": "Contraste maximal",
+        "gray": "Gris",
+        "blue": "Bleu",
+        "green": "Vert",
+        "orange": "Orange",
+        "red": "Rouge",
+        "purple": "Violet"
+      },
       "lightTheme": "thème clair",
       "darkTheme": "thème sombre",
-      "colors": {
-        "red": "Rouge",
-        "green": "Vert",
-        "blue": "Bleu"
-      },
       "language": "Langue"
     },
     "permissions": {
@@ -337,6 +479,7 @@
     },
     "privacy": {
       "title": "Politique de confidentialité",
+      "hint": "Comment Plume traite vos données.",
       "text": "Plume fonctionne entièrement sur votre ordinateur. Aucune donnée n'est collectée ni envoyée. Elle lit uniquement votre dossier personnel (en ignorant les dossiers de dépendances comme node_modules ou vendor) et ne supprime jamais définitivement un de vos fichiers : ils vont à la corbeille. Les modifications du système passent par la fenêtre d'autorisation de votre distribution. Vos réglages sont conservés localement."
     }
   }

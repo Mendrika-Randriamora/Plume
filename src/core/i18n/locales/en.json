@@ -15,6 +15,9 @@
     "authorizationDisabled": "Permission disabled in Settings.",
     "openFolder": "Open folder",
     "resizeSidebar": "Resize the navigation bar (double-click to reset)",
+    "collapseSidebar": "Collapse the navigation bar",
+    "expandSidebar": "Expand the navigation bar",
+    "back": "Back",
     "celsius": "{{value}} °C",
     "perSecond": "{{value}}/s",
     "cpu": "CPU",
@@ -139,7 +142,7 @@
   },
   "processes": {
     "title": "Processes",
-    "subtitle": "Running programs, refreshed every 2 seconds.",
+    "subtitle": "Running programs, refreshed every {{seconds}} s.",
     "columns": {
       "name": "Name",
       "cpu": "CPU",
@@ -158,15 +161,74 @@
     },
     "summary_one": "{{count}} process · sorted by {{column}} {{direction}}",
     "summary_other": "{{count}} processes · sorted by {{column}} {{direction}}",
+    "summaryFiltered_one": "{{count}} matching process out of {{total}} · “{{query}}”",
+    "summaryFiltered_other": "{{count}} matching processes out of {{total}} · “{{query}}”",
     "loading": "Reading…",
     "loadingTable": "Reading processes…",
+    "search": {
+      "placeholder": "Search for a process…",
+      "clear": "Clear search"
+    },
+    "emptySearch": "No process matches “{{query}}”.",
+    "empty": "No process to display.",
     "show": "Show",
     "all": "All",
     "limit_one": "{{count}} process",
     "limit_other": "{{count}} processes",
     "ascending": "ascending",
     "descending": "descending",
-    "sortBy": "Sort by {{column}}"
+    "sortBy": "Sort by {{column}}",
+    "contextHint": "Right-click to stop, restart or view details",
+    "menu": {
+      "title": "Process actions",
+      "stop": "Stop process",
+      "restart": "Restart process",
+      "details": "View details"
+    },
+    "status": {
+      "run": "Running",
+      "sleep": "Sleeping",
+      "idle": "Idle",
+      "stop": "Stopped",
+      "zombie": "Zombie",
+      "dead": "Dead",
+      "tracing": "Tracing",
+      "wakekill": "Wakekill",
+      "waking": "Waking",
+      "parked": "Parked",
+      "lockBlocked": "Lock blocked",
+      "diskSleep": "Uninterruptible sleep"
+    },
+    "details": {
+      "title": "Process details",
+      "loading": "Reading details…",
+      "error": "Couldn't read this process's details.",
+      "name": "Name",
+      "pid": "ID",
+      "parent": "Parent process",
+      "user": "User",
+      "status": "Status",
+      "cpu": "CPU",
+      "memory": "Memory",
+      "started": "Started",
+      "uptime": "Uptime",
+      "read": "Disk read",
+      "write": "Disk written",
+      "exe": "Executable",
+      "cwd": "Working directory",
+      "cmd": "Command"
+    },
+    "errors": {
+      "notFound": "This process no longer exists.",
+      "permission": "Permission denied: this process belongs to another user.",
+      "protected": "This process is protected and can't be stopped from Plume.",
+      "restartUnsupported": "This process can't be restarted automatically.",
+      "stopTimeout": "The process didn't stop in time.",
+      "restartFailed": "The process was stopped but couldn't be restarted.",
+      "unsupported": "This action isn't supported on this system.",
+      "pkexec": "The system authorization tool (pkexec) is missing.",
+      "generic": "The action failed."
+    }
   },
   "updates": {
     "title": "Updates",
@@ -230,6 +292,26 @@
       "trash": "Trash"
     }
   },
+  "disk": {
+    "title": "Disks",
+    "subtitle": "All detected partitions, internal and external.",
+    "refresh": "Refresh",
+    "loading": "Looking for partitions…",
+    "empty": "No partition detected.",
+    "error": "Couldn't list partitions.",
+    "efi": "EFI",
+    "internal": "Internal",
+    "external": "External",
+    "readOnly": "Read-only",
+    "kindUnknown": "Unknown type",
+    "freeOf": "free of {{total}}",
+    "used": "{{percent}}% used",
+    "summary": {
+      "total": "Total capacity",
+      "free": "Free space",
+      "partitions": "Partitions"
+    }
+  },
   "applications": {
     "title": "Applications",
     "subtitle": "Manage the applications shown in your desktop menu.",
@@ -281,6 +363,55 @@
       "error": "Couldn't load application details."
     }
   },
+  "repositories": {
+    "title": "Repositories",
+    "subtitle": "Manage the package repositories of your distribution.",
+    "refresh": "Refresh",
+    "loading": "Loading repositories…",
+    "empty": "No repository configured.",
+    "unknownDistro": "unknown distribution",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "managed": "Managed by Plume",
+    "enable": "Enable",
+    "disable": "Disable",
+    "remove": "Remove",
+    "removeConfirm": "Yes, remove",
+    "pacmanHint": "On Arch, repositories are enabled and disabled in /etc/pacman.conf. This page lets you inspect them and manage repositories added by Plume.",
+    "list": {
+      "title": "Configured repositories",
+      "hint": "{{manager}} · {{distro}}"
+    },
+    "add": {
+      "open": "New repository",
+      "title": "Add a repository",
+      "hint": "A Plume configuration file is created. Removal deletes the targeted entry from the system configuration file.",
+      "name": "Name",
+      "namePlaceholder": "Custom repository",
+      "url": "URL",
+      "suite": "Suite / version",
+      "components": "Components",
+      "gpgKey": "GPG key (optional)",
+      "submit": "Add repository",
+      "rootHint": "A system authorization will be requested."
+    },
+    "edit": {
+      "title": "Edit repository",
+      "hint": "Changes are applied to the existing entry in the configuration file.",
+      "submit": "Save",
+      "doubleClick": "Double-click to edit"
+    },
+    "errors": {
+      "load": "Couldn't load repositories.",
+      "exists": "A repository with this name already exists.",
+      "managedOnly": "Only repositories added by Plume can be removed here.",
+      "invalid": "Invalid information. Check the URL and fields.",
+      "pkexec": "The system authorization tool (pkexec) is missing.",
+      "unsupported": "This operation isn't supported for this package manager.",
+      "command": "The system command failed.",
+      "generic": "An error occurred."
+    }
+  },
   "settings": {
     "title": "Settings",
     "subtitle": "Make Plume your own.",
@@ -289,10 +420,14 @@
       "title": "Application",
       "hint": "Information about your Plume installation.",
       "version": "Plume version",
+      "refresh": "Refresh rate",
+      "refreshHint": "Interval between live data samples (Home, Resources and Processes).",
+      "refreshSeconds": "{{seconds}} s",
       "updatesNote": "Plume updates are installed from the “Updates” page."
     },
     "appearance": {
       "title": "Appearance",
+      "hint": "Theme, language, font and interface colors.",
       "theme": "Theme",
       "themes": {
         "light": "Light",
@@ -306,17 +441,24 @@
         "serif": "Serif",
         "mono": "Monospace"
       },
-      "fontSize": "Text size · {{size}}px",
+      "fontSize": "Text size (px)",
       "interfaceV2": "Use the new interface",
       "interfaceV2Hint": "Content framed in a rounded card, navigation bar on a darkened background.",
       "background": "Background color ({{theme}})",
+      "textColor": "Text color ({{theme}})",
+      "textPalette": {
+        "title": "Text color palette",
+        "default": "Default",
+        "contrast": "Maximum contrast",
+        "gray": "Gray",
+        "blue": "Blue",
+        "green": "Green",
+        "orange": "Orange",
+        "red": "Red",
+        "purple": "Purple"
+      },
       "lightTheme": "light theme",
       "darkTheme": "dark theme",
-      "colors": {
-        "red": "Red",
-        "green": "Green",
-        "blue": "Blue"
-      },
       "language": "Language"
     },
     "permissions": {
@@ -337,6 +479,7 @@
     },
     "privacy": {
       "title": "Privacy policy",
+      "hint": "How Plume handles your data.",
       "text": "Plume runs entirely on your computer. No data is collected or sent. It only reads your home folder (ignoring dependency folders such as node_modules or vendor) and never permanently deletes your files: they go to the trash. System changes go through your distribution's permission prompt. Your settings are stored locally."
     }
   }

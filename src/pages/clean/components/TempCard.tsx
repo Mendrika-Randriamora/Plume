@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Trash2 } from "lucide-react";
 import { bytes } from "@/core/format";
 import { Card, ConfirmButton, Empty, Loading } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
@@ -41,6 +41,8 @@ export function TempCard() {
           <ConfirmButton
             label={t("clean.temp.clear", { size: bytes(total) })}
             confirmLabel={t("clean.temp.clearConfirm")}
+            icon={Trash2}
+            iconOnly
             onConfirm={clear}
             busy={busy}
           />

@@ -8,6 +8,8 @@
   --font: system-ui, sans-serif;
   --font-size: 15px;
   --radius: 12px;
+  /* Largeur maximale du contenu d'une page : évite de l'étirer sur grand écran. */
+  --page-width: 1000px;
 }
 :root[data-theme="dark"] { --ink: #e8e5de; --warn: #e8a53c; --danger: #f47163; }
 :root {
@@ -40,7 +42,10 @@ button { cursor: pointer; }
 /* Structure */
 .shell { display: flex; height: 100%; }
 .sidebar { flex: none; width: 210px; padding: 20px 12px; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
-.brand { font-weight: 600; font-size: 1.2em; padding: 0 12px 20px; }
+.sidebar-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 0 20px 12px; }
+.brand { font-weight: 600; font-size: 1.2em; }
+.sidebar-toggle { display: flex; align-items: center; justify-content: center; flex: none; width: 30px; height: 30px; border: 0; border-radius: 8px; background: none; color: var(--muted); }
+.sidebar-toggle:hover { background: var(--hover); color: var(--ink); }
 .nav-group { display: flex; flex-direction: column; gap: 2px; }
 .nav-group.bottom { margin-top: auto; }
 .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-radius: 10px; background: none; text-align: left; }
@@ -51,7 +56,7 @@ button { cursor: pointer; }
 
 /* Barre latérale réduite : icônes seules, centrées. */
 .sidebar.icon-only { padding-left: 8px; padding-right: 8px; }
-.sidebar.icon-only .brand { text-align: center; padding-left: 0; padding-right: 0; }
+.sidebar.icon-only .sidebar-head { justify-content: center; padding-left: 0; padding-right: 0; }
 .sidebar.icon-only .nav-item { justify-content: center; padding: 10px; }
 .sidebar.icon-only .nav-item span { display: none; }
 
@@ -61,6 +66,9 @@ button { cursor: pointer; }
 .sidebar-resizer:hover::after, .sidebar-resizer.active::after { background: var(--muted); }
 body.resizing { cursor: col-resize; user-select: none; }
 .content { flex: 1; overflow-y: auto; padding: 28px 36px 48px; display: flex; flex-direction: column; gap: 16px; }
+/* Conteneur centré commun à toutes les pages : le contenu garde une largeur
+   confortable au lieu de s'étirer sur les grands écrans. */
+.page { width: 100%; max-width: var(--page-width); margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 .page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 4px; }
 
 /* Nouvelle interface : le contenu est encadré dans une carte arrondie posée
@@ -87,6 +95,13 @@ body.resizing { cursor: col-resize; user-select: none; }
 .card { background: var(--surface); border-radius: var(--radius); padding: 18px 20px; }
 .card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
 .card-head:last-child { margin-bottom: 0; }
+/* Disques */
+.disk-summary { display: flex; flex-wrap: wrap; gap: 32px; }
+.disk-summary > div { display: flex; flex-direction: column; gap: 2px; }
+.disk-summary strong { font-size: 1.3em; font-weight: 600; }
+.disk-usage { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 14px 0 8px; }
+.disk-usage strong { font-size: 1.4em; font-weight: 600; }
+.disk-used { margin-top: 6px; text-align: right; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 .grid-2 > *, .grid-3 > * { min-width: 0; }
@@ -130,6 +145,38 @@ body.resizing { cursor: col-resize; user-select: none; }
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .list-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 8px; border: 0; background: none; border-radius: 8px; text-align: left; }
 button.list-row:hover { background: var(--hover); }
+
+/* Dépôts de paquets */
+.repo-list { gap: 0; }
+.repo-row { display: flex; align-items: center; gap: 16px; padding: 12px 8px; }
+.repo-row + .repo-row { border-top: 1px solid var(--line); }
+.repo-title { flex-wrap: wrap; gap: 8px; }
+.repo-name { font-weight: 500; }
+.repo-main { padding: 4px 6px; margin: -4px -6px; border-radius: 8px; }
+.repo-main.editable { cursor: pointer; user-select: none; }
+.repo-main.editable:hover { background: var(--hover); }
+.repo-main.editable:hover .repo-link { text-decoration: underline; }
+.repo-link { color: inherit; text-decoration: none; }
+.repo-actions { flex: none; }
+.repo-form { display: flex; flex-direction: column; margin-bottom: 12px; }
+.repo-form .field { gap: 6px; }
+.repo-add-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.text-input { width: 100%; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.text-input:hover { border-color: var(--muted); }
+.text-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+@media (max-width: 800px) {
+  .repo-row { flex-wrap: wrap; }
+  .repo-actions { width: 100%; justify-content: flex-end; }
+}
+
+/* Réglages : liste des sections puis vue détaillée (façon GNOME). */
+.settings-list { display: flex; flex-direction: column; gap: 2px; }
+.settings-row { display: flex; align-items: center; gap: 14px; width: 100%; padding: 13px 10px; border: 0; border-radius: 10px; background: none; text-align: left; }
+.settings-row:hover { background: var(--hover); }
+.settings-icon { display: flex; align-items: center; justify-content: center; flex: none; width: 34px; height: 34px; border-radius: 9px; background: var(--hover); color: var(--muted); }
+.settings-row:hover .settings-icon { color: var(--ink); }
+.settings-row-title { display: block; font-weight: 500; }
+.settings-chevron { flex: none; color: var(--muted); }
 /* Double-clic pour lancer : on évite la sélection de texte parasite. */
 .app-name { color: inherit; text-decoration: none; cursor: pointer; user-select: none; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -150,6 +197,22 @@ button.list-row:hover { background: var(--hover); }
 .perm { padding: 8px 0; align-items: flex-start; }
 input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; margin-top: 2px; }
 input[type="range"] { accent-color: var(--accent); width: 100%; }
+/* Couleur et taille de texte : contrôles compacts dans les réglages. */
+input[type="number"] { width: 78px; background-color: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+input[type="number"]:hover { border-color: var(--muted); }
+input[type="number"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+input[type="color"] { width: 44px; height: 30px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); cursor: pointer; }
+input[type="color"]:hover { border-color: var(--muted); }
+input[type="color"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 5px; }
+input[type="color"]::-moz-color-swatch { border: 0; border-radius: 5px; }
+/* Palette de couleurs du texte. */
+.color-field-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.color-palette { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.color-swatch { width: 30px; height: 30px; padding: 0; border: 2px solid transparent; border-radius: 50%; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 18%, transparent); transition: transform 0.12s, border-color 0.12s; }
+.color-swatch:hover { transform: scale(1.08); }
+.color-swatch.on { border-color: var(--ink); }
 /* WebKit rend les <select> avec le thème GTK natif (clair) : on désactive
    l'apparence native pour garder le fond et le texte du thème de l'app. */
 select {
@@ -196,12 +259,34 @@ label.field { cursor: pointer; }
 .search-input { flex: 1; border: none; background: none; font-size: 0.95em; }
 .search-input:focus { outline: none; }
 .search-input::placeholder { color: var(--muted); }
+/* Recherche intégrée au tableau des processus. */
+.proc-search { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 8px; color: var(--muted); }
+.proc-search:hover, .proc-search:focus-within { background: var(--hover); color: var(--ink); }
+.proc-search > svg { flex: none; }
+.proc-search input { flex: 1; min-width: 0; padding: 0; border: 0; background: none; color: var(--ink); font-size: 0.95em; }
+.proc-search input:focus { outline: none; }
+.proc-search input::placeholder { color: var(--muted); }
+.proc-search-clear { display: inline-flex; flex: none; padding: 2px; border: 0; border-radius: 8px; background: none; color: var(--muted); }
+.proc-search-clear:hover { color: var(--ink); }
+/* Filet de séparation pleine largeur, aux extrémités arrondies : la recherche prolonge le tableau. */
+.proc-divider { height: 2px; margin: 0 0 6px; border-radius: 999px; background: var(--line); }
+
+/* Menu contextuel */
+.context-menu { position: fixed; z-index: 1100; min-width: 210px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22); display: flex; flex-direction: column; gap: 2px; }
+.context-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 7px; background: none; color: inherit; text-align: left; font-size: 0.95em; }
+.context-item:hover:not(:disabled) { background: var(--hover); }
+.context-item:disabled { opacity: 0.45; cursor: default; }
+.context-item.danger { color: var(--danger); }
+.context-item svg { flex: none; }
+.context-separator { height: 1px; margin: 4px 6px; background: var(--line); }
 
 /* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal { background: var(--surface); border-radius: var(--radius); width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
 .modal-content { padding: 20px; }
+.modal-content .repo-form { margin-top: 16px; }
+.modal-content .repo-add-foot { margin-top: 16px; }
 .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .detail-item { display: flex; flex-direction: column; gap: 4px; }
 .detail-item.full-width { grid-column: 1 / -1; }
@@ -210,3 +295,4 @@ label.field { cursor: pointer; }
 .desktop-content { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
 .desktop-content h3 { font-size: 1em; font-weight: 600; margin-bottom: 12px; }
 .desktop-pre { background: var(--bg); border-radius: 8px; padding: 12px; overflow-x: auto; font-family: monospace; font-size: 0.85em; white-space: pre-wrap; word-break: break-all; }
+.process-path { font-family: monospace; font-size: 0.85em; word-break: break-all; }

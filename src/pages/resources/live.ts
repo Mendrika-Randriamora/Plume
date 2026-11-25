@@ -2,9 +2,6 @@ import { useSyncExternalStore } from "react";
 import { resourceSnapshot } from "./api";
 import type { ResourceSample, ResourceSnapshot } from "./types";
 
-/** Historique affiché : une minute, un point par seconde. */
-export const HISTORY = 60;
-
 export interface ResourcesLive {
   latest: ResourceSnapshot | null;
   history: ResourceSample[];
@@ -49,18 +46,20 @@ const toSample = (s: ResourceSnapshot): ResourceSample => ({
 });
 
 /**
- * Un relevé de plus. Appelé une fois par seconde depuis l'application, pas
+ * Un relevé de plus. Appelé à intervalle régulier depuis l'application, pas
  * seulement depuis la page Ressources : à l'ouverture, les courbes sont déjà
  * complètes. Un appel précédent encore en cours est ignoré (pas d'empilement).
+ * La taille de l'historique suit l'intervalle pour conserver une minute.
  */
-export async function sampleResources() {
+export async function sampleResources(intervalMs = 1000) {
   if (busy) return;
   busy = true;
   try {
     const snapshot = await resourceSnapshot();
+    const historySize = Math.max(6, Math.round(60_000 / intervalMs));
     publish({
       latest: snapshot,
-      history: [...state.history, toSample(snapshot)].slice(-HISTORY),
+      history: [...state.history, toSample(snapshot)].slice(-historySize),
       error: null,
     });
   } catch (e) {

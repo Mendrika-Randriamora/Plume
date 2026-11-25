@@ -15,8 +15,11 @@ export interface Settings {
   theme: ThemeMode;
   font: FontKey;
   fontSize: number;
+  refreshInterval: number; // intervalle de rafraîchissement des données en direct (ms)
   baseLight: Rgb;
   baseDark: Rgb;
+  textLight: Rgb;
+  textDark: Rgb;
   sidebarWidth: number; // largeur de la barre de navigation (px)
   interfaceV2: boolean; // page encadrée dans une carte arrondie
   permissions: Permissions;
@@ -32,8 +35,11 @@ export const DEFAULTS: Settings = {
   theme: "system",
   font: "system",
   fontSize: 15,
+  refreshInterval: 1000,
   baseLight: [243, 237, 227], // beige doux
   baseDark: [34, 36, 38], // gris foncé
+  textLight: [58, 54, 47], // encre sombre sur fond clair
+  textDark: [232, 229, 222], // encre claire sur fond sombre
   sidebarWidth: SIDEBAR_DEFAULT,
   interfaceV2: true,
   permissions: { scanHome: true, deleteFiles: true, systemChanges: true },
@@ -54,6 +60,10 @@ export function load(): Settings {
         typeof p.sidebarWidth === "number" && Number.isFinite(p.sidebarWidth)
           ? Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, Math.round(p.sidebarWidth)))
           : DEFAULTS.sidebarWidth,
+      refreshInterval:
+        typeof p.refreshInterval === "number" && Number.isFinite(p.refreshInterval)
+          ? Math.min(60_000, Math.max(500, Math.round(p.refreshInterval)))
+          : DEFAULTS.refreshInterval,
       permissions: { ...DEFAULTS.permissions, ...p.permissions },
     };
   } catch {

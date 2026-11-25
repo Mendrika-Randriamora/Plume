@@ -1,6 +1,8 @@
 pub mod applications;
 pub mod clean;
+pub mod disk;
 pub mod home;
 pub mod processes;
+pub mod repositories;
 pub mod resources;
 pub mod updates;

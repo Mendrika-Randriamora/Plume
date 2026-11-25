@@ -36,18 +36,19 @@ export function AppList({ applications, onUninstall, onDetails, onLaunch, isUnin
             </span>
             <span className="nowrap">{app.size === null ? t("common.unknown") : bytes(app.size)}</span>
             <div className="row gap">
+              <Button
+                variant="ghost"
+                icon={Info}
+                onClick={() => onDetails(app.id)}
+                aria-label={t("applications.details")}
+              />
               <ConfirmButton
                 label={t("applications.uninstall")}
                 onConfirm={() => onUninstall(app.id)}
                 disabled={!allowed || isUninstalling !== undefined}
                 busy={isUninstalling === app.id}
                 icon={Trash2}
-              />
-              <Button
-                variant="ghost"
-                icon={Info}
-                onClick={() => onDetails(app.id)}
-                aria-label={t("applications.details")}
+                iconOnly
               />
             </div>
           </div>
