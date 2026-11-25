@@ -4,6 +4,7 @@ import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { pages } from "@/pages/registry";
 import { useSettings } from "@/core/settings/SettingsProvider";
 import { SIDEBAR_DEFAULT, SIDEBAR_MAX, SIDEBAR_MIN } from "@/core/settings/store";
+import { PlumeMark } from "./PlumeMark";
 
 /** En dessous de cette largeur, les libellés disparaissent et seules les icônes restent. */
 const ICON_ONLY_BELOW = 150;
@@ -77,26 +78,31 @@ export function Sidebar({ current, onSelect }: Props) {
 
   return (
     <>
-      <nav className={`sidebar ${iconOnly ? "icon-only" : ""}`} style={{ width }}>
-        <div className="sidebar-head">
-          {!iconOnly && <div className="brand">Plume</div>}
-          <button
-            className="sidebar-toggle"
-            onClick={toggleSidebar}
-            title={t(iconOnly ? "common.expandSidebar" : "common.collapseSidebar")}
-            aria-label={t(iconOnly ? "common.expandSidebar" : "common.collapseSidebar")}
-            aria-expanded={!iconOnly}
-          >
-            {iconOnly ? <PanelLeftOpen size={18} strokeWidth={1.75} /> : <PanelLeftClose size={18} strokeWidth={1.75} />}
-          </button>
-        </div>
-        <div className="nav-group">
-          {pages.filter((p) => p.position !== "bottom").map((p) => render(p.id, p.label, p.icon))}
-        </div>
-        <div className="nav-group bottom">
-          {pages.filter((p) => p.position === "bottom").map((p) => render(p.id, p.label, p.icon))}
-        </div>
-      </nav>
+      <div className="sidebar-wrap">
+        <nav className={`sidebar ${iconOnly ? "icon-only" : ""}`} style={{ width }}>
+          <div className="sidebar-head">
+            <div className="brand">
+              <PlumeMark size={35} />
+              {!iconOnly && <span>Plume</span>}
+            </div>
+          </div>
+          <div className="nav-group">
+            {pages.filter((p) => p.position !== "bottom").map((p) => render(p.id, p.label, p.icon))}
+          </div>
+          <div className="nav-group bottom">
+            {pages.filter((p) => p.position === "bottom").map((p) => render(p.id, p.label, p.icon))}
+          </div>
+        </nav>
+        <button
+          className="sidebar-toggle"
+          onClick={toggleSidebar}
+          title={t(iconOnly ? "common.expandSidebar" : "common.collapseSidebar")}
+          aria-label={t(iconOnly ? "common.expandSidebar" : "common.collapseSidebar")}
+          aria-expanded={!iconOnly}
+        >
+          {iconOnly ? <PanelLeftOpen size={18} strokeWidth={1.75} /> : <PanelLeftClose size={18} strokeWidth={1.75} />}
+        </button>
+      </div>
       <div
         className={`sidebar-resizer ${dragging ? "active" : ""}`}
         role="separator"
