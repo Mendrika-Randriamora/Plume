@@ -1,15 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Package, Plus, Power, PowerOff, RefreshCw, Trash2 } from "lucide-react";
-import {
-  Button,
-  Card,
-  ConfirmButton,
-  Empty,
-  Loading,
-  Notice,
-  PageHeader,
-} from "@/core/ui";
+import { Package, Plus, Power, PowerOff, RefreshCw, Trash2, Button, Card, ConfirmButton, Empty, Loading, Notice, PageHeader } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
 import {
   addRepository,

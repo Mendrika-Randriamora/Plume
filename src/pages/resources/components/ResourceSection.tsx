@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight } from "@/core/ui";
 
 /** Section repliable, comme dans le moniteur système de GNOME. */
 export function ResourceSection({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {

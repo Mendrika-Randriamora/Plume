@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FileText, Folder, FolderOpen, Trash2 } from "lucide-react";
+import { FileText, Folder, FolderOpen, Trash2, Button, Card, ConfirmButton, Empty, Loading, Notice, PageHeader } from "@/core/ui";
 import { ago, bytes } from "@/core/format";
-import { Button, Card, ConfirmButton, Empty, Loading, Notice, PageHeader } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
 import type { FileEntry } from "@/pages/home/types";
 import { deleteToTrash, reveal, scanClean, type CleanFilter } from "./api";

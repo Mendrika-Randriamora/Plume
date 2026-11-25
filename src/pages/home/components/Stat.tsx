@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
-import { Meter } from "@/core/ui";
+import { Meter, type AppIcon } from "@/core/ui";
 
 export function Stat({ icon: Icon, label, value, detail, meter }: {
-  icon: LucideIcon;
+  icon: AppIcon;
   label: string;
   value: ReactNode;
   detail?: string;

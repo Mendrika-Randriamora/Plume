@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { Settings } from "lucide-react";
+import { Settings } from "@/core/ui";
 
 const SettingsPage = lazy(() => import("./SettingsPage").then((m) => ({ default: m.SettingsPage })));
 

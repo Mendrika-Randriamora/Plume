@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Info, RotateCw, Square } from "lucide-react";
+import { Info, RotateCw, Square } from "@/core/ui";
 
 interface Props {
   x: number;

@@ -427,7 +427,7 @@
     },
     "appearance": {
       "title": "Apparence",
-      "hint": "Thème, langue, police et couleurs de l'interface.",
+      "hint": "Thème, langue, police, couleurs et icônes de l'interface.",
       "theme": "Thème",
       "themes": {
         "light": "Clair",
@@ -442,6 +442,9 @@
         "mono": "Monospace"
       },
       "fontSize": "Taille du texte (px)",
+      "iconLibrary": "Bibliothèque d'icônes",
+      "iconLibrarySketchy": "Sketchy",
+      "iconLibraryLucide": "Lucide",
       "interfaceV2": "Utiliser la nouvelle interface",
       "interfaceV2Hint": "Contenu encadré dans une carte arrondie, barre de navigation sur fond assombri.",
       "background": "Couleur de fond ({{theme}})",

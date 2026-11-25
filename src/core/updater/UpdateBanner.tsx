@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Download } from "lucide-react";
+import { Download } from "@/core/ui";
 import { useNav } from "@/core/layout/nav";
 import { useAppUpdate } from "./useAppUpdate";
 

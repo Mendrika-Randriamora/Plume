@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ChevronUp, Cpu, Search, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Cpu, Search, X } from "@/core/ui";
 import { bytes, percentValue } from "@/core/format";
 import { Card, Empty, Loading, Notice, PageHeader } from "@/core/ui";
 import { usePermission, useSettings } from "@/core/settings/SettingsProvider";

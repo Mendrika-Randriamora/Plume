@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, Download, RefreshCw } from "lucide-react";
-import { Button, Card, Meter, Notice } from "@/core/ui";
+import { Button, Card, CheckCircle2, Download, Meter, Notice, RefreshCw } from "@/core/ui";
 import { formatDate } from "@/core/format";
 import { getCurrentVersion } from "@/core/updater";
 import { useAppUpdate } from "@/core/updater/useAppUpdate";

@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { Activity } from "lucide-react";
+import { Activity } from "@/core/ui";
 
 const ResourcesPage = lazy(() => import("./ResourcesPage").then((m) => ({ default: m.ResourcesPage })));
 

@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles } from "@/core/ui";
 
 const CleanPage = lazy(() => import("./CleanPage").then((m) => ({ default: m.CleanPage })));
 

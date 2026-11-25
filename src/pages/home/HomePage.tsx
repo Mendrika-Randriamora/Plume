@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeftRight, Cpu, HardDrive, MemoryStick, RefreshCw } from "lucide-react";
+import { ArrowLeftRight, Button, Card, Cpu, HardDrive, Loading, MemoryStick, Notice, PageHeader, RefreshCw } from "@/core/ui";
 import { bytes, gigabytes, pct } from "@/core/format";
-import { Button, Card, Loading, Notice, PageHeader } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
 import { reveal } from "./api";
 import { loadHighlights, useHomeLive } from "./live";

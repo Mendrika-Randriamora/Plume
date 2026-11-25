@@ -1,9 +1,9 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { pages } from "@/pages/registry";
 import { useSettings } from "@/core/settings/SettingsProvider";
 import { SIDEBAR_DEFAULT, SIDEBAR_MAX, SIDEBAR_MIN } from "@/core/settings/store";
+import { PanelLeftClose, PanelLeftOpen } from "@/core/ui";
 import { PlumeMark } from "./PlumeMark";
 
 /** En dessous de cette largeur, les libellés disparaissent et seules les icônes restent. */

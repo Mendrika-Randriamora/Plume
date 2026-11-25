@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { RefreshCw, Search } from "lucide-react";
-import { Button, Card, Loading, Notice, PageHeader } from "@/core/ui";
+import { Button, Card, Loading, Notice, PageHeader, RefreshCw, Search } from "@/core/ui";
 import { translate } from "@/core/i18n";
 import { usePermission } from "@/core/settings/SettingsProvider";
 import { refreshApplications, listApplications, searchApplications, uninstallApplication, getApplicationDetails, launchApplication } from "./api";

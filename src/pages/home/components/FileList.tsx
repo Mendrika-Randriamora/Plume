@@ -1,4 +1,4 @@
-import { FileText, Folder } from "lucide-react";
+import { FileText, Folder } from "@/core/ui";
 import { ago, bytes } from "@/core/format";
 import type { FileEntry } from "../types";
 

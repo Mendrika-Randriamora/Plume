@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Sparkles, Trash2 } from "lucide-react";
+import { Card, ConfirmButton, Empty, Loading, Sparkles, Trash2 } from "@/core/ui";
 import { bytes } from "@/core/format";
-import { Card, ConfirmButton, Empty, Loading } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
 import { clearTemp, scanTemp, type TempItem } from "../api";
 

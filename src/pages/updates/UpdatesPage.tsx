@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, Download, Search, RefreshCw } from "lucide-react";
-import { Button, Card, ConfirmButton, Empty, Notice, PageHeader } from "@/core/ui";
+import { CheckCircle2, Download, Search, RefreshCw, Button, Card, ConfirmButton, Empty, Notice, PageHeader } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
 import { AppUpdateCard } from "./components/AppUpdateCard";
 import { applyUpdates, checkUpdates } from "./api";

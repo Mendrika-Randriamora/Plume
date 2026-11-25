@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { Grid3X3 } from "lucide-react";
+import { Grid3X3 } from "@/core/ui";
 
 const ApplicationsPage = lazy(() => import("./ApplicationsPage").then((m) => ({ default: m.ApplicationsPage })));
 

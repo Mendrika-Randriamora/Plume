@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { PackageCheck, Trash2 } from "lucide-react";
+import { PackageCheck, Trash2 } from "@/core/ui";
 import { Card, ConfirmButton, Empty, Loading } from "@/core/ui";
 import { usePermission } from "@/core/settings/SettingsProvider";
 import { removeObsolete } from "../api";

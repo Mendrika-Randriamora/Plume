@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { SquarePlay } from "lucide-react";
+import { SquarePlay } from "@/core/ui";
 
 const ProcessesPage = lazy(() => import("./ProcessesPage").then((m) => ({ default: m.ProcessesPage })));
 
