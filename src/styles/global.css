@@ -43,7 +43,7 @@ button { cursor: pointer; }
 .shell { display: flex; height: 100%; }
 .sidebar-wrap { position: relative; display: flex; flex: none; }
 .sidebar { flex: none; width: 210px; padding: 20px 12px; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
-.sidebar-head { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding: 0 0 20px 8px; }
+.sidebar-head { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding: 0 0 20px 5px; }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 1.2em; }
 .brand-mark { flex: none; }
 .sidebar-toggle { position: absolute; top: 19px; right: -32px; z-index: 3; display: flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px; border: 0; border-radius: 8px; background: var(--bg); color: var(--muted); }
