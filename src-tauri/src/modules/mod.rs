@@ -1,6 +1,7 @@
 pub mod appearance;
 pub mod applications;
 pub mod clean;
+pub mod config;
 pub mod disk;
 pub mod home;
 pub mod processes;

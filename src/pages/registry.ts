@@ -9,6 +9,7 @@ import { page as disk } from "./disk";
 import { page as repositories } from "./repositories";
 import { page as settings } from "./settings";
 import { page as applications } from "./applications";
+import { page as config } from "./config";
 
 /** Clés de titre utilisées à la fois par la barre latérale et les en-têtes de page. */
 export type PageTitleKey =
@@ -19,6 +20,7 @@ export type PageTitleKey =
   | "clean.title"
   | "disk.title"
   | "applications.title"
+  | "config.title"
   | "repositories.title"
   | "settings.title";
 
@@ -33,7 +35,7 @@ export interface PageDef {
 }
 
 /** Pour ajouter une page : créer un dossier dans src/pages avec un index.ts exportant `page`, puis l'ajouter ici. */
-export const pages: PageDef[] = [home, resources, processes, updates, clean, disk, applications, repositories, settings];
+export const pages: PageDef[] = [home, resources, processes, updates, clean, disk, applications, config, repositories, settings];
 
 /**
  * Pages dans l'ordre choisi par l'utilisateur. Les identifiants inconnus sont

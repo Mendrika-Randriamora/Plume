@@ -47,7 +47,9 @@ export const DEFAULTS: Settings = {
   textDark: [232, 229, 222], // encre claire sur fond sombre
   sidebarWidth: SIDEBAR_DEFAULT,
   pageOrder: [],
-  hiddenPages: [],
+  // La page Configuration est masquée par défaut : elle s'ouvre sur la barre
+  // de recherche, et l'utilisateur peut l'épingler depuis les réglages.
+  hiddenPages: ["config"],
   interfaceV2: true,
   iconLibrary: "sketchy",
   permissions: { scanHome: true, deleteFiles: true, systemChanges: true, internetAccess: true },

@@ -11,10 +11,12 @@ fn main() {
 
     let mut builder = tauri::Builder::default()
         .manage(modules::applications::ApplicationsState::default())
+        .manage(modules::config::ConfigState::default())
         .manage(modules::home::HomeState::default())
         .manage(modules::resources::ResourcesState::default())
         .manage(modules::processes::ProcessesState::default())
-        .plugin(tauri_plugin_process::init());
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_dialog::init());
 
     // Les mises à jour automatiques ne concernent que les bureaux (Linux, Windows, macOS).
     #[cfg(desktop)]
@@ -53,6 +55,19 @@ fn main() {
             modules::applications::get_application_details,
             modules::applications::uninstall_application,
             modules::applications::launch_application,
+            modules::config::config_supported,
+            modules::config::list_known_configs,
+            modules::config::read_config,
+            modules::config::write_config,
+            modules::config::list_dir,
+            modules::config::start_index,
+            modules::config::index_status,
+            modules::config::search_configs,
+            modules::config::list_backups,
+            modules::config::restore_backup,
+            modules::config::list_favorites,
+            modules::config::add_favorite,
+            modules::config::remove_favorite,
         ])
         .run(tauri::generate_context!())
         .expect("erreur au lancement de Plume");
