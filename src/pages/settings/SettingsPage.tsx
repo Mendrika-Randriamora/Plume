@@ -1,11 +1,26 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Button, Card, ChevronRight, Info, Lock, PageHeader, Palette, RotateCcw, ShieldCheck } from "@/core/ui";
+import {
+  ArrowLeft,
+  Button,
+  Card,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Info,
+  Lock,
+  PageHeader,
+  Palette,
+  PanelLeftClose,
+  RotateCcw,
+  ShieldCheck,
+} from "@/core/ui";
 import { getCurrentVersion } from "@/core/updater";
 import i18n, { LANGS, type Lang } from "@/core/i18n";
 import { useSettings } from "@/core/settings/SettingsProvider";
 import { resolveDark, FONTS } from "@/core/settings/theme";
 import type { FontKey, IconLibrary, Permissions, Rgb, ThemeMode } from "@/core/settings/store";
+import { orderedPages } from "@/pages/registry";
 
 const THEMES = [
   ["light", "settings.appearance.themes.light"],
@@ -59,6 +74,7 @@ const PERMS = [
 const SECTIONS = [
   { id: "app", icon: Info, titleKey: "settings.app.title", hintKey: "settings.app.hint" },
   { id: "appearance", icon: Palette, titleKey: "settings.appearance.title", hintKey: "settings.appearance.hint" },
+  { id: "navigation", icon: PanelLeftClose, titleKey: "settings.navigation.title", hintKey: "settings.navigation.hint" },
   { id: "permissions", icon: ShieldCheck, titleKey: "settings.permissions.title", hintKey: "settings.permissions.hint" },
   { id: "privacy", icon: Lock, titleKey: "settings.privacy.title", hintKey: "settings.privacy.hint" },
 ] as const;
@@ -93,6 +109,11 @@ export function SettingsPage() {
   const ink = dark ? s.textDark : s.textLight;
   const themeLabel = dark ? t("settings.appearance.darkTheme") : t("settings.appearance.lightTheme");
 
+  // Seules les pages du haut sont personnalisables : les réglages restent
+  // toujours accessibles, épinglés en bas de la barre latérale.
+  const ordered = orderedPages(s.pageOrder);
+  const customPages = ordered.filter((p) => p.position !== "bottom");
+
   useEffect(() => {
     void getCurrentVersion().then((v) => setVersion(v ?? "—"));
   }, []);
@@ -117,6 +138,24 @@ export function SettingsPage() {
   const changeLang = (lang: Lang) => {
     update({ lang });
     void i18n.changeLanguage(lang);
+  };
+
+  const togglePage = (id: string) => {
+    const hiddenPages = s.hiddenPages.includes(id)
+      ? s.hiddenPages.filter((pageId) => pageId !== id)
+      : [...s.hiddenPages, id];
+    update({ hiddenPages });
+  };
+
+  const movePage = (id: string, delta: number) => {
+    const ids = customPages.map((p) => p.id);
+    const from = ids.indexOf(id);
+    const to = from + delta;
+    if (from < 0 || to < 0 || to >= ids.length) return;
+
+    [ids[from], ids[to]] = [ids[to], ids[from]];
+    const bottomIds = ordered.filter((p) => p.position === "bottom").map((p) => p.id);
+    update({ pageOrder: [...ids, ...bottomIds] });
   };
 
   const resetButton = (
@@ -288,6 +327,52 @@ export function SettingsPage() {
               })}
             </div>
           </div>
+        </Card>
+      )}
+
+      {section === "navigation" && (
+        <Card>
+          <div className="page-order-list">
+            {customPages.map((p, index) => {
+              const Icon = p.icon;
+              const shown = !s.hiddenPages.includes(p.id);
+              return (
+                <div className="page-order-row" key={p.id}>
+                  <label className="page-order-main">
+                    <input
+                      type="checkbox"
+                      checked={shown}
+                      onChange={() => togglePage(p.id)}
+                      aria-label={t("settings.navigation.visible", { page: t(p.label) })}
+                    />
+                    <span className="settings-icon"><Icon size={19} strokeWidth={1.75} /></span>
+                    <span className={`grow ${shown ? "" : "muted"}`}>{t(p.label)}</span>
+                  </label>
+                  <div className="page-order-actions">
+                    <Button
+                      variant="ghost"
+                      icon={ChevronUp}
+                      className="icon-btn"
+                      disabled={index === 0}
+                      onClick={() => movePage(p.id, -1)}
+                      aria-label={t("settings.navigation.moveUp", { page: t(p.label) })}
+                      title={t("settings.navigation.moveUp", { page: t(p.label) })}
+                    />
+                    <Button
+                      variant="ghost"
+                      icon={ChevronDown}
+                      className="icon-btn"
+                      disabled={index === customPages.length - 1}
+                      onClick={() => movePage(p.id, 1)}
+                      aria-label={t("settings.navigation.moveDown", { page: t(p.label) })}
+                      title={t("settings.navigation.moveDown", { page: t(p.label) })}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="muted small">{t("settings.navigation.pinned")}</p>
         </Card>
       )}
 

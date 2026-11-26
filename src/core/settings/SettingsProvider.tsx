@@ -35,6 +35,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setSettings({
         ...DEFAULTS,
         lang: systemLang(),
+        pageOrder: [...DEFAULTS.pageOrder],
+        hiddenPages: [...DEFAULTS.hiddenPages],
         permissions: { ...DEFAULTS.permissions },
       }),
     [],

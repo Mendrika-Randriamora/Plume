@@ -464,6 +464,14 @@
       "darkTheme": "dark theme",
       "language": "Language"
     },
+    "navigation": {
+      "title": "Sidebar",
+      "hint": "Choose which pages are shown and in what order.",
+      "visible": "Show the {{page}} page",
+      "moveUp": "Move {{page}} up",
+      "moveDown": "Move {{page}} down",
+      "pinned": "Settings always remain available at the bottom of the sidebar."
+    },
     "permissions": {
       "title": "Permissions",
       "hint": "You stay in control: every action can be disabled.",

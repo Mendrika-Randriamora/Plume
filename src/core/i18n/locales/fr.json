@@ -464,6 +464,14 @@
       "darkTheme": "thème sombre",
       "language": "Langue"
     },
+    "navigation": {
+      "title": "Barre latérale",
+      "hint": "Choisissez les pages visibles et leur ordre.",
+      "visible": "Afficher la page {{page}}",
+      "moveUp": "Monter {{page}}",
+      "moveDown": "Descendre {{page}}",
+      "pinned": "Les réglages restent toujours accessibles en bas de la barre latérale."
+    },
     "permissions": {
       "title": "Autorisations",
       "hint": "Vous gardez le contrôle : chaque action peut être désactivée.",

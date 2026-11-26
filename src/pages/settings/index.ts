@@ -9,4 +9,5 @@ export const page = {
   icon: Settings,
   component: SettingsPage,
   position: "bottom",
+  locked: true,
 } as const;

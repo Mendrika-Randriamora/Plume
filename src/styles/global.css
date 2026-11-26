@@ -179,6 +179,15 @@ button.list-row:hover { background: var(--hover); }
 .settings-row:hover .settings-icon { color: var(--ink); }
 .settings-row-title { display: block; font-weight: 500; }
 .settings-chevron { flex: none; color: var(--muted); }
+/* Ordre et visibilité des pages dans la barre latérale. */
+.page-order-list { display: flex; flex-direction: column; }
+.page-order-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.page-order-row + .page-order-row { border-top: 1px solid var(--line); }
+.page-order-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; cursor: pointer; }
+.page-order-main .settings-icon { width: 30px; height: 30px; }
+.page-order-main .grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.page-order-actions { display: flex; flex: none; gap: 2px; }
+.page-order-list + .muted { margin-top: 12px; }
 /* Double-clic pour lancer : on évite la sélection de texte parasite. */
 .app-name { color: inherit; text-decoration: none; cursor: pointer; user-select: none; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
