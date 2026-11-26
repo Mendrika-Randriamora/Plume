@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { pages } from "@/pages/registry";
+import { pages, visiblePages } from "@/pages/registry";
 import { Sidebar } from "@/core/layout/Sidebar";
 import { NavContext } from "@/core/layout/nav";
 import { UpdateBanner } from "@/core/updater/UpdateBanner";
@@ -11,8 +11,17 @@ import { sampleResources } from "@/pages/resources/live";
 
 export default function App() {
   const { settings } = useSettings();
-  const [current, setCurrent] = useState(pages[0].id);
-  const page = useMemo(() => pages.find((p) => p.id === current) ?? pages[0], [current]);
+  const visible = useMemo(
+    () => visiblePages(settings.pageOrder, settings.hiddenPages),
+    [settings.pageOrder, settings.hiddenPages],
+  );
+  // Au démarrage, on ouvre la première page visible. Une page masquée reste
+  // accessible par navigation explicite (par exemple la bannière de mise à jour).
+  const [current, setCurrent] = useState(() => visible[0]?.id ?? pages[0].id);
+  const page = useMemo(
+    () => pages.find((p) => p.id === current) ?? visible[0] ?? pages[0],
+    [current, visible],
+  );
   const Page = page.component;
 
   // Relevés continus, même quand la page n'est pas affichée : Accueil et

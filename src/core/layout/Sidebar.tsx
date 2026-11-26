@@ -1,6 +1,6 @@
-import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { pages } from "@/pages/registry";
+import { visiblePages, type PageDef } from "@/pages/registry";
 import { useSettings } from "@/core/settings/SettingsProvider";
 import { SIDEBAR_DEFAULT, SIDEBAR_MAX, SIDEBAR_MIN } from "@/core/settings/store";
 import { PanelLeftClose, PanelLeftOpen } from "@/core/ui";
@@ -25,6 +25,13 @@ export function Sidebar({ current, onSelect }: Props) {
   const width = preview ?? settings.sidebarWidth;
   const iconOnly = width < ICON_ONLY_BELOW;
   const pending = useRef(settings.sidebarWidth);
+
+  const visible = useMemo(
+    () => visiblePages(settings.pageOrder, settings.hiddenPages),
+    [settings.pageOrder, settings.hiddenPages],
+  );
+  const top = visible.filter((p) => p.position !== "bottom");
+  const bottom = visible.filter((p) => p.position === "bottom");
 
   // Mémorise la dernière largeur déployée pour la restaurer au dépliage.
   const lastExpanded = useRef(
@@ -64,7 +71,7 @@ export function Sidebar({ current, onSelect }: Props) {
     window.addEventListener("pointercancel", end);
   };
 
-  const render = (id: string, label: (typeof pages)[number]["label"], Icon: (typeof pages)[number]["icon"]) => (
+  const render = ({ id, label, icon: Icon }: PageDef) => (
     <button
       key={id}
       className={`nav-item ${current === id ? "active" : ""}`}
@@ -87,10 +94,10 @@ export function Sidebar({ current, onSelect }: Props) {
             </div>
           </div>
           <div className="nav-group">
-            {pages.filter((p) => p.position !== "bottom").map((p) => render(p.id, p.label, p.icon))}
+            {top.map(render)}
           </div>
           <div className="nav-group bottom">
-            {pages.filter((p) => p.position === "bottom").map((p) => render(p.id, p.label, p.icon))}
+            {bottom.map(render)}
           </div>
         </nav>
         <button

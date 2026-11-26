@@ -23,6 +23,8 @@ export interface Settings {
   textLight: Rgb;
   textDark: Rgb;
   sidebarWidth: number; // largeur de la barre de navigation (px)
+  pageOrder: string[]; // ordre des pages dans la barre latérale (vide = ordre du registre)
+  hiddenPages: string[]; // pages masquées de la barre latérale
   interfaceV2: boolean; // page encadrée dans une carte arrondie
   iconLibrary: IconLibrary; // bibliothèque d'icônes de l'interface (lucide, sketchy)
   permissions: Permissions;
@@ -44,12 +46,18 @@ export const DEFAULTS: Settings = {
   textLight: [58, 54, 47], // encre sombre sur fond clair
   textDark: [232, 229, 222], // encre claire sur fond sombre
   sidebarWidth: SIDEBAR_DEFAULT,
+  pageOrder: [],
+  hiddenPages: [],
   interfaceV2: true,
   iconLibrary: "sketchy",
   permissions: { scanHome: true, deleteFiles: true, systemChanges: true, internetAccess: true },
 };
 
 const KEY = "plume.settings.v1";
+
+/** Ne garde que des identifiants de page valides (chaînes de caractères). */
+const pageIds = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : [];
 
 export function load(): Settings {
   try {
@@ -68,6 +76,8 @@ export function load(): Settings {
         typeof p.refreshInterval === "number" && Number.isFinite(p.refreshInterval)
           ? Math.min(60_000, Math.max(500, Math.round(p.refreshInterval)))
           : DEFAULTS.refreshInterval,
+      pageOrder: pageIds(p.pageOrder),
+      hiddenPages: pageIds(p.hiddenPages),
       permissions: { ...DEFAULTS.permissions, ...p.permissions },
       iconLibrary: p.iconLibrary === "lucide" || p.iconLibrary === "sketchy" ? p.iconLibrary : DEFAULTS.iconLibrary,
     };

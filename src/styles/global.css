@@ -43,7 +43,7 @@ button { cursor: pointer; }
 .shell { display: flex; height: 100%; }
 .sidebar-wrap { position: relative; display: flex; flex: none; }
 .sidebar { flex: none; width: 210px; padding: 20px 12px; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
-.sidebar-head { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding: 0 0 20px 8px; }
+.sidebar-head { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding: 0 0 20px 5px; }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 1.2em; }
 .brand-mark { flex: none; }
 .sidebar-toggle { position: absolute; top: 19px; right: -32px; z-index: 3; display: flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px; border: 0; border-radius: 8px; background: var(--bg); color: var(--muted); }
@@ -179,6 +179,21 @@ button.list-row:hover { background: var(--hover); }
 .settings-row:hover .settings-icon { color: var(--ink); }
 .settings-row-title { display: block; font-weight: 500; }
 .settings-chevron { flex: none; color: var(--muted); }
+/* Ordre et visibilité des pages dans la barre latérale. */
+.page-order-list { display: flex; flex-direction: column; }
+.page-order-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.page-order-row + .page-order-row { border-top: 1px solid var(--line); }
+.page-order-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; cursor: pointer; }
+.page-order-main .settings-icon { width: 30px; height: 30px; }
+.page-order-main .grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.page-order-handle { display: flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 30px; border-radius: 6px; color: var(--muted); cursor: grab; user-select: none; -webkit-user-drag: element; }
+.page-order-handle svg { pointer-events: none; }
+.page-order-handle:hover { background: var(--hover); color: var(--ink); }
+.page-order-handle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.page-order-handle:active { cursor: grabbing; }
+.page-order-row.dragging { opacity: 0.45; }
+.page-order-row.drag-over { background: var(--hover); border-radius: 8px; }
+.page-order-list + .muted { margin-top: 12px; }
 /* Double-clic pour lancer : on évite la sélection de texte parasite. */
 .app-name { color: inherit; text-decoration: none; cursor: pointer; user-select: none; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }

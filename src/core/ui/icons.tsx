@@ -15,6 +15,7 @@ import {
   Folder as LucideFolder,
   FolderOpen as LucideFolderOpen,
   Grid3X3 as LucideGrid3X3,
+  GripVertical as LucideGripVertical,
   HardDrive as LucideHardDrive,
   Home as LucideHome,
   Info as LucideInfo,
@@ -55,6 +56,7 @@ import {
   Folder as SketchyFolder,
   FolderOpen as SketchyFolderOpen,
   Grid3X3 as SketchyGrid3X3,
+  GripVertical as SketchyGripVertical,
   HardDrive as SketchyHardDrive,
   Home as SketchyHome,
   Info as SketchyInfo,
@@ -164,6 +166,12 @@ export function FolderOpen(props: AppIconProps) {
 export function Grid3X3(props: AppIconProps) {
   const { settings } = useSettings();
   const Icon = settings.iconLibrary === "sketchy" ? SketchyGrid3X3 : LucideGrid3X3;
+  return <Icon {...props} />;
+}
+
+export function GripVertical(props: AppIconProps) {
+  const { settings } = useSettings();
+  const Icon = settings.iconLibrary === "sketchy" ? SketchyGripVertical : LucideGripVertical;
   return <Icon {...props} />;
 }
 
