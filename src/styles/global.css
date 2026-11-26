@@ -186,7 +186,13 @@ button.list-row:hover { background: var(--hover); }
 .page-order-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; cursor: pointer; }
 .page-order-main .settings-icon { width: 30px; height: 30px; }
 .page-order-main .grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.page-order-actions { display: flex; flex: none; gap: 2px; }
+.page-order-handle { display: flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 30px; border-radius: 6px; color: var(--muted); cursor: grab; user-select: none; -webkit-user-drag: element; }
+.page-order-handle svg { pointer-events: none; }
+.page-order-handle:hover { background: var(--hover); color: var(--ink); }
+.page-order-handle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.page-order-handle:active { cursor: grabbing; }
+.page-order-row.dragging { opacity: 0.45; }
+.page-order-row.drag-over { background: var(--hover); border-radius: 8px; }
 .page-order-list + .muted { margin-top: 12px; }
 /* Double-clic pour lancer : on évite la sélection de texte parasite. */
 .app-name { color: inherit; text-decoration: none; cursor: pointer; user-select: none; }

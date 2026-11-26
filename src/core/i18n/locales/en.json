@@ -466,10 +466,9 @@
     },
     "navigation": {
       "title": "Sidebar",
-      "hint": "Choose which pages are shown and in what order.",
+      "hint": "Choose which pages are shown and drag them to reorder.",
       "visible": "Show the {{page}} page",
-      "moveUp": "Move {{page}} up",
-      "moveDown": "Move {{page}} down",
+      "drag": "Move the {{page}} page",
       "pinned": "Settings always remain available at the bottom of the sidebar."
     },
     "permissions": {

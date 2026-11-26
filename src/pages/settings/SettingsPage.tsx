@@ -4,9 +4,8 @@ import {
   ArrowLeft,
   Button,
   Card,
-  ChevronDown,
   ChevronRight,
-  ChevronUp,
+  GripVertical,
   Info,
   Lock,
   PageHeader,
@@ -104,6 +103,8 @@ export function SettingsPage() {
   const { settings: s, update, reset } = useSettings();
   const [version, setVersion] = useState("…");
   const [section, setSection] = useState<SectionId | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
   const dark = resolveDark(s);
   const bg = dark ? s.baseDark : s.baseLight;
   const ink = dark ? s.textDark : s.textLight;
@@ -147,6 +148,13 @@ export function SettingsPage() {
     update({ hiddenPages });
   };
 
+  /** Enregistre l'ordre des pages personnalisables, les pages épinglées restant en bas. */
+  const applyOrder = (ids: string[]) => {
+    const bottomIds = ordered.filter((p) => p.position === "bottom").map((p) => p.id);
+    update({ pageOrder: [...ids, ...bottomIds] });
+  };
+
+  // Alternative au glisser-déposer pour le clavier : flèches haut/bas sur la poignée.
   const movePage = (id: string, delta: number) => {
     const ids = customPages.map((p) => p.id);
     const from = ids.indexOf(id);
@@ -154,8 +162,30 @@ export function SettingsPage() {
     if (from < 0 || to < 0 || to >= ids.length) return;
 
     [ids[from], ids[to]] = [ids[to], ids[from]];
-    const bottomIds = ordered.filter((p) => p.position === "bottom").map((p) => p.id);
-    update({ pageOrder: [...ids, ...bottomIds] });
+    applyOrder(ids);
+  };
+
+  const dropPage = (targetId: string) => {
+    if (!dragId || dragId === targetId) {
+      setDragId(null);
+      setOverId(null);
+      return;
+    }
+
+    const ids = customPages.map((p) => p.id);
+    const from = ids.indexOf(dragId);
+    const to = ids.indexOf(targetId);
+    if (from < 0 || to < 0) {
+      setDragId(null);
+      setOverId(null);
+      return;
+    }
+
+    const [moved] = ids.splice(from, 1);
+    ids.splice(to, 0, moved);
+    applyOrder(ids);
+    setDragId(null);
+    setOverId(null);
   };
 
   const resetButton = (
@@ -333,11 +363,26 @@ export function SettingsPage() {
       {section === "navigation" && (
         <Card>
           <div className="page-order-list">
-            {customPages.map((p, index) => {
+            {customPages.map((p) => {
               const Icon = p.icon;
               const shown = !s.hiddenPages.includes(p.id);
               return (
-                <div className="page-order-row" key={p.id}>
+                <div
+                  className={`page-order-row ${dragId === p.id ? "dragging" : ""} ${
+                    overId === p.id && dragId !== p.id ? "drag-over" : ""
+                  }`}
+                  key={p.id}
+                  onDragOver={(e) => {
+                    if (!dragId) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    setOverId((id) => (id === p.id ? id : p.id));
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    dropPage(p.id);
+                  }}
+                >
                   <label className="page-order-main">
                     <input
                       type="checkbox"
@@ -348,26 +393,39 @@ export function SettingsPage() {
                     <span className="settings-icon"><Icon size={19} strokeWidth={1.75} /></span>
                     <span className={`grow ${shown ? "" : "muted"}`}>{t(p.label)}</span>
                   </label>
-                  <div className="page-order-actions">
-                    <Button
-                      variant="ghost"
-                      icon={ChevronUp}
-                      className="icon-btn"
-                      disabled={index === 0}
-                      onClick={() => movePage(p.id, -1)}
-                      aria-label={t("settings.navigation.moveUp", { page: t(p.label) })}
-                      title={t("settings.navigation.moveUp", { page: t(p.label) })}
-                    />
-                    <Button
-                      variant="ghost"
-                      icon={ChevronDown}
-                      className="icon-btn"
-                      disabled={index === customPages.length - 1}
-                      onClick={() => movePage(p.id, 1)}
-                      aria-label={t("settings.navigation.moveDown", { page: t(p.label) })}
-                      title={t("settings.navigation.moveDown", { page: t(p.label) })}
-                    />
-                  </div>
+                  <span
+                    className="page-order-handle"
+                    draggable
+                    role="button"
+                    tabIndex={0}
+                    aria-label={t("settings.navigation.drag", { page: t(p.label) })}
+                    aria-keyshortcuts="ArrowUp ArrowDown"
+                    title={t("settings.navigation.drag", { page: t(p.label) })}
+                    onDragStart={(e) => {
+                      setDragId(p.id);
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", p.id);
+                      const row = e.currentTarget.closest(".page-order-row");
+                      if (row instanceof HTMLElement) {
+                        e.dataTransfer.setDragImage(row, row.offsetWidth - 24, 24);
+                      }
+                    }}
+                    onDragEnd={() => {
+                      setDragId(null);
+                      setOverId(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        movePage(p.id, -1);
+                      } else if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        movePage(p.id, 1);
+                      }
+                    }}
+                  >
+                    <GripVertical size={18} strokeWidth={1.75} />
+                  </span>
                 </div>
               );
             })}

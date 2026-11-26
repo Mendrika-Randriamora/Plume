@@ -466,10 +466,9 @@
     },
     "navigation": {
       "title": "Barre latérale",
-      "hint": "Choisissez les pages visibles et leur ordre.",
+      "hint": "Choisissez les pages visibles et glissez-les pour les réordonner.",
       "visible": "Afficher la page {{page}}",
-      "moveUp": "Monter {{page}}",
-      "moveDown": "Descendre {{page}}",
+      "drag": "Déplacer la page {{page}}",
       "pinned": "Les réglages restent toujours accessibles en bas de la barre latérale."
     },
     "permissions": {

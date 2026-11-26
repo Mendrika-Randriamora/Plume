@@ -17,6 +17,7 @@ export {
   Folder,
   FolderOpen,
   Grid3X3,
+  GripVertical,
   HardDrive,
   Home,
   Info,
