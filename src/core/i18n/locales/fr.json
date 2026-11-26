@@ -532,6 +532,7 @@
     "title": "Réglages",
     "subtitle": "Adaptez Plume à vos goûts.",
     "reset": "Réinitialiser",
+    "resetAll": "Tout réinitialiser",
     "app": {
       "title": "Application",
       "hint": "Informations sur votre installation de Plume.",

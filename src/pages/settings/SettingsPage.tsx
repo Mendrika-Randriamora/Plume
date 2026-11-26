@@ -190,7 +190,7 @@ export function SettingsPage() {
   };
 
   const resetButton = (
-    <Button variant="ghost" icon={RotateCcw} onClick={reset}>{t("settings.reset")}</Button>
+    <Button variant="ghost" icon={RotateCcw} onClick={reset}>{t("settings.resetAll")}</Button>
   );
 
   /** Réinitialise une seule sous-catégorie : un reset d'apparence ne remet pas en cause la sidebar. */

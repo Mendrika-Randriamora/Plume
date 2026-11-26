@@ -532,6 +532,7 @@
     "title": "Settings",
     "subtitle": "Make Plume your own.",
     "reset": "Reset",
+    "resetAll": "Reset All",
     "app": {
       "title": "Application",
       "hint": "Information about your Plume installation.",
