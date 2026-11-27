@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, Monitor } from "@/core/ui";
 import { bytes, bytesToGigabytes, gigabytes } from "@/core/format";
@@ -21,9 +21,9 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * Carte « À propos » des réglages : logo monochrome de la distribution à
- * gauche, informations matérielles et logicielles à droite. Le logo est
- * appliqué en masque pour suivre automatiquement la couleur du texte.
+ * Carte « À propos » des réglages : logo de la distribution à gauche,
+ * informations matérielles et logicielles à droite. Le logo (SVG brut ou
+ * `data:` PNG) est affiché tel quel : le dessin vient de la source fournie.
  */
 export function SystemAbout() {
   const { t } = useTranslation();
@@ -102,34 +102,24 @@ export function SystemAbout() {
     },
   ];
 
-  // Le SVG est fourni en source : on le convertit en masque pour ne garder que
-  // sa forme et la remplir avec la couleur du texte (currentColor).
+  // Le backend renvoie l'URI SVG brute ou une URL `data:` pour un PNG : on
+  // l'affiche telle quelle, sans masque.
   const rawLogo = info?.logo ?? null;
-  const maskUrl = rawLogo
+  const logoUrl = rawLogo
     ? rawLogo.trimStart().startsWith("<")
-      ? `url("data:image/svg+xml,${encodeURIComponent(rawLogo)}")`
-      : `url("${rawLogo}")`
+      ? `data:image/svg+xml,${encodeURIComponent(rawLogo)}`
+      : rawLogo
     : null;
-
-  const logoStyle: CSSProperties | undefined = maskUrl
-    ? {
-        backgroundColor: "currentColor",
-        WebkitMaskImage: maskUrl,
-        maskImage: maskUrl,
-        WebkitMaskRepeat: "no-repeat",
-        maskRepeat: "no-repeat",
-        WebkitMaskPosition: "center",
-        maskPosition: "center",
-        WebkitMaskSize: "contain",
-        maskSize: "contain",
-      }
-    : undefined;
 
   return (
     <Card>
       <div className="system-about">
-        <div className="system-about-logo" style={logoStyle} aria-hidden="true">
-          {maskUrl ? null : <Monitor size={84} strokeWidth={1.25} />}
+        <div className="system-about-logo" aria-hidden="true">
+          {logoUrl ? (
+            <img className="system-about-img" src={logoUrl} alt="" />
+          ) : (
+            <Monitor size={84} strokeWidth={1.25} />
+          )}
         </div>
         <div className="system-about-cols">
           <section>
