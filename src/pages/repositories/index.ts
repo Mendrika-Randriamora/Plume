@@ -10,4 +10,5 @@ export const page = {
   label: "repositories.title",
   icon: Package,
   component: RepositoriesPage,
+  platform: "linux",
 } as const;

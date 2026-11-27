@@ -208,6 +208,7 @@ button.list-row:hover { background: var(--hover); }
 .page-order-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; cursor: pointer; }
 .page-order-main .settings-icon { width: 30px; height: 30px; }
 .page-order-main .grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.page-platform { flex: none; white-space: nowrap; }
 .page-order-handle { display: flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 30px; border-radius: 6px; color: var(--muted); cursor: grab; user-select: none; -webkit-user-drag: element; }
 .page-order-handle svg { pointer-events: none; }
 .page-order-handle:hover { background: var(--hover); color: var(--ink); }
@@ -299,8 +300,7 @@ label.field { cursor: pointer; }
 .search-input:focus { outline: none; }
 .search-input::placeholder { color: var(--muted); }
 /* Recherche intégrée au tableau des processus. */
-.proc-search { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 8px; color: var(--muted); }
-.proc-search:hover, .proc-search:focus-within { background: var(--hover); color: var(--ink); }
+.proc-search { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 8px; background: var(--hover); color: var(--ink); }
 .proc-search > svg { flex: none; }
 .proc-search input { flex: 1; min-width: 0; padding: 0; border: 0; background: none; color: var(--ink); font-size: 0.95em; }
 .proc-search input:focus { outline: none; }

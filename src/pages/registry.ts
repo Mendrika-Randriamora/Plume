@@ -26,6 +26,8 @@ export type PageTitleKey =
   | "repositories.title"
   | "settings.title";
 
+export type PagePlatform = "linux" | "windows" | "macos";
+
 export interface PageDef {
   id: string;
   label: PageTitleKey;
@@ -34,6 +36,8 @@ export interface PageDef {
   position?: "top" | "bottom";
   /** Page toujours accessible, même si elle a été masquée dans les réglages. */
   locked?: boolean;
+  /** Système exclusif de la page, affiché comme badge dans les réglages de la barre latérale. */
+  platform?: PagePlatform;
 }
 
 /** Pour ajouter une page : créer un dossier dans src/pages avec un index.ts exportant `page`, puis l'ajouter ici. */
