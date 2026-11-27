@@ -212,7 +212,6 @@ export function StartupPage() {
                 ))}
               </ul>
             )}
-            {info.cronSupported && <p className="muted small">{t("startup.schedule.sessionHint")}</p>}
           </Card>
         </>
       )}
