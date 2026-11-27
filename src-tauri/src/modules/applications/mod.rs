@@ -6,6 +6,10 @@ use std::sync::RwLock;
 use crate::modules::updates::{detect, exec_root, run_root, Manager};
 #[cfg(target_os = "linux")]
 use crate::shared::blocking;
+#[cfg(target_os = "windows")]
+use crate::shared::blocking;
+#[cfg(target_os = "windows")]
+use std::collections::HashSet;
 #[cfg(target_os = "linux")]
 use std::collections::{HashMap, HashSet};
 #[cfg(target_os = "linux")]
@@ -15,6 +19,8 @@ use std::fs;
 #[cfg(target_os = "linux")]
 use std::path::Path;
 #[cfg(target_os = "linux")]
+use std::process::Command;
+#[cfg(target_os = "windows")]
 use std::process::Command;
 #[cfg(target_os = "linux")]
 use std::time::Duration;
@@ -51,6 +57,10 @@ struct CachedApplication {
     app: Application,
     path: PathBuf,
     categories: Vec<String>,
+    /// Identifiant de commande de désinstallation (MSI / UninstallString), renseigné
+    /// pour les applications Windows découvertes dans l'inventaire.
+    #[cfg(target_os = "windows")]
+    uninstall: Option<String>,
 }
 
 /// Inventaire conservé en mémoire : il n'est régénéré que sur demande explicite.
@@ -71,7 +81,15 @@ pub async fn list_applications(
         scan_and_store(&state).await
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(entries) = cached_entries(&state)? {
+            return Ok(entries.into_iter().map(|entry| entry.app).collect());
+        }
+        scan_windows_and_store(&state).await
+    }
+
+    #[cfg(not(any(target_os = "linux", target_os = "windows")))]
     {
         let _ = state;
         Ok(Vec::new())
@@ -87,7 +105,12 @@ pub async fn refresh_applications(
         scan_and_store(&state).await
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(target_os = "windows")]
+    {
+        scan_windows_and_store(&state).await
+    }
+
+    #[cfg(not(any(target_os = "linux", target_os = "windows")))]
     {
         let _ = state;
         Ok(Vec::new())
@@ -99,37 +122,43 @@ pub async fn search_applications(
     query: String,
     state: tauri::State<'_, ApplicationsState>,
 ) -> Result<Vec<Application>, String> {
-    #[cfg(target_os = "linux")]
+    // Aucun sous-processus ici : on filtre uniquement le cache mémoire.
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     {
-        // Aucun sous-processus ici : on filtre uniquement le cache mémoire.
         let entries = cached_entries(&state)?.unwrap_or_default();
-        let query = normalize_search(&query);
-        let terms: Vec<&str> = query.split_whitespace().collect();
-
-        Ok(entries
-            .into_iter()
-            .filter(|entry| {
-                if terms.is_empty() {
-                    return true;
-                }
-                let haystack = normalize_search(&format!(
-                    "{} {} {} {}",
-                    entry.app.name,
-                    entry.app.id,
-                    entry.app.package_name,
-                    entry.categories.join(" ")
-                ));
-                terms.iter().all(|term| haystack.contains(*term))
-            })
-            .map(|entry| entry.app)
-            .collect())
+        Ok(search_cached(entries, &query))
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(not(any(target_os = "linux", target_os = "windows")))]
     {
         let _ = (query, state);
         Ok(Vec::new())
     }
+}
+
+/// Filtre l'inventaire en mémoire sur le nom, l'identifiant, le paquet et les catégories.
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+fn search_cached(entries: Vec<CachedApplication>, query: &str) -> Vec<Application> {
+    let normalized = normalize_search(query);
+    let terms: Vec<&str> = normalized.split_whitespace().collect();
+
+    entries
+        .into_iter()
+        .filter(|entry| {
+            if terms.is_empty() {
+                return true;
+            }
+            let haystack = normalize_search(&format!(
+                "{} {} {} {}",
+                entry.app.name,
+                entry.app.id,
+                entry.app.package_name,
+                entry.categories.join(" ")
+            ));
+            terms.iter().all(|term| haystack.contains(*term))
+        })
+        .map(|entry| entry.app)
+        .collect()
 }
 
 #[tauri::command]
@@ -145,7 +174,15 @@ pub async fn get_application_details(
         blocking(move || details_for_entry(&entry)).await
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(target_os = "windows")]
+    {
+        let entry =
+            find_cached(&state, &desktop_id)?.ok_or_else(|| "application_not_found".to_string())?;
+
+        blocking(move || details_for_windows(&entry)).await
+    }
+
+    #[cfg(not(any(target_os = "linux", target_os = "windows")))]
     {
         let _ = (desktop_id, state);
         Err("unsupported_platform".into())
@@ -171,7 +208,17 @@ pub async fn uninstall_application(
         Ok(true)
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(target_os = "windows")]
+    {
+        // L'identifiant vient du front : on le valide dans l'inventaire en mémoire.
+        let entry =
+            find_cached(&state, &desktop_id)?.ok_or_else(|| "application_not_found".to_string())?;
+
+        blocking(move || uninstall_windows(&entry)).await?;
+        Ok(true)
+    }
+
+    #[cfg(not(any(target_os = "linux", target_os = "windows")))]
     {
         let _ = (desktop_id, state);
         Err("unsupported_platform".into())
@@ -192,7 +239,16 @@ pub async fn launch_application(
         blocking(move || launch_entry(&entry)).await
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(target_os = "windows")]
+    {
+        // L'identifiant vient du front : on le valide dans l'inventaire en mémoire.
+        let entry =
+            find_cached(&state, &desktop_id)?.ok_or_else(|| "application_not_found".to_string())?;
+
+        blocking(move || launch_windows(&entry)).await
+    }
+
+    #[cfg(not(any(target_os = "linux", target_os = "windows")))]
     {
         let _ = (desktop_id, state);
         Err("unsupported_platform".into())
@@ -221,6 +277,23 @@ fn find_cached(
 #[cfg(target_os = "linux")]
 async fn scan_and_store(state: &ApplicationsState) -> Result<Vec<Application>, String> {
     let entries = blocking(scan_inventory).await?;
+    let applications: Vec<Application> = entries.iter().map(|entry| entry.app.clone()).collect();
+
+    {
+        let mut guard = state
+            .entries
+            .write()
+            .map_err(|_| "inventory_unavailable".to_string())?;
+        *guard = Some(entries);
+    }
+
+    Ok(applications)
+}
+
+/// Scanne les applications Windows installées puis remplace le cache mémoire.
+#[cfg(target_os = "windows")]
+async fn scan_windows_and_store(state: &ApplicationsState) -> Result<Vec<Application>, String> {
+    let entries = blocking(windows_scan_inventory).await?;
     let applications: Vec<Application> = entries.iter().map(|entry| entry.app.clone()).collect();
 
     {
@@ -508,6 +581,165 @@ fn launch_entry(entry: &CachedApplication) -> Result<(), String> {
         .spawn()
         .map(|_| ())
         .map_err(|_| "launch_failed".to_string())
+}
+
+// ---------- Applications Windows ----------
+
+/// Script PowerShell interrogeant les clés de désinstallation (HKLM, WOW6432Node et
+/// HKCU) pour lister les applications Windows installées. Chaque ligne émise est :
+/// `nom` + tab + `version` + tab + `taille` + tab + `uninstall` + tab + `exe`.
+#[cfg(target_os = "windows")]
+const WINDOWS_INSTALLED_APPS_SCRIPT: &str = r#"
+$roots = @(
+  'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
+  'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*',
+  'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'
+)
+foreach ($root in $roots) {
+  Get-ItemProperty -Path $root -ErrorAction SilentlyContinue | ForEach-Object {
+    $name = [string]$_.DisplayName
+    $uninstall = [string]$_.UninstallString
+    if ([string]::IsNullOrWhiteSpace($name)) { return }
+    if ([string]::IsNullOrWhiteSpace($uninstall)) { return }
+    $raw = $uninstall.Trim()
+    $closingQuote = $raw.IndexOf('"', 1)
+    $candidate = if ($closingQuote -ge 0) { $raw.Substring(1, $closingQuote - 1) } else { ($raw -split '\s+')[0] }
+    $candidate = $candidate.Trim()
+    if (([IO.Path]::GetFileNameWithoutExtension($candidate)).ToLower() -eq 'msiexec') { $candidate = '' }
+    $size = 0
+    if ($null -ne $_.InstallSize) { $size = [uint64]$_.InstallSize }
+    "{0}`t{1}`t{2}`t{3}`t{4}" -f $name, [string]$_.DisplayVersion, $size, $uninstall, $candidate
+  }
+}
+"#;
+
+/// Liste les applications Windows installées via le registre de désinstallation,
+/// puis construit l'inventaire (version, taille, commande de désinstallation).
+#[cfg(target_os = "windows")]
+fn windows_scan_inventory() -> Result<Vec<CachedApplication>, String> {
+    let out = Command::new("powershell.exe")
+        .args([
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            WINDOWS_INSTALLED_APPS_SCRIPT,
+        ])
+        .output()
+        .map_err(|e| {
+            eprintln!("Impossible de lancer powershell.exe : {e}");
+            "command_failed".to_string()
+        })?;
+
+    if !out.status.success() {
+        return Err("command_failed".to_string());
+    }
+
+    let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+    let mut entries: Vec<CachedApplication> = Vec::new();
+    let mut seen: HashSet<String> = HashSet::new();
+
+    for line in stdout.lines() {
+        let mut fields = line.split('\t');
+        let Some(name) = fields.next() else {
+            continue;
+        };
+        let name = name.trim();
+        if name.is_empty() || !seen.insert(name.to_string()) {
+            continue;
+        }
+
+        let version = fields.next().unwrap_or("").trim().to_string();
+        let size = fields.next().unwrap_or("").trim().to_string();
+        let uninstall = fields.next().unwrap_or("").trim().to_string();
+        let exe = fields.next().unwrap_or("").trim().to_string();
+
+        entries.push(CachedApplication {
+            app: Application {
+                id: name.to_string(),
+                name: name.to_string(),
+                package_name: uninstall.clone(),
+                version: (!version.is_empty()).then(|| version.clone()),
+                size: (!size.is_empty() && size != "0").and_then(|raw| raw.parse::<u64>().ok()),
+                source: "windows".to_string(),
+            },
+            path: (!exe.is_empty())
+                .then(|| PathBuf::from(exe))
+                .unwrap_or_default(),
+            categories: Vec::new(),
+            uninstall: (!uninstall.is_empty()).then(|| uninstall.clone()),
+        });
+    }
+
+    entries.sort_by(|a, b| {
+        a.app
+            .name
+            .to_lowercase()
+            .cmp(&b.app.name.to_lowercase())
+            .then_with(|| a.app.id.cmp(&b.app.id))
+    });
+
+    Ok(entries)
+}
+
+/// L'identifiant a déjà été validé dans le cache ; la commande ne reçoit que des arguments sûrs.
+#[cfg(target_os = "windows")]
+fn launch_windows(entry: &CachedApplication) -> Result<(), String> {
+    let exe = entry.path.to_string_lossy().trim().to_string();
+    if exe.is_empty() {
+        // Exécutable introuvable ou installateur (MSI) : rien à lancer.
+        return Err("launch_failed".into());
+    }
+
+    let status = Command::new(&exe)
+        .status()
+        .map_err(|_| "launch_failed".to_string())?;
+
+    if status.success() {
+        Ok(())
+    } else {
+        Err("launch_failed".into())
+    }
+}
+
+/// L'identifiant a déjà été validé dans le cache ; la commande ne reçoit que des arguments sûrs.
+#[cfg(target_os = "windows")]
+fn uninstall_windows(entry: &CachedApplication) -> Result<(), String> {
+    let Some(uninstall) = entry.uninstall.as_deref() else {
+        return Err("missing_package_id".into());
+    };
+    if uninstall.trim().is_empty() {
+        return Err("missing_package_id".into());
+    }
+
+    let status = Command::new("cmd")
+        .args(["/c", uninstall])
+        .status()
+        .map_err(|_| "command_failed".to_string())?;
+
+    if status.success() {
+        Ok(())
+    } else {
+        Err("command_failed".into())
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn details_for_windows(entry: &CachedApplication) -> Result<ApplicationDetails, String> {
+    let exe = entry.path.to_string_lossy().trim().to_string();
+
+    Ok(ApplicationDetails {
+        name: entry.app.name.clone(),
+        package_name: entry.app.package_name.clone(),
+        version: entry.app.version.clone(),
+        size: entry.app.size,
+        source: entry.app.source.clone(),
+        desktop_file: (!exe.is_empty()).then(|| entry.path.display().to_string()),
+        desktop_content: None,
+        description: None,
+        icon: None,
+        categories: None,
+        exec: (!exe.is_empty()).then(|| exe.clone()),
+    })
 }
 
 // ---------- Découverte des fichiers .desktop ----------
@@ -1309,7 +1541,7 @@ fn parse_human_size(raw: &str) -> Option<u64> {
 
 // ---------- Recherche insensible à la casse et aux accents ----------
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 fn normalize_search(value: &str) -> String {
     let mut normalized = String::with_capacity(value.len());
     for ch in value.to_lowercase().chars() {

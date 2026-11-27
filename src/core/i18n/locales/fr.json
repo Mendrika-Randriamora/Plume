@@ -354,7 +354,8 @@
     "emptyHint": "Essayez une autre recherche ou un autre gestionnaire.",
     "showMore": "Afficher plus ({{count}})",
     "source": {
-      "manual": "installée manuellement"
+      "manual": "installée manuellement",
+      "windows": "Windows"
     },
     "uninstall": "Désinstaller",
     "details": "Voir les détails",
