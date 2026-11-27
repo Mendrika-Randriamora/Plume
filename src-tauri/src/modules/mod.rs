@@ -1,9 +1,11 @@
 pub mod appearance;
 pub mod applications;
 pub mod clean;
+pub mod config;
 pub mod disk;
 pub mod home;
 pub mod processes;
 pub mod repositories;
 pub mod resources;
+pub mod settings;
 pub mod updates;

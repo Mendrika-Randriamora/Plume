@@ -59,7 +59,20 @@
     "snap_change_in_progress": "A removal is already in progress for this application. Wait for it to finish, then refresh the list.",
     "snap_in_use": "This snap is used by other snaps (base or runtime) and can't be removed.",
     "resources_unavailable": "Couldn't read system resources.",
-    "processes_unavailable": "Couldn't read the process list."
+    "processes_unavailable": "Couldn't read the process list.",
+    "config_not_found": "This file can't be found.",
+    "config_binary": "This file looks binary and can't be opened.",
+    "config_too_large": "This file is too large to edit.",
+    "config_path_denied": "This file is outside the allowed folders.",
+    "config_read_failed": "Couldn't read this file.",
+    "config_write_failed": "Couldn't save this file.",
+    "config_backup_failed": "Couldn't create the backup.",
+    "config_backup_not_found": "This backup can't be found.",
+    "config_invalid_id": "This backup isn't valid.",
+    "config_validation_failed": "Validation failed.",
+    "config_favorites_failed": "Couldn't save favorites.",
+    "config_invalid_root": "This file doesn't need system authorization.",
+    "config_root_required": "System authorization is required for this file."
   },
   "updater": {
     "banner": {
@@ -363,6 +376,109 @@
       "error": "Couldn't load application details."
     }
   },
+  "config": {
+    "title": "Configuration",
+    "subtitle": "Edit your system's configuration files, without the command line.",
+    "unsupported": "This page is only available on Linux.",
+    "search": {
+      "placeholder": "Search for a file…",
+      "clear": "Clear search",
+      "known": "Known files",
+      "results": "Results",
+      "noResults": "No file matches “{{query}}”.",
+      "indexing": "Indexing files in /etc and ~/.config…",
+      "indexReady_one": "{{count}} file indexed",
+      "indexReady_other": "{{count}} files indexed",
+      "indexError": "Couldn't index the files."
+    },
+    "favorites": {
+      "title": "Favorites",
+      "add": "Add a file",
+      "addPlaceholder": "/etc/… or ~/…",
+      "addAction": "Add",
+      "added": "File added to favorites.",
+      "removed": "File removed from favorites.",
+      "addError": "Couldn't add this file."
+    },
+    "browser": {
+      "title": "Browse",
+      "system": "System (/etc)",
+      "user": "User configuration (~/.config)",
+      "empty": "Empty folder.",
+      "loading": "Reading…",
+      "error": "Couldn't read this folder."
+    },
+    "categories": {
+      "Système": "System",
+      "Réseau": "Network",
+      "Démarrage": "Boot",
+      "Shell": "Shell",
+      "Applications": "Applications"
+    },
+    "empty": {
+      "noFile": "Choose a file to get started.",
+      "noKnown": "No common configuration file was found on this system.",
+      "loadError": "Couldn't read this file.",
+      "hint": "Search for or browse a file to get started."
+    },
+    "editor": {
+      "readOnly": "File larger than 1 MB: opened read-only.",
+      "loading": "Opening the file…",
+      "systemFile": "System file: authorization will be requested when saving.",
+      "favorite": "Add to favorites",
+      "unfavorite": "Remove from favorites",
+      "language": "Language"
+    },
+    "danger": {
+      "high": "Critical file",
+      "highHint": "A mistake can prevent startup or sign-in. You'll be asked to confirm before saving.",
+      "medium": "System file"
+    },
+    "actions": {
+      "save": "Save",
+      "saving": "Saving…",
+      "diff": "View changes",
+      "restore": "Restore",
+      "browse": "Browse",
+      "cancel": "Cancel",
+      "confirmSave": "Save anyway",
+      "confirmRestore": "Restore this version",
+      "changeFile": "Change file"
+    },
+    "status": {
+      "dirty": "Unsaved changes",
+      "saved": "Saved.",
+      "validationNone": "No automatic validation",
+      "validationActive": "Validation: {{command}}",
+      "validationPassed": "Validation passed",
+      "validationFailed": "Validation failed: {{detail}}",
+      "writeFailed": "Couldn't save the file: {{detail}}",
+      "readFailed": "Couldn't read the file: {{detail}}"
+    },
+    "diff": {
+      "title": "Changes preview",
+      "hint": "Removed lines appear in red, added lines in yellow.",
+      "tooLarge": "Preview unavailable for files with more than {{count}} lines.",
+      "empty": "No changes to show."
+    },
+    "backups": {
+      "title": "Previous versions",
+      "hint": "A backup is created before every save.",
+      "empty": "No backup for this file.",
+      "loading": "Loading backups…",
+      "restore": "Restore",
+      "restored": "Version restored.",
+      "error": "Couldn't load backups."
+    },
+    "confirm": {
+      "unsavedTitle": "Unsaved changes",
+      "unsavedText": "Changes to “{{name}}” will be lost. Change file?",
+      "dangerTitle": "Save a critical file?",
+      "dangerText": "“{{name}}” is a critical file. A mistake can prevent startup or sign-in.",
+      "restoreTitle": "Restore this version?",
+      "restoreText": "The current content will be backed up before being replaced."
+    }
+  },
   "repositories": {
     "title": "Repositories",
     "subtitle": "Manage the package repositories of your distribution.",
@@ -415,7 +531,27 @@
   "settings": {
     "title": "Settings",
     "subtitle": "Make Plume your own.",
+    "about": {
+      "hardware": "Hardware information",
+      "software": "Software information",
+      "model": "Model",
+      "memory": "Memory",
+      "processor": "Processor",
+      "graphics": "Graphics",
+      "graphicsN": "Graphics {{index}}",
+      "disk": "Disk capacity",
+      "firmware": "Firmware version",
+      "osName": "Operating system name",
+      "osType": "Operating system type",
+      "gnome": "GNOME version",
+      "session": "Windowing system",
+      "kernel": "Kernel version",
+      "bits": "{{bits}}-bit",
+      "wayland": "Wayland",
+      "x11": "X11"
+    },
     "reset": "Reset",
+    "resetAll": "Reset All",
     "app": {
       "title": "Application",
       "hint": "Information about your Plume installation.",

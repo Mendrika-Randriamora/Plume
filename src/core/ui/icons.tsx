@@ -9,11 +9,15 @@ import {
   ChevronDown as LucideChevronDown,
   ChevronRight as LucideChevronRight,
   ChevronUp as LucideChevronUp,
+  CircleAlert as LucideCircleAlert,
   Cpu as LucideCpu,
+  Diff as LucideDiff,
   Download as LucideDownload,
+  FileCode as LucideFileCode,
   FileText as LucideFileText,
   Folder as LucideFolder,
   FolderOpen as LucideFolderOpen,
+  FolderTree as LucideFolderTree,
   Grid3X3 as LucideGrid3X3,
   GripVertical as LucideGripVertical,
   HardDrive as LucideHardDrive,
@@ -22,6 +26,7 @@ import {
   Loader2 as LucideLoader2,
   Lock as LucideLock,
   MemoryStick as LucideMemoryStick,
+  Monitor as LucideMonitor,
   Package as LucidePackage,
   PackageCheck as LucidePackageCheck,
   Palette as LucidePalette,
@@ -33,13 +38,16 @@ import {
   RefreshCw as LucideRefreshCw,
   RotateCcw as LucideRotateCcw,
   RotateCw as LucideRotateCw,
+  Save as LucideSave,
   Search as LucideSearch,
   Settings as LucideSettings,
   ShieldCheck as LucideShieldCheck,
   Sparkles as LucideSparkles,
   Square as LucideSquare,
   SquarePlay as LucideSquarePlay,
+  Star as LucideStar,
   Trash2 as LucideTrash2,
+  TriangleAlert as LucideTriangleAlert,
   X as LucideX,
 } from "lucide-react";
 import {
@@ -50,11 +58,15 @@ import {
   ChevronDown as SketchyChevronDown,
   ChevronRight as SketchyChevronRight,
   ChevronUp as SketchyChevronUp,
+  CircleAlert as SketchyCircleAlert,
   Cpu as SketchyCpu,
+  Diff as SketchyDiff,
   Download as SketchyDownload,
+  FileCode as SketchyFileCode,
   FileText as SketchyFileText,
   Folder as SketchyFolder,
   FolderOpen as SketchyFolderOpen,
+  FolderTree as SketchyFolderTree,
   Grid3X3 as SketchyGrid3X3,
   GripVertical as SketchyGripVertical,
   HardDrive as SketchyHardDrive,
@@ -63,6 +75,7 @@ import {
   Loader2 as SketchyLoader2,
   Lock as SketchyLock,
   MemoryStick as SketchyMemoryStick,
+  Monitor as SketchyMonitor,
   Package as SketchyPackage,
   PackageCheck as SketchyPackageCheck,
   Palette as SketchyPalette,
@@ -74,13 +87,16 @@ import {
   RefreshCw as SketchyRefreshCw,
   RotateCcw as SketchyRotateCcw,
   RotateCw as SketchyRotateCw,
+  Save as SketchySave,
   Search as SketchySearch,
   Settings as SketchySettings,
   ShieldCheck as SketchyShieldCheck,
   Sparkles as SketchySparkles,
   Square as SketchySquare,
   SquarePlay as SketchySquarePlay,
+  Star as SketchyStar,
   Trash2 as SketchyTrash2,
+  TriangleAlert as SketchyTriangleAlert,
   X as SketchyX,
 } from "@sketchyicons/react";
 
@@ -211,6 +227,12 @@ export function MemoryStick(props: AppIconProps) {
   return <Icon {...props} />;
 }
 
+export function Monitor(props: AppIconProps) {
+  const { settings } = useSettings();
+  const Icon = settings.iconLibrary === "sketchy" ? SketchyMonitor : LucideMonitor;
+  return <Icon {...props} />;
+}
+
 export function Package(props: AppIconProps) {
   const { settings } = useSettings();
   const Icon = settings.iconLibrary === "sketchy" ? SketchyPackage : LucidePackage;
@@ -316,6 +338,48 @@ export function SquarePlay(props: AppIconProps) {
 export function Trash2(props: AppIconProps) {
   const { settings } = useSettings();
   const Icon = settings.iconLibrary === "sketchy" ? SketchyTrash2 : LucideTrash2;
+  return <Icon {...props} />;
+}
+
+export function CircleAlert(props: AppIconProps) {
+  const { settings } = useSettings();
+  const Icon = settings.iconLibrary === "sketchy" ? SketchyCircleAlert : LucideCircleAlert;
+  return <Icon {...props} />;
+}
+
+export function Diff(props: AppIconProps) {
+  const { settings } = useSettings();
+  const Icon = settings.iconLibrary === "sketchy" ? SketchyDiff : LucideDiff;
+  return <Icon {...props} />;
+}
+
+export function FileCode(props: AppIconProps) {
+  const { settings } = useSettings();
+  const Icon = settings.iconLibrary === "sketchy" ? SketchyFileCode : LucideFileCode;
+  return <Icon {...props} />;
+}
+
+export function FolderTree(props: AppIconProps) {
+  const { settings } = useSettings();
+  const Icon = settings.iconLibrary === "sketchy" ? SketchyFolderTree : LucideFolderTree;
+  return <Icon {...props} />;
+}
+
+export function Save(props: AppIconProps) {
+  const { settings } = useSettings();
+  const Icon = settings.iconLibrary === "sketchy" ? SketchySave : LucideSave;
+  return <Icon {...props} />;
+}
+
+export function Star(props: AppIconProps) {
+  const { settings } = useSettings();
+  const Icon = settings.iconLibrary === "sketchy" ? SketchyStar : LucideStar;
+  return <Icon {...props} />;
+}
+
+export function TriangleAlert(props: AppIconProps) {
+  const { settings } = useSettings();
+  const Icon = settings.iconLibrary === "sketchy" ? SketchyTriangleAlert : LucideTriangleAlert;
   return <Icon {...props} />;
 }
 

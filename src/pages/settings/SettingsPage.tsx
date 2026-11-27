@@ -18,8 +18,10 @@ import { getCurrentVersion } from "@/core/updater";
 import i18n, { LANGS, type Lang } from "@/core/i18n";
 import { useSettings } from "@/core/settings/SettingsProvider";
 import { resolveDark, FONTS } from "@/core/settings/theme";
+import { DEFAULTS } from "@/core/settings/store";
 import type { FontKey, IconLibrary, Permissions, Rgb, ThemeMode } from "@/core/settings/store";
 import { orderedPages } from "@/pages/registry";
+import { SystemAbout } from "./components/SystemAbout";
 
 const THEMES = [
   ["light", "settings.appearance.themes.light"],
@@ -189,13 +191,46 @@ export function SettingsPage() {
   };
 
   const resetButton = (
-    <Button variant="ghost" icon={RotateCcw} onClick={reset}>{t("settings.reset")}</Button>
+    <Button variant="ghost" icon={RotateCcw} onClick={reset}>{t("settings.resetAll")}</Button>
   );
+
+  /** Réinitialise une seule sous-catégorie : un reset d'apparence ne remet pas en cause la sidebar. */
+  const resetSection = (id: SectionId) => {
+    switch (id) {
+      case "app":
+        update({ refreshInterval: DEFAULTS.refreshInterval });
+        break;
+      case "appearance":
+        update({
+          theme: DEFAULTS.theme,
+          lang: DEFAULTS.lang,
+          font: DEFAULTS.font,
+          fontSize: DEFAULTS.fontSize,
+          iconLibrary: DEFAULTS.iconLibrary,
+          interfaceV2: DEFAULTS.interfaceV2,
+          baseLight: DEFAULTS.baseLight,
+          baseDark: DEFAULTS.baseDark,
+          textLight: DEFAULTS.textLight,
+          textDark: DEFAULTS.textDark,
+        });
+        break;
+      case "navigation":
+        update({ pageOrder: [...DEFAULTS.pageOrder], hiddenPages: [...DEFAULTS.hiddenPages] });
+        break;
+      case "permissions":
+        update({ permissions: { ...DEFAULTS.permissions } });
+        break;
+      case "privacy":
+        break;
+    }
+  };
 
   if (!section) {
     return (
       <>
         <PageHeader title={t("settings.title")} subtitle={t("settings.subtitle")} action={resetButton} />
+
+        <SystemAbout />
 
         <Card>
           <div className="settings-list">
@@ -234,7 +269,7 @@ export function SettingsPage() {
             <p className="muted">{t(current.hintKey)}</p>
           </div>
         </div>
-        {resetButton}
+        <Button variant="ghost" icon={RotateCcw} onClick={() => resetSection(current.id)}>{t("settings.reset")}</Button>
       </header>
 
       {section === "app" && (

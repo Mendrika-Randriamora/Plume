@@ -59,7 +59,20 @@
     "snap_change_in_progress": "Une suppression est déjà en cours pour cette application. Patientez jusqu'à la fin, puis actualisez la liste.",
     "snap_in_use": "Ce snap est utilisé par d'autres snaps (base ou runtime) et ne peut pas être supprimé.",
     "resources_unavailable": "Impossible de lire l'état des ressources.",
-    "processes_unavailable": "Impossible de lire la liste des processus."
+    "processes_unavailable": "Impossible de lire la liste des processus.",
+    "config_not_found": "Ce fichier est introuvable.",
+    "config_binary": "Ce fichier semble binaire : il ne peut pas être ouvert.",
+    "config_too_large": "Ce fichier est trop volumineux pour être modifié.",
+    "config_path_denied": "Ce fichier se trouve en dehors des dossiers autorisés.",
+    "config_read_failed": "Impossible de lire ce fichier.",
+    "config_write_failed": "Impossible d'enregistrer ce fichier.",
+    "config_backup_failed": "Impossible de créer la sauvegarde.",
+    "config_backup_not_found": "Cette sauvegarde est introuvable.",
+    "config_invalid_id": "Cette sauvegarde n'est pas valide.",
+    "config_validation_failed": "La validation a échoué.",
+    "config_favorites_failed": "Impossible d'enregistrer les favoris.",
+    "config_invalid_root": "Ce fichier ne nécessite pas d'autorisation système.",
+    "config_root_required": "Une autorisation système est nécessaire pour ce fichier."
   },
   "updater": {
     "banner": {
@@ -363,6 +376,109 @@
       "error": "Impossible de charger les détails de l'application."
     }
   },
+  "config": {
+    "title": "Configuration",
+    "subtitle": "Modifiez les fichiers de configuration de votre système, sans ligne de commande.",
+    "unsupported": "Cette page n'est disponible que sous Linux.",
+    "search": {
+      "placeholder": "Rechercher un fichier…",
+      "clear": "Effacer la recherche",
+      "known": "Fichiers connus",
+      "results": "Résultats",
+      "noResults": "Aucun fichier ne correspond à « {{query}} ».",
+      "indexing": "Indexation des fichiers de /etc et ~/.config…",
+      "indexReady_one": "{{count}} fichier indexé",
+      "indexReady_other": "{{count}} fichiers indexés",
+      "indexError": "Impossible d'indexer les fichiers."
+    },
+    "favorites": {
+      "title": "Favoris",
+      "add": "Ajouter un fichier",
+      "addPlaceholder": "/etc/… ou ~/…",
+      "addAction": "Ajouter",
+      "added": "Fichier ajouté aux favoris.",
+      "removed": "Fichier retiré des favoris.",
+      "addError": "Impossible d'ajouter ce fichier."
+    },
+    "browser": {
+      "title": "Parcourir",
+      "system": "Système (/etc)",
+      "user": "Configuration utilisateur (~/.config)",
+      "empty": "Dossier vide.",
+      "loading": "Lecture…",
+      "error": "Impossible de lire ce dossier."
+    },
+    "categories": {
+      "Système": "Système",
+      "Réseau": "Réseau",
+      "Démarrage": "Démarrage",
+      "Shell": "Shell",
+      "Applications": "Applications"
+    },
+    "empty": {
+      "noFile": "Choisissez un fichier pour commencer.",
+      "noKnown": "Aucun fichier de configuration courant n'a été trouvé sur ce système.",
+      "loadError": "Impossible de lire ce fichier.",
+      "hint": "Recherchez ou parcourez un fichier pour commencer."
+    },
+    "editor": {
+      "readOnly": "Fichier de plus de 1 Mo : ouverture en lecture seule.",
+      "loading": "Ouverture du fichier…",
+      "systemFile": "Fichier système : une autorisation sera demandée à l'enregistrement.",
+      "favorite": "Ajouter aux favoris",
+      "unfavorite": "Retirer des favoris",
+      "language": "Langage"
+    },
+    "danger": {
+      "high": "Fichier critique",
+      "highHint": "Une erreur peut empêcher le démarrage ou la connexion. Une confirmation sera demandée avant d'enregistrer.",
+      "medium": "Fichier système"
+    },
+    "actions": {
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "diff": "Voir les changements",
+      "restore": "Restaurer",
+      "browse": "Parcourir",
+      "cancel": "Annuler",
+      "confirmSave": "Enregistrer quand même",
+      "confirmRestore": "Restaurer cette version",
+      "changeFile": "Changer de fichier"
+    },
+    "status": {
+      "dirty": "Modifications non enregistrées",
+      "saved": "Enregistré.",
+      "validationNone": "Aucune validation automatique",
+      "validationActive": "Validation : {{command}}",
+      "validationPassed": "Validation réussie",
+      "validationFailed": "La validation a échoué : {{detail}}",
+      "writeFailed": "Impossible d'enregistrer le fichier : {{detail}}",
+      "readFailed": "Impossible de lire le fichier : {{detail}}"
+    },
+    "diff": {
+      "title": "Aperçu des changements",
+      "hint": "Les lignes retirées apparaissent en rouge, les lignes ajoutées en jaune.",
+      "tooLarge": "Aperçu indisponible pour les fichiers de plus de {{count}} lignes.",
+      "empty": "Aucune modification à afficher."
+    },
+    "backups": {
+      "title": "Versions précédentes",
+      "hint": "Une sauvegarde est créée avant chaque enregistrement.",
+      "empty": "Aucune sauvegarde pour ce fichier.",
+      "loading": "Chargement des sauvegardes…",
+      "restore": "Restaurer",
+      "restored": "Version restaurée.",
+      "error": "Impossible de charger les sauvegardes."
+    },
+    "confirm": {
+      "unsavedTitle": "Modifications non enregistrées",
+      "unsavedText": "Les modifications de « {{name}} » seront perdues. Changer de fichier ?",
+      "dangerTitle": "Enregistrer un fichier critique ?",
+      "dangerText": "« {{name}} » est un fichier critique. Une erreur peut empêcher le démarrage ou la connexion.",
+      "restoreTitle": "Restaurer cette version ?",
+      "restoreText": "Le contenu actuel sera sauvegardé avant d'être remplacé."
+    }
+  },
   "repositories": {
     "title": "Dépôts",
     "subtitle": "Gérez les dépôts de paquets de votre distribution.",
@@ -415,7 +531,27 @@
   "settings": {
     "title": "Réglages",
     "subtitle": "Adaptez Plume à vos goûts.",
+    "about": {
+      "hardware": "Informations liées au matériel",
+      "software": "Informations liées au logiciel",
+      "model": "Modèle",
+      "memory": "Mémoire",
+      "processor": "Processeur",
+      "graphics": "Carte graphique",
+      "graphicsN": "Carte graphique {{index}}",
+      "disk": "Capacité du disque",
+      "firmware": "Version du microgiciel",
+      "osName": "Nom du système d'exploitation",
+      "osType": "Type de système d'exploitation",
+      "gnome": "Version de GNOME",
+      "session": "Système de fenêtrage",
+      "kernel": "Version du noyau",
+      "bits": "{{bits}} bits",
+      "wayland": "Wayland",
+      "x11": "X11"
+    },
     "reset": "Réinitialiser",
+    "resetAll": "Tout réinitialiser",
     "app": {
       "title": "Application",
       "hint": "Informations sur votre installation de Plume.",

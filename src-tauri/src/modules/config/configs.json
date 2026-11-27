@@ -1,0 +1,115 @@
+[
+  {
+    "id": "fstab",
+    "label": "Disques au démarrage",
+    "description": "Points de montage des disques et partitions.",
+    "path": "/etc/fstab",
+    "category": "Système",
+    "language": "plaintext",
+    "root": true,
+    "validate": ["findmnt", "--verify", "--tab-file", "{file}"],
+    "danger": "high"
+  },
+  {
+    "id": "hosts",
+    "label": "Noms de domaine locaux",
+    "description": "Correspondance entre noms et adresses IP.",
+    "path": "/etc/hosts",
+    "category": "Réseau",
+    "language": "plaintext",
+    "root": true,
+    "danger": "medium"
+  },
+  {
+    "id": "environment",
+    "label": "Variables d'environnement",
+    "description": "Variables globales appliquées à la session.",
+    "path": "/etc/environment",
+    "category": "Système",
+    "language": "shell",
+    "root": true,
+    "danger": "medium"
+  },
+  {
+    "id": "sudoers",
+    "label": "Droits d'administration",
+    "description": "Qui peut utiliser sudo et comment.",
+    "path": "/etc/sudoers",
+    "category": "Système",
+    "language": "shell",
+    "root": true,
+    "validate": ["visudo", "-cf", "{file}"],
+    "danger": "high"
+  },
+  {
+    "id": "grub",
+    "label": "Options de démarrage",
+    "description": "Réglages du menu de démarrage GRUB.",
+    "path": "/etc/default/grub",
+    "category": "Démarrage",
+    "language": "shell",
+    "root": true,
+    "danger": "high"
+  },
+  {
+    "id": "sshd",
+    "label": "Serveur SSH",
+    "description": "Accès distant à cet ordinateur.",
+    "path": "/etc/ssh/sshd_config",
+    "category": "Réseau",
+    "language": "plaintext",
+    "root": true,
+    "validate": ["sshd", "-t", "-f", "{file}"],
+    "danger": "medium"
+  },
+  {
+    "id": "ssh-client",
+    "label": "Connexions SSH",
+    "description": "Hôtes et clés pour vos connexions SSH.",
+    "path": "~/.ssh/config",
+    "category": "Réseau",
+    "language": "plaintext",
+    "root": false,
+    "danger": "low"
+  },
+  {
+    "id": "bashrc",
+    "label": "Terminal Bash",
+    "description": "Alias et réglages du terminal Bash.",
+    "path": "~/.bashrc",
+    "category": "Shell",
+    "language": "shell",
+    "root": false,
+    "danger": "low"
+  },
+  {
+    "id": "zshrc",
+    "label": "Terminal Zsh",
+    "description": "Alias et réglages du terminal Zsh.",
+    "path": "~/.zshrc",
+    "category": "Shell",
+    "language": "shell",
+    "root": false,
+    "danger": "low"
+  },
+  {
+    "id": "profile",
+    "label": "Profil de session",
+    "description": "Variables chargées à l'ouverture de session.",
+    "path": "~/.profile",
+    "category": "Shell",
+    "language": "shell",
+    "root": false,
+    "danger": "low"
+  },
+  {
+    "id": "gitconfig",
+    "label": "Git",
+    "description": "Nom, courriel et réglages de Git.",
+    "path": "~/.gitconfig",
+    "category": "Applications",
+    "language": "ini",
+    "root": false,
+    "danger": "low"
+  }
+]
