@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { bytes } from "@/core/format";
 import { Button, ConfirmButton, Info, Trash2 } from "@/core/ui";
-import type { Application } from "../types";
+import type { Application, ApplicationSource } from "../types";
 
 interface Props {
   applications: Application[];
@@ -14,6 +14,13 @@ interface Props {
 
 export function AppList({ applications, onUninstall, onDetails, onLaunch, isUninstalling, allowed }: Props) {
   const { t } = useTranslation();
+
+  const sourceLabel = (source: ApplicationSource) =>
+    source === "manuel"
+      ? t("applications.source.manual")
+      : source === "windows"
+        ? t("applications.source.windows")
+        : source;
 
   return (
     <ul className="list">
@@ -30,7 +37,7 @@ export function AppList({ applications, onUninstall, onDetails, onLaunch, isUnin
                 {app.name}
               </a>
               <span className="muted small ellipsis">
-                {app.source === "manuel" ? t("applications.source.manual") : app.source}
+                {sourceLabel(app.source)}
               </span>
             </span>
             <span className="nowrap">{app.size === null ? t("common.unknown") : bytes(app.size)}</span>

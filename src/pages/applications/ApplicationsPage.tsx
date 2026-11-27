@@ -11,7 +11,7 @@ import type { Application, ApplicationDetails, ApplicationSource } from "./types
 const PAGE_SIZE = 100;
 const SEARCH_DEBOUNCE_MS = 150;
 /** Ordre d'affichage des gestionnaires dans le filtre. */
-const SOURCE_ORDER: ApplicationSource[] = ["apt", "snap", "flatpak", "dnf", "pacman", "manuel"];
+const SOURCE_ORDER: ApplicationSource[] = ["apt", "snap", "flatpak", "dnf", "pacman", "windows", "manuel"];
 
 type SourceFilter = "all" | ApplicationSource;
 
@@ -114,7 +114,11 @@ export function ApplicationsPage() {
 
   const sourceLabel = useCallback(
     (source: ApplicationSource) =>
-      source === "manuel" ? t("applications.source.manual") : source,
+      source === "manuel"
+        ? t("applications.source.manual")
+        : source === "windows"
+          ? t("applications.source.windows")
+          : source,
     [t],
   );
 
