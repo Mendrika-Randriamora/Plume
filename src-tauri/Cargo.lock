@@ -2470,7 +2470,7 @@ dependencies = [
 
 [[package]]
 name = "plume"
-version = "0.5.9"
+version = "0.6.0"
 dependencies = [
  "dirs 5.0.1",
  "gio",
@@ -2485,6 +2485,7 @@ dependencies = [
  "trash",
  "walkdir",
  "windows 0.62.2",
+ "winreg",
 ]
 
 [[package]]

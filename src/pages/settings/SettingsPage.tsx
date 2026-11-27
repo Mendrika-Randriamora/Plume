@@ -12,6 +12,7 @@ import {
   Palette,
   PanelLeftClose,
   RotateCcw,
+  Search,
   ShieldCheck,
 } from "@/core/ui";
 import { getCurrentVersion } from "@/core/updater";
@@ -100,6 +101,13 @@ const FONT_SIZE_MAX = 20;
 /** Fréquences proposées pour les relevés en direct (ms). */
 const REFRESH_OPTIONS = [1000, 2000, 5000, 10_000];
 
+/** Badge affiché pour une page qui ne fonctionne que sur un seul système. */
+const PLATFORM_LABELS = {
+  linux: "settings.navigation.platform.linuxOnly",
+  windows: "settings.navigation.platform.windowsOnly",
+  macos: "settings.navigation.platform.macosOnly",
+} as const;
+
 export function SettingsPage() {
   const { t } = useTranslation();
   const { settings: s, update, reset } = useSettings();
@@ -107,6 +115,7 @@ export function SettingsPage() {
   const [section, setSection] = useState<SectionId | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+  const [navQuery, setNavQuery] = useState("");
   const dark = resolveDark(s);
   const bg = dark ? s.baseDark : s.baseLight;
   const ink = dark ? s.textDark : s.textLight;
@@ -116,6 +125,10 @@ export function SettingsPage() {
   // toujours accessibles, épinglés en bas de la barre latérale.
   const ordered = orderedPages(s.pageOrder);
   const customPages = ordered.filter((p) => p.position !== "bottom");
+  const navQueryNormalized = navQuery.trim().toLowerCase();
+  const navPages = navQueryNormalized
+    ? customPages.filter((p) => t(p.label).toLowerCase().includes(navQueryNormalized))
+    : customPages;
 
   useEffect(() => {
     void getCurrentVersion().then((v) => setVersion(v ?? "—"));
@@ -396,77 +409,95 @@ export function SettingsPage() {
       )}
 
       {section === "navigation" && (
-        <Card>
-          <div className="page-order-list">
-            {customPages.map((p) => {
-              const Icon = p.icon;
-              const shown = !s.hiddenPages.includes(p.id);
-              return (
-                <div
-                  className={`page-order-row ${dragId === p.id ? "dragging" : ""} ${
-                    overId === p.id && dragId !== p.id ? "drag-over" : ""
-                  }`}
-                  key={p.id}
-                  onDragOver={(e) => {
-                    if (!dragId) return;
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = "move";
-                    setOverId((id) => (id === p.id ? id : p.id));
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    dropPage(p.id);
-                  }}
-                >
-                  <label className="page-order-main">
-                    <input
-                      type="checkbox"
-                      checked={shown}
-                      onChange={() => togglePage(p.id)}
-                      aria-label={t("settings.navigation.visible", { page: t(p.label) })}
-                    />
-                    <span className="settings-icon"><Icon size={19} strokeWidth={1.75} /></span>
-                    <span className={`grow ${shown ? "" : "muted"}`}>{t(p.label)}</span>
-                  </label>
-                  <span
-                    className="page-order-handle"
-                    draggable
-                    role="button"
-                    tabIndex={0}
-                    aria-label={t("settings.navigation.drag", { page: t(p.label) })}
-                    aria-keyshortcuts="ArrowUp ArrowDown"
-                    title={t("settings.navigation.drag", { page: t(p.label) })}
-                    onDragStart={(e) => {
-                      setDragId(p.id);
-                      e.dataTransfer.effectAllowed = "move";
-                      e.dataTransfer.setData("text/plain", p.id);
-                      const row = e.currentTarget.closest(".page-order-row");
-                      if (row instanceof HTMLElement) {
-                        e.dataTransfer.setDragImage(row, row.offsetWidth - 24, 24);
-                      }
+        <>
+          <div className="search-container">
+            <Search size={16} className="search-icon" />
+            <input
+              type="text"
+              className="search-input"
+              placeholder={t("common.search")}
+              value={navQuery}
+              onChange={(e) => setNavQuery(e.target.value)}
+              aria-label={t("common.search")}
+            />
+          </div>
+          <Card>
+            <div className="page-order-list">
+              {navPages.map((p) => {
+                const Icon = p.icon;
+                const shown = !s.hiddenPages.includes(p.id);
+                return (
+                  <div
+                    className={`page-order-row ${dragId === p.id ? "dragging" : ""} ${
+                      overId === p.id && dragId !== p.id ? "drag-over" : ""
+                    }`}
+                    key={p.id}
+                    onDragOver={(e) => {
+                      if (!dragId) return;
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                      setOverId((id) => (id === p.id ? id : p.id));
                     }}
-                    onDragEnd={() => {
-                      setDragId(null);
-                      setOverId(null);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "ArrowUp") {
-                        e.preventDefault();
-                        movePage(p.id, -1);
-                      } else if (e.key === "ArrowDown") {
-                        e.preventDefault();
-                        movePage(p.id, 1);
-                      }
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      dropPage(p.id);
                     }}
                   >
-                    <GripVertical size={18} strokeWidth={1.75} />
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          <p className="muted small">{t("settings.navigation.pinned")}</p>
-        </Card>
+                    <label className="page-order-main">
+                      <input
+                        type="checkbox"
+                        checked={shown}
+                        onChange={() => togglePage(p.id)}
+                        aria-label={t("settings.navigation.visible", { page: t(p.label) })}
+                      />
+                      <span className="settings-icon"><Icon size={19} strokeWidth={1.75} /></span>
+                      <span className={`grow ${shown ? "" : "muted"}`}>{t(p.label)}</span>
+                    </label>
+                    {p.platform && (
+                      <span className="chip muted small page-platform">
+                        {t(PLATFORM_LABELS[p.platform])}
+                      </span>
+                    )}
+                    <span
+                      className="page-order-handle"
+                      draggable
+                      role="button"
+                      tabIndex={0}
+                      aria-label={t("settings.navigation.drag", { page: t(p.label) })}
+                      aria-keyshortcuts="ArrowUp ArrowDown"
+                      title={t("settings.navigation.drag", { page: t(p.label) })}
+                      onDragStart={(e) => {
+                        setDragId(p.id);
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", p.id);
+                        const row = e.currentTarget.closest(".page-order-row");
+                        if (row instanceof HTMLElement) {
+                          e.dataTransfer.setDragImage(row, row.offsetWidth - 24, 24);
+                        }
+                      }}
+                      onDragEnd={() => {
+                        setDragId(null);
+                        setOverId(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "ArrowUp") {
+                          e.preventDefault();
+                          movePage(p.id, -1);
+                        } else if (e.key === "ArrowDown") {
+                          e.preventDefault();
+                          movePage(p.id, 1);
+                        }
+                      }}
+                    >
+                      <GripVertical size={18} strokeWidth={1.75} />
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="muted small">{t("settings.navigation.pinned")}</p>
+          </Card>
+        </>
       )}
 
       {section === "permissions" && (

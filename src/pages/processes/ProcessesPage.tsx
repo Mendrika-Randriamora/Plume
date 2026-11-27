@@ -186,29 +186,29 @@ export function ProcessesPage() {
         </label>
       </div>
 
-      <Card>
-        <div className="proc-search">
-          <Search size={15} strokeWidth={1.75} />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("processes.search.placeholder")}
-            aria-label={t("processes.search.placeholder")}
-          />
-          {query && (
-            <button
-              type="button"
-              className="proc-search-clear"
-              onClick={() => setQuery("")}
-              title={t("processes.search.clear")}
-              aria-label={t("processes.search.clear")}
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
+      <div className="proc-search">
+        <Search size={15} strokeWidth={1.75} />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("processes.search.placeholder")}
+          aria-label={t("processes.search.placeholder")}
+        />
+        {query && (
+          <button
+            type="button"
+            className="proc-search-clear"
+            onClick={() => setQuery("")}
+            title={t("processes.search.clear")}
+            aria-label={t("processes.search.clear")}
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
 
+      <Card>
         <div className="proc-divider" />
 
         {!rows ? (
