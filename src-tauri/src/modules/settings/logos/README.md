@@ -69,9 +69,9 @@ En revanche, seuls le **canal alpha** et la silhouette comptent :
 
 ## Ordre de résolution
 
-1. SVG local trouvé dans les thèmes d'icônes de la distribution (logo officiel,
-   toujours prioritaire) ;
-2. SVG embarqué de ce dossier, par `ID` puis `ID_LIKE` ;
+1. SVG embarqué de ce dossier, par `ID` puis chaque entrée d'`ID_LIKE` ;
+2. SVG local trouvé dans les thèmes d'icônes de la distribution (logo officiel,
+   vectoriel) ;
 3. raster local (PNG), dernier recours quand aucun SVG n'existe ;
 4. logo générique embarqué (`linux/linux`) puis icône `Monitor`.
 
