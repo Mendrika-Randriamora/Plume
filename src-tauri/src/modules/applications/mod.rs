@@ -22,19 +22,28 @@ use std::path::Path;
 use std::process::Command;
 #[cfg(target_os = "windows")]
 use std::process::Command;
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
 #[cfg(target_os = "linux")]
 use std::time::Duration;
 
+/// Empêche l'ouverture d'une fenêtre console pour les outils CLI lancés en arrière-plan.
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Application {
-    /// Identifiant du fichier `.desktop` : sert de clé stable entre l'interface et Rust.
+    /// Identifiant stable côté Rust : fichier .desktop sous Linux, clé registre sous Windows.
     pub id: String,
     pub name: String,
-    /// Paquet apt/dnf/pacman, identifiant Flatpak ou nom du snap.
+    /// Identifiant du paquet Linux ou de l'entrée Windows correspondante.
     pub package_name: String,
     pub version: Option<String>,
     pub size: Option<u64>,
     pub source: String,
+    /// `Some(false)` indique qu'aucune commande de désinstallation n'est enregistrée.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub uninstall_available: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -50,6 +59,32 @@ pub struct ApplicationDetails {
     pub icon: Option<String>,
     pub categories: Option<Vec<String>>,
     pub exec: Option<String>,
+    /// Métadonnées Windows supplémentaires (absentes sous Linux).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub publisher: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub install_location: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_icon_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub install_date: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub architecture: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub registry_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub uninstall_available: Option<bool>,
+}
+
+#[cfg(target_os = "windows")]
+#[derive(Debug, Clone, Default)]
+struct WindowsApplicationMetadata {
+    publisher: Option<String>,
+    install_location: Option<String>,
+    display_icon: Option<String>,
+    comments: Option<String>,
+    install_date: Option<String>,
+    architecture: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -57,10 +92,11 @@ struct CachedApplication {
     app: Application,
     path: PathBuf,
     categories: Vec<String>,
-    /// Identifiant de commande de désinstallation (MSI / UninstallString), renseigné
-    /// pour les applications Windows découvertes dans l'inventaire.
+    /// Commande de désinstallation issue de UninstallString / QuietUninstallString.
     #[cfg(target_os = "windows")]
     uninstall: Option<String>,
+    #[cfg(target_os = "windows")]
+    windows_details: WindowsApplicationMetadata,
 }
 
 /// Inventaire conservé en mémoire : il n'est régénéré que sur demande explicite.
@@ -215,6 +251,8 @@ pub async fn uninstall_application(
             find_cached(&state, &desktop_id)?.ok_or_else(|| "application_not_found".to_string())?;
 
         blocking(move || uninstall_windows(&entry)).await?;
+        // Met à jour immédiatement la liste après la désinstallation.
+        scan_windows_and_store(&state).await?;
         Ok(true)
     }
 
@@ -368,6 +406,7 @@ fn build_cached(parsed: ParsedDesktop, source: String, package_name: String) -> 
             version: None,
             size: None,
             source,
+            uninstall_available: None,
         },
         path: parsed.path,
         categories,
@@ -410,6 +449,13 @@ fn details_for_entry(entry: &CachedApplication) -> Result<ApplicationDetails, St
             .get("Exec")
             .map(clean_exec)
             .filter(|exec| !exec.is_empty()),
+        publisher: None,
+        install_location: None,
+        display_icon_path: None,
+        install_date: None,
+        architecture: None,
+        registry_key: None,
+        uninstall_available: None,
     })
 }
 
@@ -585,45 +631,79 @@ fn launch_entry(entry: &CachedApplication) -> Result<(), String> {
 
 // ---------- Applications Windows ----------
 
-/// Script PowerShell interrogeant les clés de désinstallation (HKLM, WOW6432Node et
-/// HKCU) pour lister les applications Windows installées. Chaque ligne émise est :
-/// `nom` + tab + `version` + tab + `taille` + tab + `uninstall` + tab + `exe`.
+/// Inventorie les entrées de désinstallation Windows.
+/// Format de chaque ligne : id registre, nom, version, taille en Kio,
+/// commande de désinstallation, emplacement, éditeur, icône, commentaires,
+/// date d'installation et architecture.
 #[cfg(target_os = "windows")]
 const WINDOWS_INSTALLED_APPS_SCRIPT: &str = r#"
+[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false
+
+function ConvertTo-SafeField([object]$Value) {
+    if ($null -eq $Value) { return '' }
+    return ([string]$Value -replace "[`t`r`n]", ' ').Trim()
+}
+
 $roots = @(
-  'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
-  'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*',
-  'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'
+    [pscustomobject]@{ Path = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'; Scope = 'Machine'; Architecture = '64-bit' },
+    [pscustomobject]@{ Path = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'; Scope = 'Machine'; Architecture = '32-bit' },
+    [pscustomobject]@{ Path = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'; Scope = 'User'; Architecture = '64-bit' },
+    [pscustomobject]@{ Path = 'HKCU:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'; Scope = 'User'; Architecture = '32-bit' }
 )
+
 foreach ($root in $roots) {
-  Get-ItemProperty -Path $root -ErrorAction SilentlyContinue | ForEach-Object {
-    $name = [string]$_.DisplayName
-    $uninstall = [string]$_.UninstallString
-    if ([string]::IsNullOrWhiteSpace($name)) { return }
-    if ([string]::IsNullOrWhiteSpace($uninstall)) { return }
-    $raw = $uninstall.Trim()
-    $closingQuote = $raw.IndexOf('"', 1)
-    $candidate = if ($closingQuote -ge 0) { $raw.Substring(1, $closingQuote - 1) } else { ($raw -split '\s+')[0] }
-    $candidate = $candidate.Trim()
-    if (([IO.Path]::GetFileNameWithoutExtension($candidate)).ToLower() -eq 'msiexec') { $candidate = '' }
-    $size = 0
-    if ($null -ne $_.InstallSize) { $size = [uint64]$_.InstallSize }
-    "{0}`t{1}`t{2}`t{3}`t{4}" -f $name, [string]$_.DisplayVersion, $size, $uninstall, $candidate
-  }
+    Get-ItemProperty -Path ($root.Path + '\*') -ErrorAction SilentlyContinue | ForEach-Object {
+        $name = ConvertTo-SafeField $_.DisplayName
+        if ([string]::IsNullOrWhiteSpace($name)) { return }
+
+        $uninstall = [string]$_.UninstallString
+        if ([string]::IsNullOrWhiteSpace($uninstall)) {
+            $uninstall = [string]$_.QuietUninstallString
+        }
+
+        # Certaines entrées MSI publient /I (maintenance) au lieu de /X (suppression).
+        if ($_.WindowsInstaller -eq 1 -and -not [string]::IsNullOrWhiteSpace($uninstall)) {
+            $uninstall = [regex]::Replace($uninstall, '(?i)/I(?=\s*\{)', '/X')
+        }
+
+        $sizeKb = ''
+        if ($null -ne $_.EstimatedSize) {
+            try { $sizeKb = [uint64]$_.EstimatedSize } catch { $sizeKb = '' }
+        }
+
+        $registryId = '{0}|{1}|{2}' -f $root.Scope, $root.Architecture, [string]$_.PSChildName
+        $fields = @(
+            (ConvertTo-SafeField $registryId),
+            $name,
+            (ConvertTo-SafeField $_.DisplayVersion),
+            (ConvertTo-SafeField $sizeKb),
+            (ConvertTo-SafeField $uninstall),
+            (ConvertTo-SafeField $_.InstallLocation),
+            (ConvertTo-SafeField $_.Publisher),
+            (ConvertTo-SafeField $_.DisplayIcon),
+            (ConvertTo-SafeField $_.Comments),
+            (ConvertTo-SafeField $_.InstallDate),
+            (ConvertTo-SafeField $root.Architecture)
+        )
+        [Console]::Out.WriteLine(($fields -join "`t"))
+    }
 }
 "#;
 
-/// Liste les applications Windows installées via le registre de désinstallation,
-/// puis construit l'inventaire (version, taille, commande de désinstallation).
+/// Lit le registre sans afficher la fenêtre console de PowerShell.
 #[cfg(target_os = "windows")]
 fn windows_scan_inventory() -> Result<Vec<CachedApplication>, String> {
     let out = Command::new("powershell.exe")
         .args([
+            "-NoLogo",
             "-NoProfile",
             "-NonInteractive",
+            "-WindowStyle",
+            "Hidden",
             "-Command",
             WINDOWS_INSTALLED_APPS_SCRIPT,
         ])
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .map_err(|e| {
             eprintln!("Impossible de lancer powershell.exe : {e}");
@@ -631,6 +711,10 @@ fn windows_scan_inventory() -> Result<Vec<CachedApplication>, String> {
         })?;
 
     if !out.status.success() {
+        eprintln!(
+            "Échec de l'inventaire Windows : {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
         return Err("command_failed".to_string());
     }
 
@@ -639,38 +723,56 @@ fn windows_scan_inventory() -> Result<Vec<CachedApplication>, String> {
     let mut seen: HashSet<String> = HashSet::new();
 
     for line in stdout.lines() {
-        let mut fields = line.split('\t');
-        let Some(name) = fields.next() else {
-            continue;
-        };
-        let name = name.trim();
-        if name.is_empty() || !seen.insert(name.to_string()) {
+        let fields: Vec<&str> = line.split('\t').collect();
+        if fields.len() < 11 {
             continue;
         }
 
-        let version = fields.next().unwrap_or("").trim().to_string();
-        let size = fields.next().unwrap_or("").trim().to_string();
-        let uninstall = fields.next().unwrap_or("").trim().to_string();
-        let exe = fields.next().unwrap_or("").trim().to_string();
+        let id = fields[0].trim();
+        let name = fields[1].trim();
+        if id.is_empty() || name.is_empty() || !seen.insert(id.to_ascii_lowercase()) {
+            continue;
+        }
+
+        let version = fields[2].trim();
+        let size_kb = fields[3].trim();
+        let uninstall = fields[4].trim();
+        let install_location = fields[5].trim();
+        let publisher = fields[6].trim();
+        let display_icon = fields[7].trim();
+        let comments = fields[8].trim();
+        let install_date = fields[9].trim();
+        let architecture = fields[10].trim();
+
+        let optional = |value: &str| (!value.is_empty()).then(|| value.to_string());
+        let size = size_kb
+            .parse::<u64>()
+            .ok()
+            .map(|kib| kib.saturating_mul(1024));
 
         entries.push(CachedApplication {
             app: Application {
-                id: name.to_string(),
+                id: id.to_string(),
                 name: name.to_string(),
-                package_name: uninstall.clone(),
-                version: (!version.is_empty()).then(|| version.clone()),
-                size: if size.is_empty() || size == "0" {
-                    None
-                } else {
-                    size.parse::<u64>().ok()
-                },
+                // Ne jamais exposer UninstallString comme identifiant de paquet.
+                package_name: id.to_string(),
+                version: optional(version),
+                size,
                 source: "windows".to_string(),
+                uninstall_available: Some(!uninstall.is_empty()),
             },
-            path: (!exe.is_empty())
-                .then(|| PathBuf::from(exe))
-                .unwrap_or_default(),
+            // UninstallString n'est pas le chemin de lancement de l'application.
+            path: PathBuf::new(),
             categories: Vec::new(),
-            uninstall: (!uninstall.is_empty()).then(|| uninstall.clone()),
+            uninstall: optional(uninstall),
+            windows_details: WindowsApplicationMetadata {
+                publisher: optional(publisher),
+                install_location: optional(install_location),
+                display_icon: optional(display_icon),
+                comments: optional(comments),
+                install_date: optional(install_date),
+                architecture: optional(architecture),
+            },
         });
     }
 
@@ -685,27 +787,14 @@ fn windows_scan_inventory() -> Result<Vec<CachedApplication>, String> {
     Ok(entries)
 }
 
-/// L'identifiant a déjà été validé dans le cache ; la commande ne reçoit que des arguments sûrs.
+/// Le registre de désinstallation ne fournit pas un chemin de lancement fiable.
+/// Ne jamais lancer par erreur l'exécutable du désinstalleur.
 #[cfg(target_os = "windows")]
-fn launch_windows(entry: &CachedApplication) -> Result<(), String> {
-    let exe = entry.path.to_string_lossy().trim().to_string();
-    if exe.is_empty() {
-        // Exécutable introuvable ou installateur (MSI) : rien à lancer.
-        return Err("launch_failed".into());
-    }
-
-    let status = Command::new(&exe)
-        .status()
-        .map_err(|_| "launch_failed".to_string())?;
-
-    if status.success() {
-        Ok(())
-    } else {
-        Err("launch_failed".into())
-    }
+fn launch_windows(_entry: &CachedApplication) -> Result<(), String> {
+    Err("launch_not_supported".into())
 }
 
-/// L'identifiant a déjà été validé dans le cache ; la commande ne reçoit que des arguments sûrs.
+/// Exécute la commande enregistrée par l'installateur sans faire apparaître cmd.exe.
 #[cfg(target_os = "windows")]
 fn uninstall_windows(entry: &CachedApplication) -> Result<(), String> {
     let Some(uninstall) = entry.uninstall.as_deref() else {
@@ -715,21 +804,26 @@ fn uninstall_windows(entry: &CachedApplication) -> Result<(), String> {
         return Err("missing_package_id".into());
     }
 
-    let status = Command::new("cmd")
-        .args(["/c", uninstall])
+    let status = Command::new("cmd.exe")
+        .args(["/D", "/C", uninstall])
+        .creation_flags(CREATE_NO_WINDOW)
         .status()
-        .map_err(|_| "command_failed".to_string())?;
+        .map_err(|e| {
+            eprintln!("Impossible de lancer le désinstalleur : {e}");
+            "command_failed".to_string()
+        })?;
 
-    if status.success() {
-        Ok(())
-    } else {
-        Err("command_failed".into())
+    // 1641 et 3010 sont des codes Windows Installer indiquant une réussite
+    // nécessitant (ou ayant déclenché) un redémarrage.
+    match status.code() {
+        Some(0 | 1641 | 3010) => Ok(()),
+        _ => Err("command_failed".into()),
     }
 }
 
 #[cfg(target_os = "windows")]
 fn details_for_windows(entry: &CachedApplication) -> Result<ApplicationDetails, String> {
-    let exe = entry.path.to_string_lossy().trim().to_string();
+    let details = &entry.windows_details;
 
     Ok(ApplicationDetails {
         name: entry.app.name.clone(),
@@ -737,12 +831,21 @@ fn details_for_windows(entry: &CachedApplication) -> Result<ApplicationDetails, 
         version: entry.app.version.clone(),
         size: entry.app.size,
         source: entry.app.source.clone(),
-        desktop_file: (!exe.is_empty()).then(|| entry.path.display().to_string()),
+        // Les champs .desktop / Exec ne s'appliquent pas aux entrées du registre Windows.
+        desktop_file: None,
         desktop_content: None,
-        description: None,
+        description: details.comments.clone(),
+        // DisplayIcon est un chemin Windows, pas une URL image utilisable directement par le WebView.
         icon: None,
         categories: None,
-        exec: (!exe.is_empty()).then(|| exe.clone()),
+        exec: None,
+        publisher: details.publisher.clone(),
+        install_location: details.install_location.clone(),
+        display_icon_path: details.display_icon.clone(),
+        install_date: details.install_date.clone(),
+        architecture: details.architecture.clone(),
+        registry_key: Some(entry.app.id.clone()),
+        uninstall_available: Some(entry.uninstall.is_some()),
     })
 }
 
