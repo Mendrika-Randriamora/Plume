@@ -331,14 +331,15 @@ fn logo(os: &HashMap<String, String>) -> Option<String> {
     {
         let names = local_logo_names(os);
 
-        // 1. SVG local : logo officiel de la distribution, déjà vectoriel.
-        if let Some(svg) = local_logo(&names, &["-symbolic.svg", ".svg", "-icon.svg"]) {
-            return Some(svg);
-        }
-        // 2. SVG embarqué : indispensable quand la distribution ne fournit
-        // qu'un raster basse résolution (Debian et son PNG 48×48).
+        // 1. SVG embarqué : le logo déposé dans `logos/` pour cette
+        // distribution. Il prime sur le logo local : c'est lui que
+        // l'utilisateur a choisi d'afficher.
         if let Some(svg) = bundled_linux_logo(os) {
             return Some(svg.to_string());
+        }
+        // 2. SVG local : logo officiel de la distribution, déjà vectoriel.
+        if let Some(svg) = local_logo(&names, &["-symbolic.svg", ".svg", "-icon.svg"]) {
+            return Some(svg);
         }
         // 3. Raster local : dernier recours avant l'icône générique.
         if let Some(png) = local_logo(&names, &["-symbolic.png", ".png", "-icon.png"]) {
