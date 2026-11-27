@@ -1244,7 +1244,7 @@ mod platform {
             "command_failed".to_string()
         })?;
         let value = RegValue {
-            bytes: startup_approved_blob(enabled),
+            bytes: startup_approved_blob(enabled).into(),
             vtype: REG_BINARY,
         };
         key.set_raw_value(value_name, &value).map_err(|error| {
