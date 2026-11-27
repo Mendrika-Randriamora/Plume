@@ -2485,6 +2485,7 @@ dependencies = [
  "trash",
  "walkdir",
  "windows 0.62.2",
+ "winreg",
 ]
 
 [[package]]

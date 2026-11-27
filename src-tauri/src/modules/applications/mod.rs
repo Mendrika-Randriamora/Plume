@@ -838,7 +838,7 @@ fn details_for_windows(entry: &CachedApplication) -> Result<ApplicationDetails, 
         // DisplayIcon est un chemin Windows, pas une URL image utilisable directement par le WebView.
         icon: None,
         categories: None,
-        exec: None,
+        exec: launch_command_from_display_icon(details.display_icon.as_deref()),
         publisher: details.publisher.clone(),
         install_location: details.install_location.clone(),
         display_icon_path: details.display_icon.clone(),
@@ -847,6 +847,26 @@ fn details_for_windows(entry: &CachedApplication) -> Result<ApplicationDetails, 
         registry_key: Some(entry.app.id.clone()),
         uninstall_available: Some(entry.uninstall.is_some()),
     })
+}
+
+/// DisplayIcon pointe souvent vers l'exécutable de l'application, parfois suivi
+/// d'un index d'icône (`,0`). On ne l'expose que pour un vrai `.exe` : le
+/// sélecteur d'application de la page Démarrage a besoin d'une commande.
+#[cfg(target_os = "windows")]
+fn launch_command_from_display_icon(icon: Option<&str>) -> Option<String> {
+    let icon = icon?.trim();
+    let path = icon
+        .rsplit_once(',')
+        .map(|(path, _)| path)
+        .unwrap_or(icon)
+        .trim()
+        .trim_matches('"');
+
+    if path.to_ascii_lowercase().ends_with(".exe") {
+        Some(path.to_string())
+    } else {
+        None
+    }
 }
 
 // ---------- Découverte des fichiers .desktop ----------
