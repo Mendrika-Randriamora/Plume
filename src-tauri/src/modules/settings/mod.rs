@@ -10,6 +10,9 @@ use sysinfo::{Disks, System};
 
 use crate::shared::blocking;
 
+// Logos SVG embarqués, découverts au build dans `logos/` (voir `build.rs`).
+include!(concat!(env!("OUT_DIR"), "/logos.rs"));
+
 /// Informations « À propos » de la machine, affichées en tête des réglages.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -326,51 +329,147 @@ fn kernel() -> Option<String> {
 fn logo(os: &HashMap<String, String>) -> Option<String> {
     #[cfg(target_os = "linux")]
     {
-        let mut names: Vec<String> = Vec::new();
-        if let Some(name) = os.get("LOGO").filter(|name| !name.is_empty()) {
-            names.push(name.clone());
-        }
-        names.push("distributor-logo".to_string());
+        let names = local_logo_names(os);
 
-        let mut dirs: Vec<PathBuf> = vec![PathBuf::from("/usr/share/pixmaps")];
-        for root in ["/usr/share/icons", "/usr/local/share/icons"] {
-            let Ok(themes) = fs::read_dir(root) else {
-                continue;
-            };
-            for theme in themes.flatten() {
-                for size in ["scalable", "256x256", "128x128", "64x64", "48x48"] {
-                    dirs.push(theme.path().join(size).join("places"));
-                    dirs.push(theme.path().join(size).join("apps"));
-                }
-            }
+        // 1. SVG local : logo officiel de la distribution, déjà vectoriel.
+        if let Some(svg) = local_logo(&names, &["-symbolic.svg", ".svg", "-icon.svg"]) {
+            return Some(svg);
         }
-
-        // Le symbolique d'abord : une forme simple se prête bien au masque
-        // monochrome appliqué côté interface.
-        for suffix in [
-            "-symbolic.svg",
-            ".svg",
-            "-icon.svg",
-            "-symbolic.png",
-            ".png",
-            "-icon.png",
-        ] {
-            for dir in &dirs {
-                for name in &names {
-                    let path = dir.join(format!("{name}{suffix}"));
-                    if let Some(data) = logo_data(&path) {
-                        return Some(data);
-                    }
-                }
-            }
+        // 2. SVG embarqué : indispensable quand la distribution ne fournit
+        // qu'un raster basse résolution (Debian et son PNG 48×48).
+        if let Some(svg) = bundled_linux_logo(os) {
+            return Some(svg.to_string());
         }
-        None
+        // 3. Raster local : dernier recours avant l'icône générique.
+        if let Some(png) = local_logo(&names, &["-symbolic.png", ".png", "-icon.png"]) {
+            return Some(png);
+        }
+        // 4. Logo générique livré avec l'application.
+        bundled_logo("linux/linux").map(str::to_string)
     }
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(target_os = "windows")]
+    {
+        let _ = os;
+        bundled_windows_logo().map(str::to_string)
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let _ = os;
+        bundled_macos_logo().map(str::to_string)
+    }
+    #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
     {
         let _ = os;
         None
     }
+}
+
+/// Noms de fichiers à chercher dans les thèmes d'icônes locaux.
+///
+/// `LOGO=` d'`os-release` vient en premier (choix explicite de la
+/// distribution), puis la convention Papirus `distributor-logo-<ID>`, puis le
+/// nom générique des thèmes GNOME.
+#[cfg(target_os = "linux")]
+fn local_logo_names(os: &HashMap<String, String>) -> Vec<String> {
+    let mut names: Vec<String> = Vec::new();
+
+    if let Some(logo) = os.get("LOGO") {
+        push_name(&mut names, logo);
+    }
+    if let Some(id) = os.get("ID") {
+        push_name(&mut names, &format!("distributor-logo-{id}"));
+    }
+    if let Some(like) = os.get("ID_LIKE") {
+        for id in like.split_whitespace() {
+            push_name(&mut names, &format!("distributor-logo-{id}"));
+        }
+    }
+    push_name(&mut names, "distributor-logo");
+    names
+}
+
+#[cfg(target_os = "linux")]
+fn push_name(names: &mut Vec<String>, name: &str) {
+    let name = name.trim();
+    if !name.is_empty() && !names.iter().any(|known| known == name) {
+        names.push(name.to_string());
+    }
+}
+
+/// Dossiers d'icônes candidats, du plus grand au plus petit : un 256×256 doit
+/// primer sur un 48×48, quel que soit le thème qui le fournit.
+#[cfg(target_os = "linux")]
+fn icon_dirs() -> Vec<PathBuf> {
+    let mut themes: Vec<PathBuf> = Vec::new();
+    for root in ["/usr/share/icons", "/usr/local/share/icons"] {
+        let Ok(entries) = fs::read_dir(root) else {
+            continue;
+        };
+        themes.extend(entries.flatten().map(|entry| entry.path()));
+    }
+    themes.sort();
+
+    let mut dirs: Vec<PathBuf> = Vec::new();
+    for size in ["scalable", "256x256", "128x128", "64x64", "48x48"] {
+        for theme in &themes {
+            dirs.push(theme.join(size).join("places"));
+            dirs.push(theme.join(size).join("apps"));
+        }
+    }
+    // Les pixmaps ne contiennent souvent qu'un petit PNG : en dernier.
+    dirs.push(PathBuf::from("/usr/share/pixmaps"));
+    dirs
+}
+
+#[cfg(target_os = "linux")]
+fn local_logo(names: &[String], suffixes: &[&str]) -> Option<String> {
+    let dirs = icon_dirs();
+    for suffix in suffixes {
+        for dir in &dirs {
+            for name in names {
+                let path = dir.join(format!("{name}{suffix}"));
+                if let Some(data) = logo_data(&path) {
+                    return Some(data);
+                }
+            }
+        }
+    }
+    None
+}
+
+/// Logo embarqué de la distribution : `ID` puis chaque entrée d'`ID_LIKE`.
+#[cfg(target_os = "linux")]
+fn bundled_linux_logo(os: &HashMap<String, String>) -> Option<&'static str> {
+    let mut keys: Vec<&str> = Vec::new();
+    if let Some(id) = os.get("ID") {
+        keys.push(id);
+    }
+    if let Some(like) = os.get("ID_LIKE") {
+        keys.extend(like.split_whitespace());
+    }
+    keys.into_iter()
+        .find_map(|id| bundled_logo(&format!("linux/{id}")))
+}
+
+/// Windows 11 partage la version 10.0 avec Windows 10 : seul le numéro de
+/// build (≥ 22000) les distingue.
+#[cfg(target_os = "windows")]
+fn bundled_windows_logo() -> Option<&'static str> {
+    let version = System::os_version().unwrap_or_default();
+    let build = version
+        .split('.')
+        .nth(2)
+        .and_then(|value| value.parse::<u32>().ok());
+    let key = match build {
+        Some(build) if build >= 22000 => "windows/windows-11",
+        _ => "windows/windows-10",
+    };
+    bundled_logo(key).or_else(|| bundled_logo("windows/windows"))
+}
+
+#[cfg(target_os = "macos")]
+fn bundled_macos_logo() -> Option<&'static str> {
+    bundled_logo("macos/macos")
 }
 
 #[cfg(target_os = "linux")]
