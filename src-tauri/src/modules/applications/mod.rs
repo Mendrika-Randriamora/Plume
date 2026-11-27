@@ -659,7 +659,11 @@ fn windows_scan_inventory() -> Result<Vec<CachedApplication>, String> {
                 name: name.to_string(),
                 package_name: uninstall.clone(),
                 version: (!version.is_empty()).then(|| version.clone()),
-                size: (!size.is_empty() && size != "0").and_then(|raw| raw.parse::<u64>().ok()),
+                size: if size.is_empty() || size == "0" {
+                    None
+                } else {
+                    size.parse::<u64>().ok()
+                },
                 source: "windows".to_string(),
             },
             path: (!exe.is_empty())
