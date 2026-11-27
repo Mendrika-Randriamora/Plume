@@ -8,4 +8,5 @@ pub mod processes;
 pub mod repositories;
 pub mod resources;
 pub mod settings;
+pub mod startup;
 pub mod updates;

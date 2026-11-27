@@ -72,7 +72,11 @@
     "config_validation_failed": "Validation failed.",
     "config_favorites_failed": "Couldn't save favorites.",
     "config_invalid_root": "This file doesn't need system authorization.",
-    "config_root_required": "System authorization is required for this file."
+    "config_root_required": "System authorization is required for this file.",
+    "invalid_schedule": "This cron schedule isn't valid.",
+    "unmanaged_entry": "This entry wasn't created by Plume, so it's read-only.",
+    "cron_unavailable": "No cron service was found on this system.",
+    "crontab_failed": "Couldn't update your crontab."
   },
   "updater": {
     "banner": {
@@ -632,6 +636,84 @@
       "title": "Privacy policy",
       "hint": "How Plume handles your data.",
       "text": "Plume runs entirely on your computer. No data is collected or sent. It only reads your home folder (ignoring dependency folders such as node_modules or vendor) and never permanently deletes your files: they go to the trash. System changes go through your distribution's permission prompt. Your settings are stored locally."
+    }
+  },
+  "startup": {
+    "title": "Startup",
+    "subtitle": "Launch your applications automatically, when you sign in or at a set time.",
+    "refresh": "Refresh",
+    "add": "Add",
+    "loading": "Reading startup entries…",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "enable": "Enable",
+    "disable": "Disable",
+    "remove": "Remove",
+    "removeConfirm": "Yes, remove",
+    "system": "System",
+    "boot": {
+      "title": "At sign-in",
+      "hint": "Starts as soon as you sign in, like from your desktop menu.",
+      "empty": "No application starts at sign-in."
+    },
+    "schedule": {
+      "title": "At a set time (cron)",
+      "hint": "Scheduled in your personal crontab, without administrator rights.",
+      "empty": "No scheduled task.",
+      "sessionHint": "A scheduled task can only open a window while your session is open; to launch at sign-in, use the section above."
+    },
+    "cronUnavailable": "The “crontab” command can't be found: install a cron service to schedule launches.",
+    "trigger": {
+      "boot": "At sign-in",
+      "schedule": "At a set time"
+    },
+    "summary": {
+      "hourly": "Every hour",
+      "daily": "Every day at {{time}}",
+      "weekdays": "Monday to Friday at {{time}}",
+      "weekly": "Every {{day}} at {{time}}",
+      "custom": "Custom schedule"
+    },
+    "days": {
+      "sun": "Sunday",
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday"
+    },
+    "presets": {
+      "daily9": "Every day at 09:00",
+      "daily1830": "Every day at 18:30",
+      "hourly": "Every hour",
+      "weekdays8": "Mon–Fri at 08:00"
+    },
+    "modal": {
+      "title": "Add a startup entry",
+      "hint": "Pick an application or type a command, then choose when to start it.",
+      "name": "Name",
+      "namePlaceholder": "Name shown in the list",
+      "application": "Application",
+      "applicationLoading": "Loading applications…",
+      "customCommand": "Custom command",
+      "command": "Command to run",
+      "commandPlaceholder": "/usr/bin/my-application",
+      "trigger": "When to start",
+      "schedule": "Schedule (cron)",
+      "schedulePlaceholder": "0 9 * * *",
+      "submit": "Add",
+      "invalid": "Enter a name and a command.",
+      "scheduleInvalid": "The schedule needs 5 fields (minute, hour, day, month, weekday).",
+      "appDetails": "Couldn't read this application's command."
+    },
+    "errors": {
+      "load": "Couldn't read startup entries.",
+      "generic": "The operation failed.",
+      "schedule": "This cron schedule isn't valid.",
+      "unmanaged": "This entry wasn't created by Plume, so it's read-only.",
+      "cronUnavailable": "No cron service was found on this system.",
+      "crontab": "Couldn't update your crontab."
     }
   }
 }

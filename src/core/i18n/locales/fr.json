@@ -72,7 +72,11 @@
     "config_validation_failed": "La validation a échoué.",
     "config_favorites_failed": "Impossible d'enregistrer les favoris.",
     "config_invalid_root": "Ce fichier ne nécessite pas d'autorisation système.",
-    "config_root_required": "Une autorisation système est nécessaire pour ce fichier."
+    "config_root_required": "Une autorisation système est nécessaire pour ce fichier.",
+    "invalid_schedule": "La planification cron n'est pas valide.",
+    "unmanaged_entry": "Cette entrée n'a pas été créée par Plume : elle est en lecture seule.",
+    "cron_unavailable": "Le service cron est introuvable sur ce système.",
+    "crontab_failed": "Impossible de mettre à jour votre crontab."
   },
   "updater": {
     "banner": {
@@ -632,6 +636,84 @@
       "title": "Politique de confidentialité",
       "hint": "Comment Plume traite vos données.",
       "text": "Plume fonctionne entièrement sur votre ordinateur. Aucune donnée n'est collectée ni envoyée. Elle lit uniquement votre dossier personnel (en ignorant les dossiers de dépendances comme node_modules ou vendor) et ne supprime jamais définitivement un de vos fichiers : ils vont à la corbeille. Les modifications du système passent par la fenêtre d'autorisation de votre distribution. Vos réglages sont conservés localement."
+    }
+  },
+  "startup": {
+    "title": "Démarrage",
+    "subtitle": "Lancez vos applications automatiquement, à l'ouverture de session ou à une heure précise.",
+    "refresh": "Rafraîchir",
+    "add": "Ajouter",
+    "loading": "Lecture des lancements automatiques…",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "enable": "Activer",
+    "disable": "Désactiver",
+    "remove": "Retirer",
+    "removeConfirm": "Oui, retirer",
+    "system": "Système",
+    "boot": {
+      "title": "À l'ouverture de session",
+      "hint": "Lancé dès que vous ouvrez votre session, comme depuis le menu de votre bureau.",
+      "empty": "Aucune application ne se lance à l'ouverture de session."
+    },
+    "schedule": {
+      "title": "À une heure précise (cron)",
+      "hint": "Planifié dans votre crontab personnel, sans droits d'administration.",
+      "empty": "Aucune tâche planifiée.",
+      "sessionHint": "Une tâche planifiée ne peut ouvrir une fenêtre que si votre session est ouverte ; pour un lancement à l'ouverture de session, utilisez la section ci-dessus."
+    },
+    "cronUnavailable": "La commande « crontab » est introuvable : installez un service cron pour planifier des lancements.",
+    "trigger": {
+      "boot": "À l'ouverture de session",
+      "schedule": "À une heure précise"
+    },
+    "summary": {
+      "hourly": "Toutes les heures",
+      "daily": "Tous les jours à {{time}}",
+      "weekdays": "Du lundi au vendredi à {{time}}",
+      "weekly": "Chaque {{day}} à {{time}}",
+      "custom": "Planification personnalisée"
+    },
+    "days": {
+      "sun": "dimanche",
+      "mon": "lundi",
+      "tue": "mardi",
+      "wed": "mercredi",
+      "thu": "jeudi",
+      "fri": "vendredi",
+      "sat": "samedi"
+    },
+    "presets": {
+      "daily9": "Tous les jours à 09:00",
+      "daily1830": "Tous les jours à 18:30",
+      "hourly": "Chaque heure",
+      "weekdays8": "Lun–ven à 08:00"
+    },
+    "modal": {
+      "title": "Ajouter un lancement",
+      "hint": "Choisissez une application ou saisissez une commande, puis quand la lancer.",
+      "name": "Nom",
+      "namePlaceholder": "Nom affiché dans la liste",
+      "application": "Application",
+      "applicationLoading": "Chargement des applications…",
+      "customCommand": "Commande personnalisée",
+      "command": "Commande à exécuter",
+      "commandPlaceholder": "/usr/bin/mon-application",
+      "trigger": "Quand lancer",
+      "schedule": "Planification (cron)",
+      "schedulePlaceholder": "0 9 * * *",
+      "submit": "Ajouter",
+      "invalid": "Renseignez un nom et une commande.",
+      "scheduleInvalid": "La planification doit contenir 5 champs (minute, heure, jour, mois, jour de la semaine).",
+      "appDetails": "Impossible de lire la commande de cette application."
+    },
+    "errors": {
+      "load": "Impossible de lire les lancements automatiques.",
+      "generic": "L'opération a échoué.",
+      "schedule": "La planification cron n'est pas valide.",
+      "unmanaged": "Cette entrée n'a pas été créée par Plume : elle est en lecture seule.",
+      "cronUnavailable": "Le service cron est introuvable sur ce système.",
+      "crontab": "Impossible de mettre à jour votre crontab."
     }
   }
 }

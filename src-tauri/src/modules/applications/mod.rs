@@ -16,14 +16,14 @@ use std::collections::{HashMap, HashSet};
 use std::env;
 #[cfg(target_os = "linux")]
 use std::fs;
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
 #[cfg(target_os = "linux")]
 use std::path::Path;
 #[cfg(target_os = "linux")]
 use std::process::Command;
 #[cfg(target_os = "windows")]
 use std::process::Command;
-#[cfg(target_os = "windows")]
-use std::os::windows::process::CommandExt;
 #[cfg(target_os = "linux")]
 use std::time::Duration;
 
@@ -1142,7 +1142,7 @@ fn locale_candidates() -> Vec<String> {
 
 /// Retire les codes de champ XDG (`%U`, `%f`, `%i`, etc.) du champ Exec.
 #[cfg(target_os = "linux")]
-fn clean_exec(exec: &str) -> String {
+pub(crate) fn clean_exec(exec: &str) -> String {
     const FIELD_CODES: &[char] = &[
         'f', 'F', 'u', 'U', 'i', 'c', 'k', 'd', 'D', 'n', 'N', 'v', 'm',
     ];
