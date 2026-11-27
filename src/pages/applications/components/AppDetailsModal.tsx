@@ -15,7 +15,11 @@ export function AppDetailsModal({ isOpen, onClose, details, loading }: Props) {
   if (!isOpen) return null;
 
   const sourceLabel = (source: ApplicationDetails["source"]) =>
-    source === "manuel" ? t("applications.source.manual") : source;
+    source === "manuel"
+      ? t("applications.source.manual")
+      : source === "windows"
+        ? t("applications.source.windows")
+        : source;
 
   return (
     <div className="modal-overlay" onClick={onClose}>

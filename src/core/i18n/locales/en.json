@@ -354,7 +354,8 @@
     "emptyHint": "Try another search or package manager.",
     "showMore": "Show more ({{count}})",
     "source": {
-      "manual": "installed manually"
+      "manual": "installed manually",
+      "windows": "Windows"
     },
     "uninstall": "Uninstall",
     "details": "View details",

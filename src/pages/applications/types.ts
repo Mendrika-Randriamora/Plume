@@ -1,4 +1,4 @@
-export type ApplicationSource = "apt" | "dnf" | "pacman" | "snap" | "flatpak" | "manuel";
+export type ApplicationSource = "apt" | "dnf" | "pacman" | "snap" | "flatpak" | "manuel" | "windows";
 
 export interface Application {
   id: string;
