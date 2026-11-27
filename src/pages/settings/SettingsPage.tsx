@@ -21,6 +21,7 @@ import { resolveDark, FONTS } from "@/core/settings/theme";
 import { DEFAULTS } from "@/core/settings/store";
 import type { FontKey, IconLibrary, Permissions, Rgb, ThemeMode } from "@/core/settings/store";
 import { orderedPages } from "@/pages/registry";
+import { SystemAbout } from "./components/SystemAbout";
 
 const THEMES = [
   ["light", "settings.appearance.themes.light"],
@@ -228,6 +229,8 @@ export function SettingsPage() {
     return (
       <>
         <PageHeader title={t("settings.title")} subtitle={t("settings.subtitle")} action={resetButton} />
+
+        <SystemAbout />
 
         <Card>
           <div className="settings-list">

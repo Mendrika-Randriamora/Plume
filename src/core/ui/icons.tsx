@@ -26,6 +26,7 @@ import {
   Loader2 as LucideLoader2,
   Lock as LucideLock,
   MemoryStick as LucideMemoryStick,
+  Monitor as LucideMonitor,
   Package as LucidePackage,
   PackageCheck as LucidePackageCheck,
   Palette as LucidePalette,
@@ -74,6 +75,7 @@ import {
   Loader2 as SketchyLoader2,
   Lock as SketchyLock,
   MemoryStick as SketchyMemoryStick,
+  Monitor as SketchyMonitor,
   Package as SketchyPackage,
   PackageCheck as SketchyPackageCheck,
   Palette as SketchyPalette,
@@ -222,6 +224,12 @@ export function Lock(props: AppIconProps) {
 export function MemoryStick(props: AppIconProps) {
   const { settings } = useSettings();
   const Icon = settings.iconLibrary === "sketchy" ? SketchyMemoryStick : LucideMemoryStick;
+  return <Icon {...props} />;
+}
+
+export function Monitor(props: AppIconProps) {
+  const { settings } = useSettings();
+  const Icon = settings.iconLibrary === "sketchy" ? SketchyMonitor : LucideMonitor;
   return <Icon {...props} />;
 }
 

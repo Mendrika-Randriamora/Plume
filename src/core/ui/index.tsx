@@ -28,6 +28,7 @@ export {
   Loader2,
   Lock,
   MemoryStick,
+  Monitor,
   Package,
   PackageCheck,
   Palette,

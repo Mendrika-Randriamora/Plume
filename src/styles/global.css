@@ -188,6 +188,18 @@ button.list-row:hover { background: var(--hover); }
 .settings-row:hover .settings-icon { color: var(--ink); }
 .settings-row-title { display: block; font-weight: 500; }
 .settings-chevron { flex: none; color: var(--muted); }
+/* Réglages : logo monochrome du système à gauche, informations à droite. */
+.system-about { display: flex; align-items: center; gap: 32px; }
+.system-about-logo { display: flex; align-items: center; justify-content: center; flex: none; width: 300px; height: 300px; color: var(--ink); }
+.system-about-cols { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+.system-about-cols h2 { margin-bottom: 10px; }
+.system-about-row { padding: 3px 0; }
+.system-about-label { display: block; color: var(--muted); font-size: 0.85em; }
+.system-about-value { display: block; overflow-wrap: anywhere; }
+@media (max-width: 860px) {
+  .system-about { flex-direction: column; align-items: flex-start; }
+  .system-about-cols { width: 100%; grid-template-columns: 1fr; }
+}
 /* Ordre et visibilité des pages dans la barre latérale. */
 .page-order-list { display: flex; flex-direction: column; }
 .page-order-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }

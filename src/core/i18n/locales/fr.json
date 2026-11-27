@@ -531,6 +531,25 @@
   "settings": {
     "title": "Réglages",
     "subtitle": "Adaptez Plume à vos goûts.",
+    "about": {
+      "hardware": "Informations liées au matériel",
+      "software": "Informations liées au logiciel",
+      "model": "Modèle",
+      "memory": "Mémoire",
+      "processor": "Processeur",
+      "graphics": "Carte graphique",
+      "graphicsN": "Carte graphique {{index}}",
+      "disk": "Capacité du disque",
+      "firmware": "Version du microgiciel",
+      "osName": "Nom du système d'exploitation",
+      "osType": "Type de système d'exploitation",
+      "gnome": "Version de GNOME",
+      "session": "Système de fenêtrage",
+      "kernel": "Version du noyau",
+      "bits": "{{bits}} bits",
+      "wayland": "Wayland",
+      "x11": "X11"
+    },
     "reset": "Réinitialiser",
     "resetAll": "Tout réinitialiser",
     "app": {

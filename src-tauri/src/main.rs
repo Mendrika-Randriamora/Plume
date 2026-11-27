@@ -28,6 +28,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             modules::appearance::sync_app_icon,
             modules::home::system_stats,
+            modules::settings::system_info,
             modules::home::home_highlights,
             modules::home::reveal,
             modules::resources::resource_snapshot,

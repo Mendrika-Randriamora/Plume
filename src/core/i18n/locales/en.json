@@ -531,6 +531,25 @@
   "settings": {
     "title": "Settings",
     "subtitle": "Make Plume your own.",
+    "about": {
+      "hardware": "Hardware information",
+      "software": "Software information",
+      "model": "Model",
+      "memory": "Memory",
+      "processor": "Processor",
+      "graphics": "Graphics",
+      "graphicsN": "Graphics {{index}}",
+      "disk": "Disk capacity",
+      "firmware": "Firmware version",
+      "osName": "Operating system name",
+      "osType": "Operating system type",
+      "gnome": "GNOME version",
+      "session": "Windowing system",
+      "kernel": "Kernel version",
+      "bits": "{{bits}}-bit",
+      "wayland": "Wayland",
+      "x11": "X11"
+    },
     "reset": "Reset",
     "resetAll": "Reset All",
     "app": {
