@@ -610,6 +610,11 @@
       "hint": "Choose which pages are shown and drag them to reorder.",
       "visible": "Show the {{page}} page",
       "drag": "Move the {{page}} page",
+      "platform": {
+        "linuxOnly": "Linux only",
+        "windowsOnly": "Windows only",
+        "macosOnly": "macOS only"
+      },
       "pinned": "Settings always remain available at the bottom of the sidebar."
     },
     "permissions": {
@@ -658,7 +663,9 @@
     },
     "schedule": {
       "title": "At a set time (cron)",
+      "titleWindows": "At a set time (Task Scheduler)",
       "hint": "Scheduled in your personal crontab, without administrator rights.",
+      "hintWindows": "Scheduled in Windows Task Scheduler, without administrator rights.",
       "empty": "No scheduled task.",
       "sessionHint": "A scheduled task can only open a window while your session is open; to launch at sign-in, use the section above."
     },
@@ -699,8 +706,10 @@
       "customCommand": "Custom command",
       "command": "Command to run",
       "commandPlaceholder": "/usr/bin/my-application",
+      "commandPlaceholderWindows": "C:\\Program Files\\My application\\app.exe",
       "trigger": "When to start",
       "schedule": "Schedule (cron)",
+      "scheduleWindows": "Schedule",
       "schedulePlaceholder": "0 9 * * *",
       "submit": "Add",
       "invalid": "Enter a name and a command.",
@@ -711,6 +720,7 @@
       "load": "Couldn't read startup entries.",
       "generic": "The operation failed.",
       "schedule": "This cron schedule isn't valid.",
+      "scheduleWindows": "The schedule isn't valid.",
       "unmanaged": "This entry wasn't created by Plume, so it's read-only.",
       "cronUnavailable": "No cron service was found on this system.",
       "crontab": "Couldn't update your crontab."

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Notice, Plus, X } from "@/core/ui";
 import { getApplicationDetails, listApplications } from "@/pages/applications/api";
+import { isWindows } from "../platform";
 import { ScheduleText } from "../schedule";
 import type { StartupInput } from "../api";
 
@@ -28,6 +29,7 @@ const DEFAULT_SCHEDULE = "0 9 * * *";
 
 export function StartupModal({ isOpen, cronSupported, onClose, onSubmit }: Props) {
   const { t } = useTranslation();
+  const windows = isWindows();
   const [name, setName] = useState("");
   const [command, setCommand] = useState("");
   const [appId, setAppId] = useState("");
@@ -185,7 +187,11 @@ export function StartupModal({ isOpen, cronSupported, onClose, onSubmit }: Props
               <input
                 className="text-input"
                 value={command}
-                placeholder={t("startup.modal.commandPlaceholder")}
+                placeholder={t(
+                  windows
+                    ? "startup.modal.commandPlaceholderWindows"
+                    : "startup.modal.commandPlaceholder",
+                )}
                 onChange={(event) => setCommand(event.target.value)}
               />
             </label>
@@ -224,7 +230,7 @@ export function StartupModal({ isOpen, cronSupported, onClose, onSubmit }: Props
                 </div>
 
                 <label className="field col">
-                  <span>{t("startup.modal.schedule")}</span>
+                  <span>{t(windows ? "startup.modal.scheduleWindows" : "startup.modal.schedule")}</span>
                   <input
                     className="text-input"
                     value={schedule}

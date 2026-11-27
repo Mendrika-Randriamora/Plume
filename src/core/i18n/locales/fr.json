@@ -610,6 +610,11 @@
       "hint": "Choisissez les pages visibles et glissez-les pour les réordonner.",
       "visible": "Afficher la page {{page}}",
       "drag": "Déplacer la page {{page}}",
+      "platform": {
+        "linuxOnly": "Linux uniquement",
+        "windowsOnly": "Windows uniquement",
+        "macosOnly": "macOS uniquement"
+      },
       "pinned": "Les réglages restent toujours accessibles en bas de la barre latérale."
     },
     "permissions": {
@@ -658,7 +663,9 @@
     },
     "schedule": {
       "title": "À une heure précise (cron)",
+      "titleWindows": "À une heure précise (Planificateur de tâches)",
       "hint": "Planifié dans votre crontab personnel, sans droits d'administration.",
+      "hintWindows": "Planifié dans le Planificateur de tâches Windows, sans droits d'administration.",
       "empty": "Aucune tâche planifiée.",
       "sessionHint": "Une tâche planifiée ne peut ouvrir une fenêtre que si votre session est ouverte ; pour un lancement à l'ouverture de session, utilisez la section ci-dessus."
     },
@@ -699,8 +706,10 @@
       "customCommand": "Commande personnalisée",
       "command": "Commande à exécuter",
       "commandPlaceholder": "/usr/bin/mon-application",
+      "commandPlaceholderWindows": "C:\\Program Files\\Mon application\\app.exe",
       "trigger": "Quand lancer",
       "schedule": "Planification (cron)",
+      "scheduleWindows": "Planification",
       "schedulePlaceholder": "0 9 * * *",
       "submit": "Ajouter",
       "invalid": "Renseignez un nom et une commande.",
@@ -711,6 +720,7 @@
       "load": "Impossible de lire les lancements automatiques.",
       "generic": "L'opération a échoué.",
       "schedule": "La planification cron n'est pas valide.",
+      "scheduleWindows": "La planification n'est pas valide.",
       "unmanaged": "Cette entrée n'a pas été créée par Plume : elle est en lecture seule.",
       "cronUnavailable": "Le service cron est introuvable sur ce système.",
       "crontab": "Impossible de mettre à jour votre crontab."

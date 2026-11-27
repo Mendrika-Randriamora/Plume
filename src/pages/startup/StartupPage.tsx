@@ -22,6 +22,7 @@ import {
   setStartupEntryEnabled,
 } from "./api";
 import type { StartupEntry, StartupInput, StartupList } from "./api";
+import { isWindows } from "./platform";
 import { ScheduleText } from "./schedule";
 import { StartupModal } from "./components/StartupModal";
 
@@ -78,6 +79,7 @@ function EntryRow({ entry, busy, onToggle, onRemove }: RowProps) {
 
 export function StartupPage() {
   const { t } = useTranslation();
+  const windows = isWindows();
   const [info, setInfo] = useState<StartupList | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -105,7 +107,7 @@ export function StartupPage() {
       case "invalid_input":
         return t("startup.modal.invalid");
       case "invalid_schedule":
-        return t("startup.errors.schedule");
+        return t(windows ? "startup.errors.scheduleWindows" : "startup.errors.schedule");
       case "unmanaged_entry":
         return t("startup.errors.unmanaged");
       case "cron_unavailable":
@@ -196,7 +198,10 @@ export function StartupPage() {
             )}
           </Card>
 
-          <Card title={t("startup.schedule.title")} hint={t("startup.schedule.hint")}>
+          <Card
+            title={t(windows ? "startup.schedule.titleWindows" : "startup.schedule.title")}
+            hint={t(windows ? "startup.schedule.hintWindows" : "startup.schedule.hint")}
+          >
             {scheduled.length === 0 ? (
               <Empty icon={SquarePlay} text={t("startup.schedule.empty")} />
             ) : (
