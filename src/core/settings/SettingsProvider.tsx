@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import i18n, { systemLang } from "@/core/i18n";
-import { applyTitleBarMode, readTitleBarMode } from "@/core/layout/titleBar";
+import { applyTitleBarMode, readTitleBarMode } from "@/core/layout/titleBarMode";
 import { DEFAULTS, load, save, type Permissions, type Settings, type TitleBarMode } from "./store";
 import { applyTheme, syncAppIcon } from "./theme";
 
