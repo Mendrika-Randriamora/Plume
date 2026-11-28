@@ -14,12 +14,17 @@
 :root[data-theme="dark"] { --ink: #e8e5de; --warn: #e8a53c; --danger: #f47163; }
 :root {
   --bg: var(--base);
+  --panel: var(--base);
   --surface: color-mix(in srgb, var(--base) 93%, var(--ink));
   --hover: color-mix(in srgb, var(--base) 86%, var(--ink));
   --line: color-mix(in srgb, var(--base) 82%, var(--ink));
   --muted: color-mix(in srgb, var(--ink) 55%, var(--base));
   --accent: color-mix(in srgb, var(--ink) 82%, var(--base));
   --accent-ink: var(--base);
+  /* Couleurs sémantiques de texte et de bordure. */
+  --text: var(--ink);
+  --text-muted: var(--muted);
+  --border: var(--line);
   /* Coloration de l'éditeur de configuration : dérivée de --ink et --base pour
      suivre automatiquement les thèmes clair, sombre et personnalisé. */
   --cm-active: color-mix(in srgb, var(--base) 93%, var(--ink));
@@ -30,6 +35,10 @@
   --cm-number: color-mix(in srgb, #b06a1f 72%, var(--ink));
   --cm-type: color-mix(in srgb, #2f6fa8 72%, var(--ink));
 }
+
+/* En interface carte, la fenêtre est assombrie autour du panneau : la barre de
+   titre, la barre latérale et le cadre extérieur partagent le même fond --bg. */
+:root[data-shell="card"] { --bg: color-mix(in srgb, var(--panel) 78%, #000); }
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
@@ -49,13 +58,14 @@ button { cursor: pointer; }
 .row { display: flex; align-items: center; } .gap { gap: 8px; }
 
 /* Structure */
-.shell { display: flex; height: 100%; }
+.shell { display: flex; flex-direction: column; height: 100%; position: relative; }
+.shell-body { display: flex; flex: 1; min-height: 0; }
 .sidebar-wrap { position: relative; display: flex; flex: none; }
 .sidebar { flex: none; width: 210px; padding: 20px 12px; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
 .sidebar-head { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding: 0 0 20px 5px; }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 1.2em; }
 .brand-mark { flex: none; }
-.sidebar-toggle { position: absolute; top: 19px; right: -32px; z-index: 3; display: flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px; border: 0; border-radius: 8px; background: var(--bg); color: var(--muted); }
+.sidebar-toggle { position: absolute; top: 19px; right: -32px; z-index: 3; display: flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px; border: 0; border-radius: 8px; background: var(--panel); color: var(--muted); }
 .sidebar-toggle:hover { background: var(--hover); color: var(--ink); }
 .nav-group { display: flex; flex-direction: column; gap: 2px; }
 .nav-group.bottom { margin-top: auto; }
@@ -84,8 +94,8 @@ body.resizing { cursor: col-resize; user-select: none; }
 
 /* Nouvelle interface : le contenu est encadré dans une carte arrondie posée
    sur un fond légèrement noirci ; la barre de navigation reste en dehors du
-   cadre (façon opencode-desktop). */
-:root[data-shell="card"] body { background: color-mix(in srgb, var(--bg) 78%, #000); }
+   cadre (façon opencode-desktop). Le fond --bg est déjà assombri par
+   :root[data-shell="card"]. */
 .shell.shell-card .sidebar { background: none; border-right: 0; }
 /* Pas de trait visible sur la poignée dans la nouvelle interface. */
 .shell.shell-card .sidebar-resizer::after,
@@ -95,7 +105,7 @@ body.resizing { cursor: col-resize; user-select: none; }
   margin: 10px 10px 10px 0;
   /*border: 1px solid var(--line);*/
   border-radius: 10px;
-  background: var(--bg);
+  background: var(--panel);
   /*box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);*/
   /* Barre de défilement masquée : le contenu reste défilable (molette, clavier, tactile). */
   scrollbar-width: none;
@@ -172,7 +182,7 @@ button.list-row:hover { background: var(--hover); }
 .repo-form { display: flex; flex-direction: column; margin-bottom: 12px; }
 .repo-form .field { gap: 6px; }
 .repo-add-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.text-input { width: 100%; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.text-input { width: 100%; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
 .text-input:hover { border-color: var(--muted); }
 .text-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 @media (max-width: 800px) {
@@ -231,17 +241,17 @@ button.list-row:hover { background: var(--hover); }
 .btn:disabled { opacity: 0.45; cursor: default; }
 .seg { display: inline-flex; background: var(--hover); border-radius: 10px; padding: 3px; }
 .seg button { border: 0; background: none; padding: 6px 12px; border-radius: 8px; }
-.seg button.on { background: var(--bg); }
+.seg button.on { background: var(--panel); }
 .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
 .check, .perm { display: flex; align-items: center; gap: 10px; }
 .perm { padding: 8px 0; align-items: flex-start; }
 input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; margin-top: 2px; }
 input[type="range"] { accent-color: var(--accent); width: 100%; }
 /* Couleur et taille de texte : contrôles compacts dans les réglages. */
-input[type="number"] { width: 78px; background-color: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+input[type="number"] { width: 78px; background-color: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
 input[type="number"]:hover { border-color: var(--muted); }
 input[type="number"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-input[type="color"] { width: 44px; height: 30px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); cursor: pointer; }
+input[type="color"] { width: 44px; height: 30px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer; }
 input[type="color"]:hover { border-color: var(--muted); }
 input[type="color"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
@@ -258,7 +268,7 @@ input[type="color"]::-moz-color-swatch { border: 0; border-radius: 5px; }
 select {
   appearance: none;
   -webkit-appearance: none;
-  background-color: var(--bg);
+  background-color: var(--panel);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238d867a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
@@ -290,7 +300,7 @@ label.field { cursor: pointer; }
 /* Mise à jour de l'application */
 .update-banner { border: 0; width: 100%; text-align: left; }
 .update-banner:hover { background: var(--line); }
-.update-notes { white-space: pre-wrap; background: var(--bg); border-radius: 8px; padding: 10px 12px; max-height: 220px; overflow-y: auto; }
+.update-notes { white-space: pre-wrap; background: var(--panel); border-radius: 8px; padding: 10px 12px; max-height: 220px; overflow-y: auto; }
 .update-action { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
 
 /* Recherche */
@@ -333,7 +343,7 @@ label.field { cursor: pointer; }
 .detail-value { font-size: 0.95em; }
 .desktop-content { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
 .desktop-content h3 { font-size: 1em; font-weight: 600; margin-bottom: 12px; }
-.desktop-pre { background: var(--bg); border-radius: 8px; padding: 12px; overflow-x: auto; font-family: monospace; font-size: 0.85em; white-space: pre-wrap; word-break: break-all; }
+.desktop-pre { background: var(--panel); border-radius: 8px; padding: 12px; overflow-x: auto; font-family: monospace; font-size: 0.85em; white-space: pre-wrap; word-break: break-all; }
 .process-path { font-family: monospace; font-size: 0.85em; word-break: break-all; }
 
 /* Configuration : page épurée, l'éditeur occupe la largeur et la hauteur restantes. */
@@ -371,7 +381,7 @@ label.field { cursor: pointer; }
 .config-open-line .config-open-path { font-family: ui-monospace, "DejaVu Sans Mono", monospace; overflow-wrap: anywhere; }
 .config-warning { flex: none; display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 9px; background: color-mix(in srgb, var(--warn) 12%, transparent); }
 .config-warning svg { flex: none; margin-top: 1px; color: var(--warn); }
-.config-editor-area { flex: 1; min-height: 0; display: flex; background: var(--bg); border-radius: var(--radius); overflow: hidden; }
+.config-editor-area { flex: 1; min-height: 0; display: flex; background: var(--panel); border-radius: var(--radius); overflow: hidden; }
 .config-editor-area .config-editor { flex: 1; min-height: 0; height: 100%; }
 .config-editor-area .cm-editor { height: 100%; }
 .config-editor-area .cm-scroller { overflow: auto; scrollbar-gutter: stable; }
@@ -387,7 +397,7 @@ label.field { cursor: pointer; }
 .config-modal.wide { max-width: 860px; }
 .config-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 .config-confirm-danger { color: var(--danger); }
-.config-diff { margin: 0; padding: 0; background: var(--bg); border-radius: 8px; overflow-x: auto; font-family: ui-monospace, "DejaVu Sans Mono", monospace; font-size: 0.85em; line-height: 1.5; }
+.config-diff { margin: 0; padding: 0; background: var(--panel); border-radius: 8px; overflow-x: auto; font-family: ui-monospace, "DejaVu Sans Mono", monospace; font-size: 0.85em; line-height: 1.5; }
 .config-diff-line { display: block; padding: 0 10px; white-space: pre; }
 .config-diff-line.add { background: color-mix(in srgb, var(--warn) 16%, transparent); }
 .config-diff-line.remove { background: color-mix(in srgb, var(--danger) 14%, transparent); }
@@ -406,3 +416,37 @@ label.field { cursor: pointer; }
 .chip-button { background: none; border: 1px solid var(--line); color: inherit; cursor: pointer; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
 .chip-button:hover:not(:disabled) { border-color: var(--muted); }
 .chip-button:disabled { cursor: default; opacity: 0.6; }
+
+/* Barre de titre personnalisée : même fond que la barre latérale. */
+.title-bar {
+  position: relative;
+  z-index: 30;
+  flex: none;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  background: var(--bg);
+  user-select: none;
+}
+.title-bar-side { display: flex; align-items: center; min-width: 0; }
+.title-bar-side-left { flex: 1; min-width: 0; }
+.title-bar-title { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: 0.9em; font-weight: 500; }
+.title-bar-actions { display: flex; align-items: center; gap: 2px; flex: none; }
+.title-bar .btn { padding: 0; width: 44px; height: 36px; display: inline-flex; align-items: center; justify-content: center; color: var(--text-muted); }
+.title-bar .btn:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.title-bar .btn.close:hover:not(:disabled) { background: var(--hover); color: var(--danger); }
+.title-bar .btn:disabled { opacity: 0.45; cursor: default; }
+
+/* Zones de redimensionnement aux bords et coins de la fenêtre (Wayland). */
+.window-resize { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
+.resize-zone { position: absolute; pointer-events: auto; }
+.resize-zone.north { top: 0; left: 0; right: 0; height: 6px; cursor: ns-resize; }
+.resize-zone.south { bottom: 0; left: 0; right: 0; height: 6px; cursor: ns-resize; }
+.resize-zone.west { top: 0; bottom: 0; left: 0; width: 6px; cursor: ew-resize; }
+.resize-zone.east { top: 0; bottom: 0; right: 0; width: 6px; cursor: ew-resize; }
+.resize-zone.northwest { top: 0; left: 0; width: 6px; height: 6px; cursor: nw-resize; }
+.resize-zone.northeast { top: 0; right: 0; width: 6px; height: 6px; cursor: ne-resize; }
+.resize-zone.southwest { bottom: 0; left: 0; width: 6px; height: 6px; cursor: sw-resize; }
+.resize-zone.southeast { bottom: 0; right: 0; width: 6px; height: 6px; cursor: se-resize; }
