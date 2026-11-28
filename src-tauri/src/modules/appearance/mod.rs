@@ -15,6 +15,59 @@ const ICON_DARK: &[u8] = include_bytes!(concat!(
     "/icons/new-icons/icone-f-imparfait-sombre-512.png"
 ));
 
+/// Fichier de configuration natif de la barre de titre. Il est lu avant la
+/// création de la fenêtre : sous Wayland, GTK négocie les décorations au
+/// moment où la fenêtre est créée, pas lorsque `set_decorations` est appelé.
+const TITLE_BAR_FILE: &str = "plume/title-bar.json";
+
+fn title_bar_file() -> std::path::PathBuf {
+    dirs::config_dir()
+        .unwrap_or_else(|| crate::shared::fsutil::home().join(".config"))
+        .join(TITLE_BAR_FILE)
+}
+
+/// Indique si la préférence enregistrée demande la barre système.
+pub fn stored_title_bar_native() -> bool {
+    std::fs::read_to_string(title_bar_file())
+        .ok()
+        .is_some_and(|raw| is_native_mode(&raw))
+}
+
+fn is_native_mode(raw: &str) -> bool {
+    serde_json::from_str::<String>(raw)
+        .ok()
+        .is_some_and(|mode| mode == "native")
+}
+
+/// Renvoie le mode de barre de titre qui sera appliqué au prochain lancement.
+#[tauri::command]
+pub fn title_bar_mode() -> Result<String, String> {
+    Ok(if stored_title_bar_native() {
+        "native"
+    } else {
+        "custom"
+    }
+    .to_string())
+}
+
+/// Enregistre le mode choisi. Un redémarrage est nécessaire pour que GTK
+/// recrée la fenêtre avec (ou sans) décorations système.
+#[tauri::command]
+pub fn set_title_bar_mode(mode: String) -> Result<(), String> {
+    if mode != "custom" && mode != "native" {
+        return Err("invalid_title_bar_mode".to_string());
+    }
+
+    let file = title_bar_file();
+    if let Some(parent) = file.parent() {
+        std::fs::create_dir_all(parent).map_err(|_| "title_bar_write_failed".to_string())?;
+    }
+
+    let contents =
+        serde_json::to_string(&mode).map_err(|_| "title_bar_write_failed".to_string())?;
+    std::fs::write(file, contents).map_err(|_| "title_bar_write_failed".to_string())
+}
+
 /// Aligne l'icône de Plume sur le thème choisi par l'utilisateur.
 ///
 /// Sous X11 et Windows, l'icône de la fenêtre suffit. Sous Wayland, le
@@ -199,6 +252,14 @@ fn sync_desktop_entry_in(data_dir: &Path, dark: bool) -> std::io::Result<()> {
 #[cfg(all(test, target_os = "linux"))]
 mod tests {
     use super::*;
+
+    #[test]
+    fn title_bar_mode_is_parsed_safely() {
+        assert!(is_native_mode("\"native\""));
+        assert!(!is_native_mode("\"custom\""));
+        assert!(!is_native_mode("native"));
+        assert!(!is_native_mode(""));
+    }
 
     #[test]
     fn desktop_entry_follows_theme() {

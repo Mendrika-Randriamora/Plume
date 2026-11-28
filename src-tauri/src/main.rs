@@ -24,8 +24,21 @@ fn main() {
         builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
     }
 
+    // Sous Wayland, GTK ne renégocie pas les décorations d'une fenêtre déjà
+    // créée : le mode de barre de titre doit donc être choisi avant la
+    // construction de la fenêtre, depuis la préférence enregistrée.
+    let mut context = tauri::generate_context!();
+    let native_title_bar = modules::appearance::stored_title_bar_native();
+    for window in &mut context.config_mut().app.windows {
+        if window.label == "main" {
+            window.decorations = native_title_bar;
+        }
+    }
+
     builder
         .invoke_handler(tauri::generate_handler![
+            modules::appearance::title_bar_mode,
+            modules::appearance::set_title_bar_mode,
             modules::appearance::sync_app_icon,
             modules::home::system_stats,
             modules::settings::system_info,
@@ -77,6 +90,6 @@ fn main() {
             modules::config::add_favorite,
             modules::config::remove_favorite,
         ])
-        .run(tauri::generate_context!())
+        .run(context)
         .expect("erreur au lancement de Plume");
 }
