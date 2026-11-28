@@ -3,6 +3,7 @@ import type { AppIcon } from "@/core/ui";
 import { page as home } from "./home";
 import { page as resources } from "./resources";
 import { page as processes } from "./processes";
+import { page as porter } from "./porter";
 import { page as updates } from "./updates";
 import { page as clean } from "./clean";
 import { page as disk } from "./disk";
@@ -17,6 +18,7 @@ export type PageTitleKey =
   | "home.title"
   | "resources.title"
   | "processes.title"
+  | "porter.title"
   | "updates.title"
   | "clean.title"
   | "disk.title"
@@ -41,7 +43,7 @@ export interface PageDef {
 }
 
 /** Pour ajouter une page : créer un dossier dans src/pages avec un index.ts exportant `page`, puis l'ajouter ici. */
-export const pages: PageDef[] = [home, resources, processes, updates, clean, disk, applications, startup, config, repositories, settings];
+export const pages: PageDef[] = [home, resources, processes, porter, updates, clean, disk, applications, startup, config, repositories, settings];
 
 /**
  * Pages dans l'ordre choisi par l'utilisateur. Les identifiants inconnus sont

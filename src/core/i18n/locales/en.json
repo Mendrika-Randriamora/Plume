@@ -76,7 +76,9 @@
     "invalid_schedule": "This cron schedule isn't valid.",
     "unmanaged_entry": "This entry wasn't created by Plume, so it's read-only.",
     "cron_unavailable": "No cron service was found on this system.",
-    "crontab_failed": "Couldn't update your crontab."
+    "crontab_failed": "Couldn't update your crontab.",
+    "porter_unavailable": "Couldn't read the port table.",
+    "porter_scan_failed": "Reading ports failed."
   },
   "updater": {
     "banner": {
@@ -245,6 +247,113 @@
       "unsupported": "This action isn't supported on this system.",
       "pkexec": "The system authorization tool (pkexec) is missing.",
       "generic": "The action failed."
+    }
+  },
+  "porter": {
+    "title": "Porter",
+    "subtitle": "This machine's ports, the process holding each one, and process stopping. Refreshed every {{seconds}} s.",
+    "loading": "Reading ports…",
+    "loadError": "Couldn't read the port table. Try again with the Refresh button.",
+    "empty": "No watched port. Open the page settings to add one.",
+    "emptyFiltered": "No port matches \"{{query}}\".",
+    "emptyFilters": "No port matches the active filters.",
+    "search": {
+      "placeholder": "Search a port or a process…",
+      "clear": "Clear search"
+    },
+    "filters": {
+      "title": "Status filters"
+    },
+    "status": {
+      "free": "Free",
+      "busy": "Busy",
+      "system": "System"
+    },
+    "stats": {
+      "free": "Free",
+      "busy": "Busy",
+      "system": "System"
+    },
+    "columns": {
+      "port": "Port",
+      "service": "Service",
+      "status": "Status",
+      "process": "Process",
+      "actions": "Actions"
+    },
+    "process": {
+      "pid": "PID {{pid}}",
+      "unknown": "Unknown process",
+      "systemHint": "Protected system process: it can't be stopped from Plume."
+    },
+    "pin": {
+      "pin": "Pin port {{port}}",
+      "unpin": "Unpin port {{port}}",
+      "limit": "You can pin at most {{count}} ports.",
+      "undo": "Port {{port}} unpinned.",
+      "undoAction": "Undo"
+    },
+    "stop": {
+      "title": "Stop the process?",
+      "aria": "Stop the process on port {{port}}",
+      "description": "The process {{name}} (PID {{pid}}) holding port {{port}} will receive a stop request.",
+      "confirm": "Stop",
+      "success": "Process {{name}} (PID {{pid}}) was stopped.",
+      "permission": "You don't have enough rights to stop this process.",
+      "elevate": "Retry with elevation",
+      "protected": "This port is held by a protected system process.",
+      "notFound": "This process no longer exists.",
+      "timeout": "The process didn't stop in time.",
+      "unsupported": "Stopping processes isn't supported on this system.",
+      "cancelled": "The elevation request was cancelled.",
+      "unavailable": "The elevation tool couldn't be found.",
+      "failed": "Stopping the process failed."
+    },
+    "other": {
+      "title": "Other ports",
+      "hint": "Every other port listening on the system.",
+      "count_one": "{{count}} port",
+      "count_other": "{{count}} ports",
+      "empty": "No other port is listening.",
+      "filteredEmpty": "No other port matches the filters.",
+      "includeOutgoing": "Include outgoing connections",
+      "outgoing": "Outgoing"
+    },
+    "settings": {
+      "title": "Watched ports",
+      "hint": "Add or remove the ports shown at the top of the page.",
+      "add": "Add",
+      "addPlaceholder": "Port",
+      "labelPlaceholder": "Label (optional)",
+      "remove": "Remove port {{port}}",
+      "reset": "Restore default ports",
+      "empty": "No watched port. Add one to get started.",
+      "invalid": "Enter a port number between 1 and 65535.",
+      "duplicate": "This port is already watched.",
+      "added": "Port {{port}} added.",
+      "removed": "Port {{port}} removed.",
+      "defaultLabel": "Custom"
+    },
+    "services": {
+      "http": "HTTP",
+      "https": "HTTPS",
+      "react": "React / Node",
+      "next": "Next.js",
+      "mysql": "MySQL",
+      "angular": "Angular",
+      "flask": "Flask",
+      "vite": "Vite",
+      "postgres": "PostgreSQL",
+      "redis": "Redis",
+      "django": "Django",
+      "httpAlt": "Alternative HTTP",
+      "phpFpm": "PHP-FPM",
+      "mongodb": "MongoDB"
+    },
+    "privacy": "Local reading only: no data leaves your machine.",
+    "credit": {
+      "prefix": "Inspired by",
+      "link": "Porter (t21dev/porter-app)"
     }
   },
   "updates": {

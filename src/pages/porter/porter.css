@@ -1,0 +1,390 @@
+/* Page Porter : compteurs, tableau des ports et section « Autres ports ». */
+
+.porter-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.porter-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+}
+
+.porter-stat strong {
+  font-size: 1.6em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.porter-stat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.porter-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.porter-dot.free {
+  background: var(--muted);
+}
+
+.porter-dot.busy {
+  background: var(--warn);
+}
+
+.porter-dot.system {
+  background: var(--danger);
+}
+
+.porter-search {
+  flex: 1;
+  min-width: 220px;
+}
+
+.porter-tools {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.porter-filters {
+  flex-wrap: wrap;
+}
+
+.porter-filters .chip-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.porter-filters .chip-button.on {
+  border-color: var(--ink);
+  background: var(--hover);
+}
+
+.porter-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.porter-row {
+  display: grid;
+  grid-template-columns: 28px 76px minmax(0, 1fr) 108px minmax(0, 1.15fr) 36px;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 8px;
+}
+
+.porter-row:not(.porter-head):hover {
+  background: var(--hover);
+}
+
+.porter-head {
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.82em;
+}
+
+.porter-head > span {
+  padding: 6px 0;
+}
+
+.porter-port {
+  font-family: ui-monospace, "DejaVu Sans Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.porter-service {
+  min-width: 0;
+}
+
+.porter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.porter-badge.busy {
+  color: var(--warn);
+}
+
+.porter-badge.system {
+  color: var(--danger);
+}
+
+.porter-process {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.porter-process .ellipsis {
+  max-width: 100%;
+}
+
+.porter-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.porter-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s, color 0.12s;
+}
+
+.porter-row:hover .porter-pin,
+.porter-pin.pinned,
+.porter-pin:focus-visible {
+  opacity: 1;
+}
+
+.porter-pin:hover {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.porter-pin.pinned {
+  color: var(--ink);
+}
+
+.porter-stop {
+  color: var(--muted);
+}
+
+.porter-stop:hover:not(:disabled) {
+  color: var(--danger);
+}
+
+.porter-protected {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: var(--danger);
+}
+
+.porter-notice {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.porter-other {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.porter-other-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.porter-other-toggle {
+  width: auto;
+  flex: 1;
+  min-width: 220px;
+}
+
+.porter-other-toggle .settings-row-title {
+  display: block;
+}
+
+.porter-other-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 420px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.porter-other-row {
+  display: grid;
+  grid-template-columns: 52px 70px minmax(0, 1fr) minmax(0, 1fr) auto 32px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.porter-other-row:hover {
+  background: var(--hover);
+}
+
+.porter-proto {
+  text-transform: uppercase;
+  font-size: 0.75em;
+  text-align: center;
+}
+
+.porter-other-address {
+  min-width: 0;
+}
+
+.porter-other-process {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.porter-other-pid {
+  justify-self: end;
+}
+
+.porter-dialog {
+  max-width: 480px;
+}
+
+.porter-watched {
+  max-width: 620px;
+}
+
+.porter-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.porter-add .text-input {
+  flex: 1;
+  min-width: 120px;
+}
+
+.porter-port-input {
+  max-width: 110px;
+}
+
+.porter-watched-list {
+  margin: 8px 0;
+}
+
+.porter-watched-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.porter-watched-row + .porter-watched-row {
+  border-top: 1px solid var(--line);
+}
+
+.porter-watched-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.porter-dialog-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+}
+
+.porter-dialog-warning svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--warn);
+}
+
+.porter-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.porter-privacy {
+  text-align: center;
+  margin-top: 4px;
+}
+
+.porter-credit {
+  margin: 0;
+  text-align: center;
+  font-size: 0.78em;
+  color: var(--muted);
+}
+
+.porter-credit a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.porter-credit a:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 760px) {
+  .porter-row {
+    grid-template-columns: 26px 64px minmax(0, 1fr) 96px 36px;
+  }
+
+  .porter-row .porter-service {
+    display: none;
+  }
+
+  .porter-other-row {
+    grid-template-columns: 46px 60px minmax(0, 1fr) 32px;
+  }
+
+  .porter-other-row .porter-other-address,
+  .porter-other-row .porter-other-pid {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .porter-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .porter-row {
+    grid-template-columns: 26px 58px minmax(0, 1fr) 32px;
+  }
+
+  .porter-row .porter-badge {
+    display: none;
+  }
+
+  .porter-watched-row {
+    grid-template-columns: 62px minmax(0, 1fr) 32px;
+  }
+}

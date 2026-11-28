@@ -76,7 +76,9 @@
     "invalid_schedule": "La planification cron n'est pas valide.",
     "unmanaged_entry": "Cette entrée n'a pas été créée par Plume : elle est en lecture seule.",
     "cron_unavailable": "Le service cron est introuvable sur ce système.",
-    "crontab_failed": "Impossible de mettre à jour votre crontab."
+    "crontab_failed": "Impossible de mettre à jour votre crontab.",
+    "porter_unavailable": "Impossible de lire la table des ports.",
+    "porter_scan_failed": "La lecture des ports a échoué."
   },
   "updater": {
     "banner": {
@@ -245,6 +247,113 @@
       "unsupported": "Cette action n'est pas prise en charge sur ce système.",
       "pkexec": "L'outil d'autorisation système (pkexec) est introuvable.",
       "generic": "L'action a échoué."
+    }
+  },
+  "porter": {
+    "title": "Porter",
+    "subtitle": "Les ports de cette machine, le processus qui les occupe et l'arrêt du processus. Actualisés toutes les {{seconds}} s.",
+    "loading": "Lecture des ports…",
+    "loadError": "Impossible de lire la table des ports. Réessayez avec le bouton Rafraîchir.",
+    "empty": "Aucun port surveillé. Ouvrez les réglages de la page pour en ajouter.",
+    "emptyFiltered": "Aucun port ne correspond à « {{query}} ».",
+    "emptyFilters": "Aucun port ne correspond aux filtres actifs.",
+    "search": {
+      "placeholder": "Rechercher un port ou un processus…",
+      "clear": "Effacer la recherche"
+    },
+    "filters": {
+      "title": "Filtres d'état"
+    },
+    "status": {
+      "free": "Libre",
+      "busy": "Occupé",
+      "system": "Système"
+    },
+    "stats": {
+      "free": "Libres",
+      "busy": "Occupés",
+      "system": "Système"
+    },
+    "columns": {
+      "port": "Port",
+      "service": "Service",
+      "status": "État",
+      "process": "Processus",
+      "actions": "Actions"
+    },
+    "process": {
+      "pid": "PID {{pid}}",
+      "unknown": "Processus inconnu",
+      "systemHint": "Processus système protégé : arrêt impossible depuis Plume."
+    },
+    "pin": {
+      "pin": "Épingler le port {{port}}",
+      "unpin": "Désépingler le port {{port}}",
+      "limit": "Vous pouvez épingler au maximum {{count}} ports.",
+      "undo": "Port {{port}} désépinglé.",
+      "undoAction": "Annuler"
+    },
+    "stop": {
+      "title": "Arrêter le processus ?",
+      "aria": "Arrêter le processus du port {{port}}",
+      "description": "Le processus {{name}} (PID {{pid}}) qui occupe le port {{port}} va recevoir une demande d'arrêt.",
+      "confirm": "Arrêter",
+      "success": "Le processus {{name}} (PID {{pid}}) a été arrêté.",
+      "permission": "Les droits sont insuffisants pour arrêter ce processus.",
+      "elevate": "Relancer avec élévation",
+      "protected": "Ce port est tenu par un processus système protégé.",
+      "notFound": "Ce processus n'existe plus.",
+      "timeout": "Le processus ne s'est pas arrêté à temps.",
+      "unsupported": "L'arrêt de processus n'est pas pris en charge sur ce système.",
+      "cancelled": "L'élévation de droits a été annulée.",
+      "unavailable": "L'outil d'élévation de droits est introuvable.",
+      "failed": "L'arrêt du processus a échoué."
+    },
+    "other": {
+      "title": "Autres ports",
+      "hint": "Tous les autres ports en écoute sur le système.",
+      "count_one": "{{count}} port",
+      "count_other": "{{count}} ports",
+      "empty": "Aucun autre port en écoute.",
+      "filteredEmpty": "Aucun autre port ne correspond aux filtres.",
+      "includeOutgoing": "Inclure les connexions sortantes",
+      "outgoing": "Sortant"
+    },
+    "settings": {
+      "title": "Ports surveillés",
+      "hint": "Ajoutez ou retirez les ports affichés en haut de page.",
+      "add": "Ajouter",
+      "addPlaceholder": "Port",
+      "labelPlaceholder": "Étiquette (facultatif)",
+      "remove": "Retirer le port {{port}}",
+      "reset": "Rétablir les ports par défaut",
+      "empty": "Aucun port surveillé. Ajoutez un port pour commencer.",
+      "invalid": "Entrez un numéro de port entre 1 et 65535.",
+      "duplicate": "Ce port est déjà surveillé.",
+      "added": "Port {{port}} ajouté.",
+      "removed": "Port {{port}} retiré.",
+      "defaultLabel": "Personnalisé"
+    },
+    "services": {
+      "http": "HTTP",
+      "https": "HTTPS",
+      "react": "React / Node",
+      "next": "Next.js",
+      "mysql": "MySQL",
+      "angular": "Angular",
+      "flask": "Flask",
+      "vite": "Vite",
+      "postgres": "PostgreSQL",
+      "redis": "Redis",
+      "django": "Django",
+      "httpAlt": "HTTP alternatif",
+      "phpFpm": "PHP-FPM",
+      "mongodb": "MongoDB"
+    },
+    "privacy": "Lecture locale uniquement : aucune donnée ne quitte votre machine.",
+    "credit": {
+      "prefix": "Inspiré par",
+      "link": "Porter (t21dev/porter-app)"
     }
   },
   "updates": {
