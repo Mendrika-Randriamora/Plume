@@ -17,7 +17,7 @@ interface Props {
 /** Thème CodeMirror piloté par les variables CSS de Plume : clair, sombre et
  * couleur personnalisée suivent donc automatiquement les réglages. */
 const editorTheme = EditorView.theme({
-  "&": { height: "100%", backgroundColor: "var(--bg)", color: "var(--ink)" },
+  "&": { height: "100%", backgroundColor: "var(--panel)", color: "var(--ink)" },
   ".cm-scroller": {
     overflow: "auto",
     fontFamily: 'ui-monospace, "JetBrains Mono", "DejaVu Sans Mono", monospace',
@@ -26,7 +26,7 @@ const editorTheme = EditorView.theme({
   },
   ".cm-content": { caretColor: "var(--ink)", padding: "12px 0" },
   ".cm-gutters": {
-    backgroundColor: "var(--bg)",
+    backgroundColor: "var(--panel)",
     color: "var(--muted)",
     border: "none",
     paddingRight: "4px",

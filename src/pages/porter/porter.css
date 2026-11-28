@@ -166,7 +166,7 @@
 }
 
 .porter-pin:hover {
-  background: var(--bg);
+  background: var(--panel);
   color: var(--ink);
 }
 
