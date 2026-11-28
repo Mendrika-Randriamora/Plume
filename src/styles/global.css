@@ -21,6 +21,10 @@
   --muted: color-mix(in srgb, var(--ink) 55%, var(--base));
   --accent: color-mix(in srgb, var(--ink) 82%, var(--base));
   --accent-ink: var(--base);
+  /* Couleurs sémantiques de texte et de bordure. */
+  --text: var(--ink);
+  --text-muted: var(--muted);
+  --border: var(--line);
   /* Coloration de l'éditeur de configuration : dérivée de --ink et --base pour
      suivre automatiquement les thèmes clair, sombre et personnalisé. */
   --cm-active: color-mix(in srgb, var(--base) 93%, var(--ink));
@@ -54,7 +58,8 @@ button { cursor: pointer; }
 .row { display: flex; align-items: center; } .gap { gap: 8px; }
 
 /* Structure */
-.shell { display: flex; height: 100%; }
+.shell { display: flex; flex-direction: column; height: 100%; position: relative; }
+.shell-body { display: flex; flex: 1; min-height: 0; }
 .sidebar-wrap { position: relative; display: flex; flex: none; }
 .sidebar { flex: none; width: 210px; padding: 20px 12px; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
 .sidebar-head { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding: 0 0 20px 5px; }
@@ -411,3 +416,37 @@ label.field { cursor: pointer; }
 .chip-button { background: none; border: 1px solid var(--line); color: inherit; cursor: pointer; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
 .chip-button:hover:not(:disabled) { border-color: var(--muted); }
 .chip-button:disabled { cursor: default; opacity: 0.6; }
+
+/* Barre de titre personnalisée : même fond que la barre latérale. */
+.title-bar {
+  position: relative;
+  z-index: 30;
+  flex: none;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  background: var(--bg);
+  user-select: none;
+}
+.title-bar-side { display: flex; align-items: center; min-width: 0; }
+.title-bar-side-left { flex: 1; min-width: 0; }
+.title-bar-title { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: 0.9em; font-weight: 500; }
+.title-bar-actions { display: flex; align-items: center; gap: 2px; flex: none; }
+.title-bar .btn { padding: 0; width: 44px; height: 36px; display: inline-flex; align-items: center; justify-content: center; color: var(--text-muted); }
+.title-bar .btn:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.title-bar .btn.close:hover:not(:disabled) { background: var(--hover); color: var(--danger); }
+.title-bar .btn:disabled { opacity: 0.45; cursor: default; }
+
+/* Zones de redimensionnement aux bords et coins de la fenêtre (Wayland). */
+.window-resize { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
+.resize-zone { position: absolute; pointer-events: auto; }
+.resize-zone.north { top: 0; left: 0; right: 0; height: 6px; cursor: ns-resize; }
+.resize-zone.south { bottom: 0; left: 0; right: 0; height: 6px; cursor: ns-resize; }
+.resize-zone.west { top: 0; bottom: 0; left: 0; width: 6px; cursor: ew-resize; }
+.resize-zone.east { top: 0; bottom: 0; right: 0; width: 6px; cursor: ew-resize; }
+.resize-zone.northwest { top: 0; left: 0; width: 6px; height: 6px; cursor: nw-resize; }
+.resize-zone.northeast { top: 0; right: 0; width: 6px; height: 6px; cursor: ne-resize; }
+.resize-zone.southwest { bottom: 0; left: 0; width: 6px; height: 6px; cursor: sw-resize; }
+.resize-zone.southeast { bottom: 0; right: 0; width: 6px; height: 6px; cursor: se-resize; }

@@ -110,7 +110,7 @@ const PLATFORM_LABELS = {
 
 export function SettingsPage() {
   const { t } = useTranslation();
-  const { settings: s, update, reset } = useSettings();
+  const { settings: s, titleBarMode, setTitleBar, update, reset } = useSettings();
   const [version, setVersion] = useState("…");
   const [section, setSection] = useState<SectionId | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -226,6 +226,7 @@ export function SettingsPage() {
           textLight: DEFAULTS.textLight,
           textDark: DEFAULTS.textDark,
         });
+        if (titleBarMode !== DEFAULTS.titleBar) setTitleBar(DEFAULTS.titleBar);
         break;
       case "navigation":
         update({ pageOrder: [...DEFAULTS.pageOrder], hiddenPages: [...DEFAULTS.hiddenPages] });
@@ -367,6 +368,32 @@ export function SettingsPage() {
               onChange={(e) => update({ interfaceV2: e.target.checked })}
             />
           </label>
+          <div className="field">
+            <span>
+              {t("settings.appearance.titleBar")}
+              <span className="muted small block">{t("settings.appearance.titleBarHint")}</span>
+            </span>
+            <div className="seg">
+              <button
+                type="button"
+                className={s.titleBar === "custom" ? "on" : ""}
+                onClick={() => {
+                  if (s.titleBar !== "custom") setTitleBar("custom");
+                }}
+              >
+                {t("settings.appearance.titleBarCustom")}
+              </button>
+              <button
+                type="button"
+                className={s.titleBar === "native" ? "on" : ""}
+                onClick={() => {
+                  if (s.titleBar !== "native") setTitleBar("native");
+                }}
+              >
+                {t("settings.appearance.titleBarNative")}
+              </button>
+            </div>
+          </div>
           <div className="field">
             <span>{t("settings.appearance.background", { theme: themeLabel })}</span>
             <input

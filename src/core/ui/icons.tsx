@@ -11,6 +11,7 @@ import {
   ChevronUp as LucideChevronUp,
   CircleAlert as LucideCircleAlert,
   Cpu as LucideCpu,
+  Copy as LucideCopy,
   Diff as LucideDiff,
   Download as LucideDownload,
   FileCode as LucideFileCode,
@@ -26,6 +27,7 @@ import {
   Loader2 as LucideLoader2,
   Lock as LucideLock,
   MemoryStick as LucideMemoryStick,
+  Minus as LucideMinus,
   Monitor as LucideMonitor,
   Package as LucidePackage,
   PackageCheck as LucidePackageCheck,
@@ -60,6 +62,7 @@ import {
   ChevronUp as SketchyChevronUp,
   CircleAlert as SketchyCircleAlert,
   Cpu as SketchyCpu,
+  Copy as SketchyCopy,
   Diff as SketchyDiff,
   Download as SketchyDownload,
   FileCode as SketchyFileCode,
@@ -75,6 +78,7 @@ import {
   Loader2 as SketchyLoader2,
   Lock as SketchyLock,
   MemoryStick as SketchyMemoryStick,
+  Minus as SketchyMinus,
   Monitor as SketchyMonitor,
   Package as SketchyPackage,
   PackageCheck as SketchyPackageCheck,
@@ -155,6 +159,12 @@ export function Cpu(props: AppIconProps) {
   return <Icon {...props} />;
 }
 
+export function Copy(props: AppIconProps) {
+  const { settings } = useSettings();
+  const Icon = settings.iconLibrary === "sketchy" ? SketchyCopy : LucideCopy;
+  return <Icon {...props} />;
+}
+
 export function Download(props: AppIconProps) {
   const { settings } = useSettings();
   const Icon = settings.iconLibrary === "sketchy" ? SketchyDownload : LucideDownload;
@@ -224,6 +234,12 @@ export function Lock(props: AppIconProps) {
 export function MemoryStick(props: AppIconProps) {
   const { settings } = useSettings();
   const Icon = settings.iconLibrary === "sketchy" ? SketchyMemoryStick : LucideMemoryStick;
+  return <Icon {...props} />;
+}
+
+export function Minus(props: AppIconProps) {
+  const { settings } = useSettings();
+  const Icon = settings.iconLibrary === "sketchy" ? SketchyMinus : LucideMinus;
   return <Icon {...props} />;
 }
 

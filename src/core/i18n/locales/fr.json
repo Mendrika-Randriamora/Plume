@@ -3,6 +3,9 @@
     "cancel": "Annuler",
     "confirm": "Confirmer",
     "close": "Fermer",
+    "minimize": "Réduire",
+    "maximize": "Agrandir",
+    "restore": "Restaurer",
     "loading": "Chargement…",
     "search": "Rechercher",
     "refresh": "Rafraîchir",
@@ -78,7 +81,9 @@
     "cron_unavailable": "Le service cron est introuvable sur ce système.",
     "crontab_failed": "Impossible de mettre à jour votre crontab.",
     "porter_unavailable": "Impossible de lire la table des ports.",
-    "porter_scan_failed": "La lecture des ports a échoué."
+    "porter_scan_failed": "La lecture des ports a échoué.",
+    "invalid_title_bar_mode": "Ce mode de barre de titre n'est pas reconnu.",
+    "title_bar_write_failed": "Impossible d'enregistrer le mode de barre de titre."
   },
   "updater": {
     "banner": {
@@ -697,6 +702,10 @@
       "iconLibraryLucide": "Lucide",
       "interfaceV2": "Utiliser la nouvelle interface",
       "interfaceV2Hint": "Contenu encadré dans une carte arrondie, barre de navigation sur fond assombri.",
+      "titleBar": "Barre de titre",
+      "titleBarHint": "Personnalisée : barre intégrée à Plume. Native : barre système (Plume redémarre pour appliquer le choix).",
+      "titleBarCustom": "Personnalisée",
+      "titleBarNative": "Système",
       "background": "Couleur de fond ({{theme}})",
       "textColor": "Couleur du texte ({{theme}})",
       "textPalette": {

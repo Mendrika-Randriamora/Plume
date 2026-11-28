@@ -3,6 +3,9 @@
     "cancel": "Cancel",
     "confirm": "Confirm",
     "close": "Close",
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "restore": "Restore",
     "loading": "Loading…",
     "search": "Search",
     "refresh": "Refresh",
@@ -78,7 +81,9 @@
     "cron_unavailable": "No cron service was found on this system.",
     "crontab_failed": "Couldn't update your crontab.",
     "porter_unavailable": "Couldn't read the port table.",
-    "porter_scan_failed": "Reading ports failed."
+    "porter_scan_failed": "Reading ports failed.",
+    "invalid_title_bar_mode": "This title bar mode is not recognized.",
+    "title_bar_write_failed": "Could not save the title bar mode."
   },
   "updater": {
     "banner": {
@@ -697,6 +702,10 @@
       "iconLibraryLucide": "Lucide",
       "interfaceV2": "Use the new interface",
       "interfaceV2Hint": "Content framed in a rounded card, navigation bar on a darkened background.",
+      "titleBar": "Title bar",
+      "titleBarHint": "Custom: integrated title bar. Native: system title bar (Plume restarts to apply the change).",
+      "titleBarCustom": "Custom",
+      "titleBarNative": "Native",
       "background": "Background color ({{theme}})",
       "textColor": "Text color ({{theme}})",
       "textPalette": {

@@ -4,6 +4,8 @@ export type Rgb = [number, number, number];
 export type ThemeMode = "light" | "dark" | "system";
 export type FontKey = "system" | "serif" | "rounded" | "mono";
 export type IconLibrary = "lucide" | "sketchy";
+/** Barre de titre de la fenêtre : personnalisée intégrée à Plume ou barre système native. */
+export type TitleBarMode = "custom" | "native";
 
 export interface Permissions {
   scanHome: boolean; // lire les fichiers de /home
@@ -26,6 +28,7 @@ export interface Settings {
   pageOrder: string[]; // ordre des pages dans la barre latérale (vide = ordre du registre)
   hiddenPages: string[]; // pages masquées de la barre latérale
   interfaceV2: boolean; // page encadrée dans une carte arrondie
+  titleBar: TitleBarMode; // barre de titre personnalisée intégrée ou barre système native
   iconLibrary: IconLibrary; // bibliothèque d'icônes de l'interface (lucide, sketchy)
   permissions: Permissions;
 }
@@ -51,6 +54,7 @@ export const DEFAULTS: Settings = {
   // s'ouvrent depuis la barre de recherche ou depuis les réglages.
   hiddenPages: ["config", "startup"],
   interfaceV2: true,
+  titleBar: "custom",
   iconLibrary: "sketchy",
   permissions: { scanHome: true, deleteFiles: true, systemChanges: true, internetAccess: true },
 };
